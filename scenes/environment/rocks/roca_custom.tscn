@@ -1,0 +1,64 @@
+[gd_scene load_steps=7 format=3]
+
+[sub_resource type="StandardMaterial3D" id="Mat_Stone"]
+albedo_color = Color(0.55, 0.56, 0.58, 1.0)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="Mat_Cobble"]
+albedo_color = Color(0.42, 0.43, 0.44, 1.0)
+roughness = 0.98
+
+[sub_resource type="StandardMaterial3D" id="Mat_Moss"]
+albedo_color = Color(0.24, 0.44, 0.14, 1.0)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="Mesh_Block"]
+size = Vector3(1.0, 1.0, 1.0)
+
+[sub_resource type="BoxMesh" id="Mesh_Slab"]
+size = Vector3(1.0, 0.5, 1.0)
+
+[sub_resource type="BoxMesh" id="Mesh_MossCover"]
+size = Vector3(1.02, 0.12, 1.02)
+
+[node name="RocaCustom" type="Node3D"]
+
+[node name="Stone_Center" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+material_override = SubResource("Mat_Stone")
+mesh = SubResource("Mesh_Block")
+
+[node name="Stone_TopSlab" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+material_override = SubResource("Mat_Stone")
+mesh = SubResource("Mesh_Slab")
+
+[node name="Cobble_Side" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0, 0.5, 0)
+material_override = SubResource("Mat_Cobble")
+mesh = SubResource("Mesh_Block")
+
+[node name="Moss_Layer" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0, 1.02, 0)
+material_override = SubResource("Mat_Moss")
+mesh = SubResource("Mesh_MossCover")
+
+[node name="Slab_StepRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.25, 0)
+material_override = SubResource("Mat_Stone")
+mesh = SubResource("Mesh_Slab")
+
+[node name="Slab_StepFront" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 1.0)
+material_override = SubResource("Mat_Cobble")
+mesh = SubResource("Mesh_Slab")
+
+[node name="Slab_StepBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0, 0.25, -1.0)
+material_override = SubResource("Mat_Stone")
+mesh = SubResource("Mesh_Slab")
+
+[node name="Moss_Carpet" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.06, 1.0)
+material_override = SubResource("Mat_Moss")
+mesh = SubResource("Mesh_MossCover")

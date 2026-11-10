@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=3]
+
+[sub_resource type="StandardMaterial3D" id="Mat_CherryWood"]
+albedo_color = Color(0.28, 0.16, 0.14, 1.0)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="Mesh_LogCherry"]
+material = SubResource("Mat_CherryWood")
+size = Vector3(0.9, 0.9, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="Mat_CherryLeaves"]
+albedo_color = Color(0.96, 0.62, 0.78, 1.0)
+roughness = 0.88
+
+[sub_resource type="BoxMesh" id="Mesh_CherryLeaves"]
+material = SubResource("Mat_CherryLeaves")
+size = Vector3(1.0, 1.0, 1.0)
+
+[node name="ArbolCherry" type="Node3D"]
+
+[node name="TroncoCurvo" type="Node3D" parent="."]
+
+[node name="Base" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("Mesh_LogCherry")
+
+[node name="Tronco1" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 1.25, 0)
+mesh = SubResource("Mesh_LogCherry")
+
+[node name="Tronco2_Inclinado" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 2.0, 0.1)
+mesh = SubResource("Mesh_LogCherry")
+
+[node name="RamaIzq" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -0.4, 2.7, -0.3)
+mesh = SubResource("Mesh_LogCherry")
+
+[node name="RamaDer" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 1.3, 2.8, 0.3)
+mesh = SubResource("Mesh_LogCherry")
+
+[node name="HojasRosadas" type="Node3D" parent="."]
+
+[node name="NubeIzq" type="MeshInstance3D" parent="HojasRosadas"]
+transform = Transform3D(3.2, 0, 0, 0, 1.4, 0, 0, 0, 3.2, -0.9, 3.3, -0.5)
+mesh = SubResource("Mesh_CherryLeaves")
+
+[node name="NubeDer" type="MeshInstance3D" parent="HojasRosadas"]
+transform = Transform3D(3.4, 0, 0, 0, 1.5, 0, 0, 0, 3.0, 1.6, 3.5, 0.5)
+mesh = SubResource("Mesh_CherryLeaves")
+
+[node name="CrestaCentro" type="MeshInstance3D" parent="HojasRosadas"]
+transform = Transform3D(2.2, 0, 0, 0, 1.0, 0, 0, 0, 2.2, 0.4, 4.3, 0)
+mesh = SubResource("Mesh_CherryLeaves")

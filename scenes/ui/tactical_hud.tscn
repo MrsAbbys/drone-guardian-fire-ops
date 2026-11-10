@@ -1,0 +1,586 @@
+[gd_scene load_steps=2 format=3 uid="uid://c_tactical_hud_01"]
+
+[ext_resource type="Script" path="res://scripts/ui/tactical_hud.gd" id="1_hud"]
+
+[node name="TacticalHUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="TopBar" type="Panel" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 56.0
+grow_horizontal = 2
+
+[node name="ColorRect" type="ColorRect" parent="TopBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.06, 0.12, 0.98)
+
+[node name="PixelBorderTop" type="ReferenceRect" parent="TopBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(0.1, 0.8, 1, 1)
+border_width = 2.0
+editor_only = false
+
+[node name="TitleBox" type="HBoxContainer" parent="TopBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 380.0
+offset_bottom = 48.0
+
+[node name="GameTitle" type="Label" parent="TopBar/TitleBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.1, 1)
+theme_override_font_sizes/font_size = 13
+text = "[!] DRONE GUARDIAN\n    FIRE OPS :: v1.0"
+
+[node name="VSeparator" type="VSeparator" parent="TopBar/TitleBox"]
+layout_mode = 2
+
+[node name="SectorLabel" type="Label" parent="TopBar/TitleBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "[*] MISION 01 - YACUIBA\n    SECTOR: CAMPO PAJOSO"
+
+[node name="GridData" type="HBoxContainer" parent="TopBar"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -840.0
+offset_top = -20.0
+offset_right = -12.0
+offset_bottom = 20.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/separation = 18
+
+[node name="DroneModel" type="Label" parent="TopBar/GridData"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.2, 1)
+theme_override_font_sizes/font_size = 11
+text = "GUARDIAN S1\nSCOUT (50L)"
+
+[node name="TimeVal" type="Label" parent="TopBar/GridData"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "03:12\nTIEMPO"
+
+[node name="AltVal" type="Label" parent="TopBar/GridData"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "75 M\nALTITUD"
+
+[node name="SpeedVal" type="Label" parent="TopBar/GridData"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "22 M/S\nVELOCIDAD"
+
+[node name="DistVal" type="Label" parent="TopBar/GridData"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 12
+text = "420 M\nDIST. BASE"
+
+[node name="Signal" type="Label" parent="TopBar/GridData"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 1, 0.4, 1)
+theme_override_font_sizes/font_size = 11
+text = "[|||||] 92%\nTELEMETRIA"
+
+[node name="GPS" type="Label" parent="TopBar/GridData"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 1, 0.4, 1)
+theme_override_font_sizes/font_size = 11
+text = "GPS LOCK\nOK (RTK)"
+
+[node name="WeatherPanel" type="Panel" parent="."]
+offset_left = 12.0
+offset_top = 66.0
+offset_right = 195.0
+offset_bottom = 295.0
+
+[node name="Bg" type="ColorRect" parent="WeatherPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.1, 0.18, 0.94)
+
+[node name="PixelBorder" type="ReferenceRect" parent="WeatherPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(0.2, 0.7, 1, 1)
+border_width = 2.0
+editor_only = false
+
+[node name="Title" type="Label" parent="WeatherPanel"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 185.0
+offset_bottom = 26.0
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 11
+text = ":: METEOROLOGIA ::"
+
+[node name="Details" type="Label" parent="WeatherPanel"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 30.0
+offset_right = 185.0
+offset_bottom = 222.0
+theme_override_font_sizes/font_size = 11
+theme_override_constants/line_spacing = 3
+text = "Temp.:      34 *C
+Humedad:    26 %
+Viento:     18 km/h
+Direccion:  NE
+Rafagas:    27 km/h
+Visibilidad: 5 km
+Combustible: BAJA
+Pendiente:  8 %"
+
+[node name="FireStatePanel" type="Panel" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -225.0
+offset_top = 66.0
+offset_right = -12.0
+offset_bottom = 236.0
+grow_horizontal = 0
+
+[node name="Bg" type="ColorRect" parent="FireStatePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.04, 0.04, 0.94)
+
+[node name="PixelBorder" type="ReferenceRect" parent="FireStatePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(1, 0.3, 0.1, 1)
+border_width = 2.0
+editor_only = false
+
+[node name="Title" type="Label" parent="FireStatePanel"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 205.0
+offset_bottom = 26.0
+theme_override_colors/font_color = Color(1, 0.3, 0.1, 1)
+theme_override_font_sizes/font_size = 11
+text = ":: ESTADO DEL FUEGO ::"
+
+[node name="FireData" type="Label" parent="FireStatePanel"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 30.0
+offset_right = 205.0
+offset_bottom = 162.0
+theme_override_font_sizes/font_size = 11
+theme_override_constants/line_spacing = 3
+text = "Area afectada:   18.7 ha
+Perimetro:       2.8 km
+Focos detectados: 1
+Propagacion:     CRITICA
+Intensidad:      [■■■■] ALTA
+% Extincion:     0 %"
+
+[node name="TacticalRadar" type="Panel" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -225.0
+offset_top = 244.0
+offset_right = -12.0
+offset_bottom = 440.0
+grow_horizontal = 0
+
+[node name="Bg" type="ColorRect" parent="TacticalRadar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.14, 0.06, 0.92)
+
+[node name="PixelBorder" type="ReferenceRect" parent="TacticalRadar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(0.2, 0.85, 0.3, 1)
+border_width = 2.0
+editor_only = false
+
+[node name="RadarTitle" type="Label" parent="TacticalRadar"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 205.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.4, 1, 0.4, 1)
+theme_override_font_sizes/font_size = 11
+text = "MAPA TACTICO        [N ^]"
+
+[node name="MapSim" type="ColorRect" parent="TacticalRadar"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 28.0
+offset_right = 202.0
+offset_bottom = 155.0
+color = Color(0.18, 0.30, 0.14, 1)
+
+[node name="FirePoint" type="ColorRect" parent="TacticalRadar/MapSim"]
+layout_mode = 0
+offset_left = 86.0
+offset_top = 18.0
+offset_right = 112.0
+offset_bottom = 44.0
+color = Color(1, 0.2, 0.05, 0.95)
+
+[node name="DroneIcon" type="Label" parent="TacticalRadar/MapSim"]
+layout_mode = 0
+offset_left = 89.0
+offset_top = 70.0
+offset_right = 112.0
+offset_bottom = 93.0
+theme_override_colors/font_color = Color(0.2, 0.9, 1, 1)
+text = "^"
+
+[node name="BaseIcon" type="Label" parent="TacticalRadar/MapSim"]
+layout_mode = 0
+offset_left = 22.0
+offset_top = 95.0
+offset_right = 46.0
+offset_bottom = 118.0
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+text = "[H]"
+
+[node name="WaterIcon" type="Label" parent="TacticalRadar/MapSim"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 95.0
+offset_right = 64.0
+offset_bottom = 118.0
+theme_override_colors/font_color = Color(0.1, 0.7, 1, 1)
+text = "[O]"
+
+[node name="Legend" type="Label" parent="TacticalRadar"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 160.0
+offset_right = 206.0
+offset_bottom = 190.0
+theme_override_font_sizes/font_size = 9
+text = "[#] Fuego  [^] Dron  [H] Base  [O] Agua"
+
+[node name="BottomBar" type="Panel" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -172.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Bg" type="ColorRect" parent="BottomBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.06, 0.12, 0.98)
+
+[node name="PixelBorderBottom" type="ReferenceRect" parent="BottomBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(0.1, 0.8, 1, 1)
+border_width = 2.0
+editor_only = false
+
+[node name="CamerasBox" type="VBoxContainer" parent="BottomBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 265.0
+offset_bottom = 162.0
+
+[node name="CamHeader" type="Label" parent="BottomBar/CamerasBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = ":: SENSOR DE CAMARA ::"
+
+[node name="BtnRow" type="HBoxContainer" parent="BottomBar/CamerasBox"]
+layout_mode = 2
+
+[node name="BtnRGB" type="Button" parent="BottomBar/CamerasBox/BtnRow"]
+layout_mode = 2
+text = "[RGB]"
+
+[node name="BtnThermal" type="Button" parent="BottomBar/CamerasBox/BtnRow"]
+layout_mode = 2
+text = "[TERMICA]"
+
+[node name="BtnRecon" type="Button" parent="BottomBar/CamerasBox/BtnRow"]
+layout_mode = 2
+text = "[RECON]"
+
+[node name="CamInfo" type="Label" parent="BottomBar/CamerasBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+text = "CMOS DUAL 4K\nTELEMETRIA ACTIVA\nOBJETIVO: FOCO NORTE"
+
+[node name="HartmanBox" type="Panel" parent="BottomBar"]
+layout_mode = 0
+offset_left = 278.0
+offset_top = 10.0
+offset_right = 725.0
+offset_bottom = 162.0
+
+[node name="Border" type="ReferenceRect" parent="BottomBar/HartmanBox"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(0.2, 0.7, 1, 1)
+border_width = 2.0
+editor_only = false
+
+[node name="PixelArtPortrait" type="TextureRect" parent="BottomBar/HartmanBox"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 100.0
+offset_bottom = 144.0
+expand_mode = 1
+stretch_mode = 6
+
+[node name="PixelFrame" type="ReferenceRect" parent="BottomBar/HartmanBox/PixelArtPortrait"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(0.8, 0.7, 0.3, 1)
+border_width = 2.0
+editor_only = false
+
+[node name="PortraitLabel" type="Label" parent="BottomBar/HartmanBox/PixelArtPortrait"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "[HARTMAN]\nSGTO. ART.\nINSTRUCTOR\n---------\n[::PIXEL::]\n[* * *]"
+horizontal_alignment = 1
+vertical_alignment = 1
+visible = false
+
+[node name="NameTag" type="Label" parent="BottomBar/HartmanBox"]
+layout_mode = 0
+offset_left = 110.0
+offset_top = 8.0
+offset_right = 438.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 12
+text = "SGTO. HARTMAN - INSTRUCTOR DE VUELO"
+
+[node name="DialogueText" type="Label" parent="BottomBar/HartmanBox"]
+layout_mode = 0
+offset_left = 110.0
+offset_top = 32.0
+offset_right = 438.0
+offset_bottom = 144.0
+theme_override_font_sizes/font_size = 11
+theme_override_constants/line_spacing = 3
+text = "«¡Atencion piloto! Guardian S1 Scout: mantenga [E] sobre la laguna y use clic izquierdo para lanzar agua.»"
+autowrap_mode = 3
+
+[node name="MissionObjectives" type="Panel" parent="BottomBar"]
+layout_mode = 0
+offset_left = 735.0
+offset_top = 10.0
+offset_right = 975.0
+offset_bottom = 162.0
+
+[node name="Border" type="ReferenceRect" parent="BottomBar/MissionObjectives"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(0.2, 0.7, 1, 1)
+border_width = 1.5
+editor_only = false
+
+[node name="ObjTitle" type="Label" parent="BottomBar/MissionObjectives"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 230.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 11
+text = ":: OBJETIVOS ::"
+
+[node name="ObjList" type="Label" parent="BottomBar/MissionObjectives"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 28.0
+offset_right = 232.0
+offset_bottom = 145.0
+theme_override_font_sizes/font_size = 10
+theme_override_constants/line_spacing = 4
+text = "[*] Reconocimiento aereo\n[ ] Recarga en la isla (50L)\n[ ] Extinguir foco Campo Pajoso\n[ ] Aterrizar en helipuerto"
+
+[node name="AlertsBox" type="Panel" parent="BottomBar"]
+layout_mode = 0
+offset_left = 985.0
+offset_top = 10.0
+offset_right = 1135.0
+offset_bottom = 162.0
+
+[node name="Border" type="ReferenceRect" parent="BottomBar/AlertsBox"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(1, 0.4, 0.1, 1)
+border_width = 1.5
+editor_only = false
+
+[node name="AlertTitle" type="Label" parent="BottomBar/AlertsBox"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 144.0
+offset_bottom = 22.0
+theme_override_colors/font_color = Color(1, 0.4, 0.1, 1)
+theme_override_font_sizes/font_size = 10
+text = ":: ALERTAS ::"
+
+[node name="AlertList" type="Label" parent="BottomBar/AlertsBox"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 26.0
+offset_right = 144.0
+offset_bottom = 119.0
+theme_override_font_sizes/font_size = 10
+text = "💧 TANQUE: 0 / 50 L\n   [□□□□□□□□□□]\n\n💨 Viento: 18 km/h\n🔥 Foco Crítico: 1"
+
+[node name="WaterBar" type="ProgressBar" parent="BottomBar/AlertsBox"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 125.0
+offset_right = 144.0
+offset_bottom = 143.0
+show_percentage = false
+max_value = 50.0
+
+[node name="TimerBox" type="Panel" parent="BottomBar"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -140.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Border" type="ReferenceRect" parent="BottomBar/TimerBox"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(0.2, 0.8, 1, 1)
+border_width = 1.5
+editor_only = false
+
+[node name="TimerTitle" type="Label" parent="BottomBar/TimerBox"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 10.0
+offset_right = 124.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(0.3, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "TIEMPO REST."
+horizontal_alignment = 1
+
+[node name="TimeLeftVal" type="Label" parent="BottomBar/TimerBox"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 34.0
+offset_right = 124.0
+offset_bottom = 68.0
+theme_override_colors/font_color = Color(1, 0.9, 0.2, 1)
+theme_override_font_sizes/font_size = 18
+text = "15:32"
+horizontal_alignment = 1
+
+[node name="BtnRTL" type="Button" parent="BottomBar/TimerBox"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 80.0
+offset_right = 122.0
+offset_bottom = 135.0
+theme_override_colors/font_color = Color(0.2, 1, 0.4, 1)
+theme_override_font_sizes/font_size = 10
+text = "[^] REGRESAR\nA LA BASE"

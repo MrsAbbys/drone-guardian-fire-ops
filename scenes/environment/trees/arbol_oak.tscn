@@ -1,0 +1,66 @@
+[gd_scene load_steps=6 format=3 uid="uid://arbol_oak_mc01"]
+[ext_resource type="Script" path="res://scripts/world/oak_tree.gd" id="1_oak_scr"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_OakLog"]
+albedo_color = Color(0.40, 0.27, 0.15, 1.0)
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="Mesh_Log"]
+material = SubResource("Mat_OakLog")
+size = Vector3(1.0, 1.0, 1.0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_OakLeaves"]
+albedo_color = Color(0.23, 0.49, 0.12, 1.0)
+roughness = 0.9
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="Mesh_LeavesLayerWide"]
+material = SubResource("Mat_OakLeaves")
+size = Vector3(4.8, 0.95, 4.8)
+
+[sub_resource type="BoxMesh" id="Mesh_LeavesLayerMid"]
+material = SubResource("Mat_OakLeaves")
+size = Vector3(2.9, 0.95, 2.9)
+
+[node name="ArbolOak" type="Node3D"]
+
+[node name="Trunk" type="Node3D" parent="."]
+
+[node name="Log1" type="MeshInstance3D" parent="Trunk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("Mesh_Log")
+
+[node name="Log2" type="MeshInstance3D" parent="Trunk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+mesh = SubResource("Mesh_Log")
+
+[node name="Log3" type="MeshInstance3D" parent="Trunk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+mesh = SubResource("Mesh_Log")
+
+[node name="Log4" type="MeshInstance3D" parent="Trunk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+mesh = SubResource("Mesh_Log")
+
+[node name="Log5" type="MeshInstance3D" parent="Trunk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, 0)
+mesh = SubResource("Mesh_Log")
+
+[node name="Leaves" type="Node3D" parent="."]
+
+[node name="Layer1_Base" type="MeshInstance3D" parent="Leaves"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+mesh = SubResource("Mesh_LeavesLayerWide")
+
+[node name="Layer2_Mid" type="MeshInstance3D" parent="Leaves"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, 0)
+mesh = SubResource("Mesh_LeavesLayerWide")
+
+[node name="Layer3_Upper" type="MeshInstance3D" parent="Leaves"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, 0)
+mesh = SubResource("Mesh_LeavesLayerMid")
+
+[node name="Layer4_TopCross" type="MeshInstance3D" parent="Leaves"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.45, 0)
+mesh = SubResource("Mesh_LeavesLayerMid")

@@ -1,0 +1,7 @@
+﻿.godot/
+drone-guardian-fire-ops-main/
+build/
+export/
+*.tmp
+.DS_Store
+Thumbs.db

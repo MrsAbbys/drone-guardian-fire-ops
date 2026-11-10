@@ -1,0 +1,94 @@
+[gd_scene format=3 uid="uid://dw6hb0wdgwx5a"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_Bark"]
+albedo_color = Color(0.38, 0.28, 0.18, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="Mesh_WoodBlock"]
+material = SubResource("Mat_Bark")
+size = Vector3(1.2, 1.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_AcaciaLeaves"]
+albedo_color = Color(0.36, 0.52, 0.18, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="Mesh_LeafBlock"]
+material = SubResource("Mat_AcaciaLeaves")
+size = Vector3(1.2, 1.2, 1.2)
+
+[node name="ArbolAcacia" type="Node3D" unique_id=1226636426]
+
+[node name="Raices" type="Node3D" parent="." unique_id=225013488]
+
+[node name="Raiz1" type="MeshInstance3D" parent="Raices" unique_id=188993720]
+transform = Transform3D(1, 0, 0, 0, 0.4, 0, 0, 0, 1, -1, 0.2, 0)
+mesh = SubResource("Mesh_WoodBlock")
+
+[node name="Raiz2" type="MeshInstance3D" parent="Raices" unique_id=1607305537]
+transform = Transform3D(1, 0, 0, 0, 0.4, 0, 0, 0, 1, 1, 0.2, 0)
+mesh = SubResource("Mesh_WoodBlock")
+
+[node name="Raiz3" type="MeshInstance3D" parent="Raices" unique_id=729707768]
+transform = Transform3D(1, 0, 0, 0, 0.4, 0, 0, 0, 1, 0, 0.2, 1)
+mesh = SubResource("Mesh_WoodBlock")
+
+[node name="Tronco" type="Node3D" parent="." unique_id=257096648]
+
+[node name="TroncoBase1" type="MeshInstance3D" parent="Tronco" unique_id=1432653073]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("Mesh_WoodBlock")
+
+[node name="TroncoBase2" type="MeshInstance3D" parent="Tronco" unique_id=1541755815]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+mesh = SubResource("Mesh_WoodBlock")
+
+[node name="TroncoCurva1" type="MeshInstance3D" parent="Tronco" unique_id=1404479584]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+mesh = SubResource("Mesh_WoodBlock")
+
+[node name="TroncoCurva2" type="MeshInstance3D" parent="Tronco" unique_id=2029955230]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 3.4, 0)
+mesh = SubResource("Mesh_WoodBlock")
+
+[node name="TroncoRamaIzq" type="MeshInstance3D" parent="Tronco" unique_id=1936162019]
+transform = Transform3D(1, 0, 0, 0, 0.8, 0, 0, 0, 1, -137.53625, -14.331364, 0)
+mesh = SubResource("Mesh_WoodBlock")
+
+[node name="TroncoRamaDer" type="MeshInstance3D" parent="Tronco" unique_id=375758155]
+transform = Transform3D(0.75263613, 0, 0.6584365, 0, 0.79999995, 0, -0.6584365, 0, 0.75263613, 0.7396973, 3.4945312, 0.4995)
+mesh = SubResource("Mesh_WoodBlock")
+
+[node name="Hojas" type="Node3D" parent="." unique_id=1068924091]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, 0)
+
+[node name="CopaIzq1" type="MeshInstance3D" parent="Hojas" unique_id=1768290856]
+transform = Transform3D(2.5, 0, 0, 0, 1.2, 0, 0, 0, 2.5, -2.2, 0.2, 0)
+mesh = SubResource("Mesh_LeafBlock")
+
+[node name="CopaIzq3" type="MeshInstance3D" parent="Hojas" unique_id=1512831988]
+transform = Transform3D(2.5, 0, 0, 0, 1.2, 0, 0, 0, 2.5, -2.2, 0.2, 0)
+mesh = SubResource("Mesh_LeafBlock")
+
+[node name="CopaIzq4" type="MeshInstance3D" parent="Hojas" unique_id=645794248]
+transform = Transform3D(2.5, 0, 0, 0, 1.2, 0, 0, 0, 2.5, -2.2, 0.2, 0)
+mesh = SubResource("Mesh_LeafBlock")
+
+[node name="CopaIzq5" type="MeshInstance3D" parent="Hojas" unique_id=128279571]
+transform = Transform3D(2.5, 0, 0, 0, 1.2, 0, 0, 0, 2.5, -2.2, 0.2, 0)
+mesh = SubResource("Mesh_LeafBlock")
+
+[node name="CopaIzq2" type="MeshInstance3D" parent="Hojas" unique_id=626272738]
+transform = Transform3D(2, 0, 0, 0, 1, 0, 0, 0, 2, -1.8, 1, 0)
+mesh = SubResource("Mesh_LeafBlock")
+
+[node name="CopaCentro" type="MeshInstance3D" parent="Hojas" unique_id=118488283]
+transform = Transform3D(2.8, 0, 0, 0, 1.4, 0, 0, 0, 2.8, -0.01797533, 0.7739401, -0.053749464)
+mesh = SubResource("Mesh_LeafBlock")
+
+[node name="CopaCresta" type="MeshInstance3D" parent="Hojas" unique_id=1536755671]
+transform = Transform3D(1.8, 0, 0, 0, 1, 0, 0, 0, 1.8, -0.3, 1.6, 0)
+mesh = SubResource("Mesh_LeafBlock")
+
+[node name="CopaDer" type="MeshInstance3D" parent="Hojas" unique_id=1639647668]
+transform = Transform3D(2.6, 0, 0, 0, 1.1, 0, 0, 0, 2.6, 1.8, 0.1, 0)
+mesh = SubResource("Mesh_LeafBlock")

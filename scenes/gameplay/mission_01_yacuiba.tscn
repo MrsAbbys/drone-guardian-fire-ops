@@ -1,0 +1,296 @@
+[gd_scene load_steps=32 format=3 uid="uid://yacuiba01scene"]
+
+[ext_resource type="PackedScene" uid="uid://b8dronplayer01" path="res://scenes/gameplay/drone_player.tscn" id="1_dronescene"]
+[ext_resource type="PackedScene" uid="uid://c_tactical_hud_01" path="res://scenes/ui/tactical_hud.tscn" id="2_hudscene"]
+[ext_resource type="PackedScene" uid="uid://firesource_voxel_01" path="res://scenes/actors/fire_source.tscn" id="3_firesource"]
+
+[sub_resource type="Environment" id="Env_ChacoReal"]
+background_mode = 1
+background_color = Color(0.52, 0.72, 0.90, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.92, 0.88, 0.80, 1)
+ambient_light_energy = 1.35
+fog_enabled = true
+fog_light_color = Color(0.74, 0.66, 0.52, 1)
+fog_density = 0.0014
+
+[sub_resource type="StandardMaterial3D" id="Mat_TerrainPajoso"]
+albedo_color = Color(0.66, 0.55, 0.38, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="Mesh_Terrain"]
+material = SubResource("Mat_TerrainPajoso")
+size = Vector3(1800, 1, 1800)
+
+[sub_resource type="BoxShape3D" id="Shape_TerrainCol"]
+size = Vector3(1800, 1, 1800)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Ruta9Asfalto"]
+albedo_color = Color(0.22, 0.23, 0.25, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="Mesh_Ruta9"]
+material = SubResource("Mat_Ruta9Asfalto")
+size = Vector3(16, 0.2, 1200)
+
+[sub_resource type="StandardMaterial3D" id="Mat_CalleTierra"]
+albedo_color = Color(0.55, 0.44, 0.30, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_CalleLong"]
+material = SubResource("Mat_CalleTierra")
+size = Vector3(8, 0.15, 600)
+
+[sub_resource type="BoxMesh" id="Mesh_CalleTrans"]
+material = SubResource("Mat_CalleTierra")
+size = Vector3(450, 0.15, 8)
+
+[sub_resource type="StandardMaterial3D" id="Mat_CanchaVerde"]
+albedo_color = Color(0.24, 0.46, 0.20, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Cancha"]
+material = SubResource("Mat_CanchaVerde")
+size = Vector3(90, 0.25, 50)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Helipad"]
+albedo_color = Color(0.18, 0.20, 0.22, 1)
+
+[sub_resource type="CylinderMesh" id="Mesh_Helipad"]
+material = SubResource("Mat_Helipad")
+top_radius = 12.0
+bottom_radius = 12.0
+height = 0.3
+
+[sub_resource type="StandardMaterial3D" id="Mat_WaterTank"]
+albedo_color = Color(0.1, 0.55, 0.9, 1)
+metallic = 0.85
+roughness = 0.2
+
+[sub_resource type="CylinderMesh" id="Mesh_WaterTank"]
+material = SubResource("Mat_WaterTank")
+top_radius = 5.0
+bottom_radius = 5.0
+height = 4.0
+
+[sub_resource type="CylinderShape3D" id="Shape_CisternCol"]
+height = 4.0
+radius = 5.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_HouseWall"]
+albedo_color = Color(0.86, 0.83, 0.76, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_House"]
+material = SubResource("Mat_HouseWall")
+size = Vector3(11, 4.5, 8.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_HouseRoof"]
+albedo_color = Color(0.68, 0.25, 0.15, 1)
+
+[sub_resource type="PrismMesh" id="Mesh_Roof"]
+material = SubResource("Mat_HouseRoof")
+size = Vector3(12, 2.6, 9.5)
+
+[sub_resource type="BoxShape3D" id="Shape_HouseCol"]
+size = Vector3(11, 5.5, 8.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_PastizalAibe"]
+albedo_color = Color(0.76, 0.67, 0.42, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Parcela"]
+material = SubResource("Mat_PastizalAibe")
+size = Vector3(120, 0.2, 80)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Quebracho"]
+albedo_color = Color(0.28, 0.42, 0.18, 1)
+
+[sub_resource type="SphereMesh" id="Mesh_QuebrachoFoliage"]
+material = SubResource("Mat_Quebracho")
+radius = 3.5
+height = 4.8
+
+[sub_resource type="StandardMaterial3D" id="Mat_Algarrobo"]
+albedo_color = Color(0.38, 0.52, 0.22, 1)
+
+[sub_resource type="SphereMesh" id="Mesh_AlgarroboFoliage"]
+material = SubResource("Mat_Algarrobo")
+radius = 4.5
+height = 3.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_Trunk"]
+albedo_color = Color(0.32, 0.20, 0.12, 1)
+
+[sub_resource type="CylinderMesh" id="Mesh_Trunk"]
+material = SubResource("Mat_Trunk")
+top_radius = 0.5
+bottom_radius = 0.8
+height = 5.5
+
+[sub_resource type="CylinderShape3D" id="Shape_TrunkCol"]
+height = 5.5
+radius = 0.8
+
+[sub_resource type="StandardMaterial3D" id="Mat_Pole"]
+albedo_color = Color(0.4, 0.35, 0.3, 1)
+
+[sub_resource type="CylinderMesh" id="Mesh_Pole"]
+material = SubResource("Mat_Pole")
+top_radius = 0.18
+bottom_radius = 0.25
+height = 10.0
+
+[sub_resource type="CylinderShape3D" id="Shape_PoleCol"]
+height = 10.0
+radius = 0.35
+
+[node name="Mission01Yacuiba" type="Node3D"]
+
+[node name="TacticalHUD" parent="." instance=ExtResource("2_hudscene")]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_ChacoReal")
+
+[node name="SunLight" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.353, 0.353, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 100, 120, 80)
+light_color = Color(1.0, 0.95, 0.86, 1)
+light_energy = 1.6
+shadow_enabled = true
+
+[node name="GroundTerrain" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroundTerrain"]
+mesh = SubResource("Mesh_Terrain")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroundTerrain"]
+shape = SubResource("Shape_TerrainCol")
+
+[node name="Ruta9Carretera" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, 0.819152, -180, 0.1, -150)
+mesh = SubResource("Mesh_Ruta9")
+
+[node name="CalleTierra1" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 0, 0.12, -120)
+mesh = SubResource("Mesh_CalleLong")
+
+[node name="CalleTierra2" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 70, 0.12, -160)
+mesh = SubResource("Mesh_CalleLong")
+
+[node name="CalleTransversal1" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, 0.819152, 30, 0.12, -100)
+mesh = SubResource("Mesh_CalleTrans")
+
+[node name="CalleTransversal2" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, 0.819152, 70, 0.12, -170)
+mesh = SubResource("Mesh_CalleTrans")
+
+[node name="CanchaCampoPajoso" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 85, 0.18, -110)
+mesh = SubResource("Mesh_Cancha")
+
+[node name="ParcelaAgricola1" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 190, 0.15, -60)
+mesh = SubResource("Mesh_Parcela")
+
+[node name="ParcelaAgricola2" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 220, 0.15, -180)
+mesh = SubResource("Mesh_Parcela")
+
+[node name="BaseHelipad" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0.15, 20)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BaseHelipad"]
+mesh = SubResource("Mesh_Helipad")
+
+[node name="WaterRefillStation" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 0, 20)
+
+[node name="TankMesh" type="MeshInstance3D" parent="WaterRefillStation"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+mesh = SubResource("Mesh_WaterTank")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WaterRefillStation"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+shape = SubResource("Shape_CisternCol")
+
+[node name="WaterBeaconLight" type="OmniLight3D" parent="WaterRefillStation"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.0, 0)
+light_color = Color(0.1, 0.85, 1.0, 1)
+light_energy = 10.0
+omni_range = 30.0
+
+[node name="Vivienda1" type="StaticBody3D" parent="."]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, -15, 0, -80)
+
+[node name="Wall" type="MeshInstance3D" parent="Vivienda1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+mesh = SubResource("Mesh_House")
+
+[node name="Roof" type="MeshInstance3D" parent="Vivienda1/Wall"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+mesh = SubResource("Mesh_Roof")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Vivienda1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.75, 0)
+shape = SubResource("Shape_HouseCol")
+
+[node name="Vivienda2" type="StaticBody3D" parent="."]
+transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 25, 0, -60)
+
+[node name="Wall" type="MeshInstance3D" parent="Vivienda2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+mesh = SubResource("Mesh_House")
+
+[node name="Roof" type="MeshInstance3D" parent="Vivienda2/Wall"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+mesh = SubResource("Mesh_Roof")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Vivienda2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.75, 0)
+shape = SubResource("Shape_HouseCol")
+
+[node name="TreeQuebracho1" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, -90)
+
+[node name="Trunk" type="MeshInstance3D" parent="TreeQuebracho1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.75, 0)
+mesh = SubResource("Mesh_Trunk")
+
+[node name="Leaves" type="MeshInstance3D" parent="TreeQuebracho1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, 0)
+mesh = SubResource("Mesh_QuebrachoFoliage")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TreeQuebracho1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.75, 0)
+shape = SubResource("Shape_TrunkCol")
+
+[node name="TreeAlgarrobo1" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, 0, -70)
+
+[node name="Trunk" type="MeshInstance3D" parent="TreeAlgarrobo1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.75, 0)
+mesh = SubResource("Mesh_Trunk")
+
+[node name="Leaves" type="MeshInstance3D" parent="TreeAlgarrobo1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.0, 0)
+mesh = SubResource("Mesh_AlgarroboFoliage")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TreeAlgarrobo1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.75, 0)
+shape = SubResource("Shape_TrunkCol")
+
+[node name="PowerPoleRuta9" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -165, 0, -130)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PowerPoleRuta9"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+mesh = SubResource("Mesh_Pole")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PowerPoleRuta9"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+shape = SubResource("Shape_PoleCol")
+
+[node name="WildfireZone" parent="." instance=ExtResource("3_firesource")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 110, 0, -260)
+
+[node name="DronePlayer" parent="." instance=ExtResource("1_dronescene")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 3.5, 20)
