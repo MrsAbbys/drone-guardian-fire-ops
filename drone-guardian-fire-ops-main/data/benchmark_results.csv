@@ -1,0 +1,9 @@
+paradigma,unidades,N,steps,tiempo_segundos
+secuencial,1,600,150,0.161004
+openmp,1,600,150,0.150312
+openmp,2,600,150,0.087642
+openmp,4,600,150,0.056948
+openmp,8,600,150,0.041079
+mpi,2,600,150,0.091990
+mpi,4,600,150,0.088955
+mpi,6,600,150,0.063689
