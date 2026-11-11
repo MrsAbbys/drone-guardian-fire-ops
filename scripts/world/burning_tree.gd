@@ -19,11 +19,11 @@ var forma_arbol: int = 0
 var semilla_arbol: int = 0
 var rng := RandomNumberGenerator.new()
 
-func configurar(hud_ref: Node, fire_scene: PackedScene, forma: int, seed: int) -> void:
+func configurar(hud_ref: Node, fire_scene: PackedScene, forma: int, semilla: int) -> void:
 	hud = hud_ref
 	escena_visual_fuego = fire_scene
 	forma_arbol = forma
-	semilla_arbol = seed
+	semilla_arbol = semilla
 
 func _ready() -> void:
 	salud_maxima = maxf(salud_fuego, 1.0)

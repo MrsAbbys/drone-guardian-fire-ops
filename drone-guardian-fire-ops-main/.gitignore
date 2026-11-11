@@ -1,0 +1,16 @@
+.godot/
+*.translation
+*.import
+/build/
+/export/
+*.tmp
+.DS_Store
+Thumbs.db
+.env
+infrastructure/ssh/authorized_keys
+infrastructure/ssh/id_*
+smoke_test
+src/sequential/fire_sim_seq
+src/parallel/openmp/fire_sim_omp
+src/parallel/openmp/fire_sim_visual
+src/parallel/mpi/fire_sim_mpi
