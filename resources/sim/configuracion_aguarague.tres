@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="ConfiguracionGrillaIncendio" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/configuracion_grilla_incendio.gd" id="1_configuracion"]
+[ext_resource type="Script" path="res://scripts/sim/perfil_combustible.gd" id="2_perfil"]
+[ext_resource type="Resource" path="res://resources/sim/viento_rachas.tres" id="3_viento"]
+
+[sub_resource type="Resource" id="PerfilBosqueSeco"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.0575
+tasa_consumo = 2.5
+calor_umbral = 300.0
+duracion_mojado = 12.0
+k_viento = 0.25
+k_pendiente = 0.1
+
+[sub_resource type="Resource" id="PerfilPastizal"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.135
+tasa_consumo = 4.0
+calor_umbral = 150.0
+duracion_mojado = 7.0
+k_viento = 0.25
+k_pendiente = 0.1
+
+[sub_resource type="Resource" id="PerfilVivienda"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.04
+tasa_consumo = 1.8
+calor_umbral = 500.0
+duracion_mojado = 20.0
+k_viento = 0.25
+k_pendiente = 0.1
+
+[sub_resource type="Resource" id="PerfilSinCombustible"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.0
+tasa_consumo = 0.0
+calor_umbral = 2000.0
+duracion_mojado = 0.0
+k_viento = 0.25
+k_pendiente = 0.1
+
+[resource]
+script = ExtResource("1_configuracion")
+origen = Vector2(-600, -600)
+tamano_celdas = Vector2i(600, 600)
+centro_foco = Vector2(55, -120)
+radio_foco = 65.0
+cantidad_celdas_foco_inicial = 8
+retardo_propagacion = 5.0
+radio_nucleo_arbol = 5.0
+radio_combustible_arbol = 12.0
+combustible_bosque = 100.0
+combustible_pastizal = 40.0
+porcentaje_derrota = 70.0
+configuracion_viento = ExtResource("3_viento")
+perfil_bosque_seco = SubResource("PerfilBosqueSeco")
+perfil_pastizal = SubResource("PerfilPastizal")
+perfil_vivienda = SubResource("PerfilVivienda")
+perfil_sin_combustible = SubResource("PerfilSinCombustible")

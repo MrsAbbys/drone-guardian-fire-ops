@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ConfiguracionViento" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/configuracion_viento.gd" id="1_viento"]
+
+[resource]
+script = ExtResource("1_viento")
+modo = 1
+direccion = Vector2(3, 1)
+velocidad_base = 8.3
+amplitud_direccion_grados = 30.0
+amplitud_velocidad = 3.2

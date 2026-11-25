@@ -1,0 +1,38 @@
+[gd_scene load_steps=5 format=3]
+
+[sub_resource type="StandardMaterial3D" id="Mat_DarkWood"]
+albedo_color = Color(0.18, 0.10, 0.05, 1.0)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="Mesh_ThickLog"]
+material = SubResource("Mat_DarkWood")
+size = Vector3(1.8, 5.0, 1.8)
+
+[sub_resource type="StandardMaterial3D" id="Mat_DarkLeaves"]
+albedo_color = Color(0.12, 0.26, 0.09, 1.0)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="Mesh_DarkLeaves"]
+material = SubResource("Mat_DarkLeaves")
+size = Vector3(1.0, 1.0, 1.0)
+
+[node name="ArbolDarkOak" type="Node3D"]
+
+[node name="TroncoGrueso" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+mesh = SubResource("Mesh_ThickLog")
+
+[node name="CopaFrondosa" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, 0)
+
+[node name="BaseAncha" type="MeshInstance3D" parent="CopaFrondosa"]
+transform = Transform3D(6.2, 0, 0, 0, 1.4, 0, 0, 0, 6.2, 0, 0, 0)
+mesh = SubResource("Mesh_DarkLeaves")
+
+[node name="TechoSuperior" type="MeshInstance3D" parent="CopaFrondosa"]
+transform = Transform3D(4.5, 0, 0, 0, 1.2, 0, 0, 0, 4.5, 0, 1.1, 0)
+mesh = SubResource("Mesh_DarkLeaves")
+
+[node name="CrestaCúpula" type="MeshInstance3D" parent="CopaFrondosa"]
+transform = Transform3D(2.6, 0, 0, 0, 0.9, 0, 0, 0, 2.6, 0, 2.0, 0)
+mesh = SubResource("Mesh_DarkLeaves")

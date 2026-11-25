@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ObjetivoCritico" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/objetivo_critico.gd" id="1_objetivo"]
+
+[resource]
+script = ExtResource("1_objetivo")
+identificador = &"vivienda_sur"
+nombre = "Vivienda Sur"
+tipo = 0
+posicion = Vector3(170, 0, 345)
+vida = 18.0
+penalizacion = 3500
+area = 7.0

@@ -1,0 +1,100 @@
+[gd_scene load_steps=5 format=3 uid="uid://tree_willow_custom"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_Wood"]
+albedo_color = Color(0.20, 0.14, 0.08, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="Mesh_Log"]
+material = SubResource("Mat_Wood")
+size = Vector3(0.9, 0.9, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Leaf"]
+albedo_color = Color(0.44, 0.65, 0.22, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="Mesh_Leaf"]
+material = SubResource("Mat_Leaf")
+size = Vector3(0.9, 0.9, 0.9)
+
+[node name="ArbolSauce" type="Node3D"]
+
+[node name="TroncoCurvo" type="Node3D" parent="."]
+
+[node name="Log_0" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("Mesh_Log")
+
+[node name="Log_1" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 1.25, 0)
+mesh = SubResource("Mesh_Log")
+
+[node name="Log_2" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 2.05, 0.1)
+mesh = SubResource("Mesh_Log")
+
+[node name="Log_3_Codo" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 2.75, 0.1)
+mesh = SubResource("Mesh_Log")
+
+[node name="RamaIzq_1" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 3.4, -0.4)
+mesh = SubResource("Mesh_Log")
+
+[node name="RamaIzq_2" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 3.8, -0.8)
+mesh = SubResource("Mesh_Log")
+
+[node name="RamaDer_1" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 3.3, 0.3)
+mesh = SubResource("Mesh_Log")
+
+[node name="RamaDer_2" type="MeshInstance3D" parent="TroncoCurvo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 3.7, 0.6)
+mesh = SubResource("Mesh_Log")
+
+[node name="MechonesHojas" type="Node3D" parent="."]
+
+[node name="CopaIzq" type="Node3D" parent="MechonesHojas"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 3.9, -0.9)
+
+[node name="LeafCluster1" type="MeshInstance3D" parent="MechonesHojas/CopaIzq"]
+transform = Transform3D(2, 0, 0, 0, 1.2, 0, 0, 0, 2, 0, 0.5, 0)
+mesh = SubResource("Mesh_Leaf")
+
+[node name="LianaIzq1_A" type="MeshInstance3D" parent="MechonesHojas/CopaIzq"]
+transform = Transform3D(0.7, 0, 0, 0, 1.8, 0, 0, 0, 0.7, -0.7, -0.8, -0.6)
+mesh = SubResource("Mesh_Leaf")
+
+[node name="LianaIzq1_B" type="MeshInstance3D" parent="MechonesHojas/CopaIzq"]
+transform = Transform3D(0.7, 0, 0, 0, 2.4, 0, 0, 0, 0.7, 0.6, -1.1, 0.5)
+mesh = SubResource("Mesh_Leaf")
+
+[node name="CopaCentro" type="Node3D" parent="MechonesHojas"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 4.3, 0.1)
+
+[node name="LeafClusterCentro" type="MeshInstance3D" parent="MechonesHojas/CopaCentro"]
+transform = Transform3D(2.4, 0, 0, 0, 1.4, 0, 0, 0, 2.2, 0, 0.6, 0)
+mesh = SubResource("Mesh_Leaf")
+
+[node name="LianaCentro_A" type="MeshInstance3D" parent="MechonesHojas/CopaCentro"]
+transform = Transform3D(0.7, 0, 0, 0, 2.2, 0, 0, 0, 0.7, 0.9, -0.9, -0.8)
+mesh = SubResource("Mesh_Leaf")
+
+[node name="LianaCentro_B" type="MeshInstance3D" parent="MechonesHojas/CopaCentro"]
+transform = Transform3D(0.7, 0, 0, 0, 1.6, 0, 0, 0, 0.7, -0.8, -0.7, 0.8)
+mesh = SubResource("Mesh_Leaf")
+
+[node name="CopaDer" type="Node3D" parent="MechonesHojas"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 3.8, 0.7)
+
+[node name="LeafClusterDer" type="MeshInstance3D" parent="MechonesHojas/CopaDer"]
+transform = Transform3D(2.1, 0, 0, 0, 1.2, 0, 0, 0, 2.1, 0, 0.5, 0)
+mesh = SubResource("Mesh_Leaf")
+
+[node name="LianaDer_A" type="MeshInstance3D" parent="MechonesHojas/CopaDer"]
+transform = Transform3D(0.7, 0, 0, 0, 2.6, 0, 0, 0, 0.7, 0.8, -1.2, 0.6)
+mesh = SubResource("Mesh_Leaf")
+
+[node name="LianaDer_B" type="MeshInstance3D" parent="MechonesHojas/CopaDer"]
+transform = Transform3D(0.7, 0, 0, 0, 1.7, 0, 0, 0, 0.7, -0.6, -0.8, -0.7)
+mesh = SubResource("Mesh_Leaf")

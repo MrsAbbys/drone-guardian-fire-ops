@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ObjetivoCritico" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/objetivo_critico.gd" id="1_objetivo"]
+
+[resource]
+script = ExtResource("1_objetivo")
+identificador = &"deposito_combustible"
+nombre = "Depósito de combustible"
+tipo = 2
+posicion = Vector3(260, 0, 270)
+vida = 8.0
+penalizacion = 12000
+area = 8.0

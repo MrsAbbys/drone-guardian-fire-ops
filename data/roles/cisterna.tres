@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="DroneRole" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/drone_role.gd" id="1_role"]
+
+[resource]
+script = ExtResource("1_role")
+identificador = &"cisterna"
+nombre = "Cisterna"
+descripcion = "H8 Aqua Lift: tanque de 350 L, chorro ancho y vuelo pesado. Q libera una descarga masiva."
+agua_maxima = 350.0
+gasto_por_segundo = 14.0
+velocidad_base = 12.0
+velocidad_maxima = 24.0
+recarga_por_segundo = 25.0
+ancho_chorro = 4.2
+alcance_chorro = 30.0
+potencia_chorro = 10.0
+alcance_termico = 250.0
+bonus_recarga = 0.0
+radio_bono_recarga = 0.0
+color_equipo = Color(0.16, 0.55, 0.92, 1)
+escala_modelo = 1.14
+enfriamiento_especial = 28.0
+costo_especial_agua = 45.0
+radio_especial = 9.0
+potencia_especial = 10.0
+duracion_especial = 1.0
+costo_retardante = 0.0
+alcance_retardante = 30.0
+radio_retardante = 3.0
+enfriamiento_retardante = 5.0

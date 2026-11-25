@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="DroneRole" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/drone_role.gd" id="1_role"]
+
+[resource]
+script = ExtResource("1_role")
+identificador = &"tactico"
+nombre = "Táctico"
+descripcion = "S2 Response: 100 L, coordina el viento, acelera la recarga de aliados y marca objetivos."
+agua_maxima = 100.0
+gasto_por_segundo = 5.0
+velocidad_base = 17.0
+velocidad_maxima = 32.0
+recarga_por_segundo = 25.0
+ancho_chorro = 2.4
+alcance_chorro = 30.0
+potencia_chorro = 9.0
+alcance_termico = 450.0
+bonus_recarga = 0.35
+radio_bono_recarga = 24.0
+color_equipo = Color(0.95, 0.48, 0.16, 1)
+escala_modelo = 1.0
+enfriamiento_especial = 8.0
+costo_especial_agua = 0.0
+radio_especial = 0.0
+potencia_especial = 1.0
+duracion_especial = 1.0
+duracion_marca_objetivo = 10.0
+costo_retardante = 0.0
+alcance_retardante = 30.0
+radio_retardante = 3.0
+enfriamiento_retardante = 5.0

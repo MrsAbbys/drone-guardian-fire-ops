@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ObjetivoCritico" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/objetivo_critico.gd" id="1_objetivo"]
+
+[resource]
+script = ExtResource("1_objetivo")
+identificador = &"ducto_principal"
+nombre = "Ducto principal"
+tipo = 3
+posicion = Vector3(0, 0, 285)
+vida = 18.0
+penalizacion = 8000
+area = 4.0
+direccion_ducto = Vector2(1, 0)
+longitud = 780.0

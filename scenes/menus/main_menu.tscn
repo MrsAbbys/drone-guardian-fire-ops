@@ -1,0 +1,295 @@
+[gd_scene load_steps=7 format=3 uid="uid://mainmenu_fireops01"]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+
+[sub_resource type="StyleBoxFlat" id="Style_BtnNormal"]
+bg_color = Color(0.05, 0.08, 0.12, 0.94)
+border_width_left = 4
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.42, 0.58, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 18.0
+
+[sub_resource type="StyleBoxFlat" id="Style_BtnHover"]
+bg_color = Color(0.14, 0.18, 0.24, 0.98)
+border_width_left = 5
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.6, 0.15, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 22.0
+
+[sub_resource type="StyleBoxFlat" id="Style_BtnPrimary"]
+bg_color = Color(0.18, 0.11, 0.04, 0.95)
+border_width_left = 5
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.55, 0.1, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 22.0
+
+[sub_resource type="StyleBoxFlat" id="Style_PanelDark"]
+bg_color = Color(0.02, 0.04, 0.07, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.18, 0.35, 0.48, 0.9)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="Style_HartmanBox"]
+bg_color = Color(0.03, 0.06, 0.09, 0.92)
+border_width_left = 2
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.55, 0.75, 0.85)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="MenuArtBackground" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="FrontUILayer" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="LeftTacticalPanel" type="Panel" parent="FrontUILayer"]
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = 24.0
+offset_right = 398.0
+offset_bottom = -30.0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_PanelDark")
+
+[node name="HeaderBox" type="HBoxContainer" parent="FrontUILayer/LeftTacticalPanel"]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 16.0
+offset_right = 350.0
+offset_bottom = 54.0
+
+[node name="SystemLabel" type="Label" parent="FrontUILayer/LeftTacticalPanel/HeaderBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.8, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+text = "DRONE GUARDIAN SYSTEM\nDG-FO v2.4.7"
+
+[node name="StatusLights" type="Label" parent="FrontUILayer/LeftTacticalPanel/HeaderBox"]
+layout_mode = 2
+size_flags_horizontal = 10
+theme_override_colors/font_color = Color(1, 0.6, 0.1, 1)
+theme_override_font_sizes/font_size = 12
+text = "[●●●■]"
+
+[node name="ButtonList" type="VBoxContainer" parent="FrontUILayer/LeftTacticalPanel"]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 68.0
+offset_right = 352.0
+offset_bottom = 445.0
+theme_override_constants/separation = 10
+
+[node name="BtnIniciar" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("Style_BtnPrimary")
+theme_override_styles/hover = SubResource("Style_BtnHover")
+theme_override_styles/pressed = SubResource("Style_BtnPrimary")
+text = "🎯  1. INICIAR OPERACIÓN"
+alignment = 0
+
+[node name="BtnDrones" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_BtnNormal")
+theme_override_styles/hover = SubResource("Style_BtnHover")
+theme_override_styles/pressed = SubResource("Style_BtnPrimary")
+text = "🚁  2. SELECCIÓN DE DRON"
+alignment = 0
+
+[node name="BtnRuleta" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_BtnNormal")
+theme_override_styles/hover = SubResource("Style_BtnHover")
+theme_override_styles/pressed = SubResource("Style_BtnPrimary")
+text = "🎲  3. RULETA PARA VALIENTES"
+alignment = 0
+
+[node name="BtnMisiones" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_BtnNormal")
+theme_override_styles/hover = SubResource("Style_BtnHover")
+theme_override_styles/pressed = SubResource("Style_BtnPrimary")
+text = "⭐  4. MISIONES"
+alignment = 0
+
+[node name="BtnConfig" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_BtnNormal")
+theme_override_styles/hover = SubResource("Style_BtnHover")
+theme_override_styles/pressed = SubResource("Style_BtnPrimary")
+text = "⚙  5. CONFIGURACIÓN"
+alignment = 0
+
+[node name="BtnSalir" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_BtnNormal")
+theme_override_styles/hover = SubResource("Style_BtnHover")
+theme_override_styles/pressed = SubResource("Style_BtnPrimary")
+text = "🚪  6. SALIR"
+alignment = 0
+
+[node name="HartmanCard" type="Panel" parent="FrontUILayer/LeftTacticalPanel"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = -185.0
+offset_right = -14.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("Style_HartmanBox")
+
+[node name="PortraitBox" type="TextureRect" parent="FrontUILayer/LeftTacticalPanel/HartmanCard"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 88.0
+offset_bottom = 128.0
+expand_mode = 1
+stretch_mode = 6
+
+[node name="PortraitText" type="Label" parent="FrontUILayer/LeftTacticalPanel/HartmanCard/PortraitBox"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "[SGTO.]\nHARTMAN\n------\nINSTRUCTOR\n★★"
+horizontal_alignment = 1
+vertical_alignment = 1
+visible = false
+
+[node name="NameTag" type="Label" parent="FrontUILayer/LeftTacticalPanel/HartmanCard"]
+layout_mode = 0
+offset_left = 98.0
+offset_top = 10.0
+offset_right = 332.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(1, 0.65, 0.1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 12
+text = "SARGENTO HARTMAN"
+
+[node name="DialogueText" type="Label" parent="FrontUILayer/LeftTacticalPanel/HartmanCard"]
+layout_mode = 0
+offset_left = 98.0
+offset_top = 30.0
+offset_right = 334.0
+offset_bottom = 128.0
+theme_override_font_sizes/font_size = 10
+theme_override_constants/line_spacing = 2
+text = "«Aquí no vienes a pasear, soldado. El bosque está en llamas y tú eres lo único entre el caos y la civilización. Cumple tu misión.»"
+autowrap_mode = 3
+
+[node name="AudioWave" type="Label" parent="FrontUILayer/LeftTacticalPanel/HartmanCard"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -28.0
+offset_right = -10.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.35, 0.8, 1, 0.9)
+theme_override_font_sizes/font_size = 9
+text = "ılı.lıllılı.ıllı.ılı.lıll  ● AUDIO FEED"
+
+[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnIniciar" to="." method="_on_btn_1_iniciar_pressed"]
+[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnDrones" to="." method="_on_btn_2_drones_pressed"]
+[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnRuleta" to="." method="_on_btn_3_ruleta_pressed"]
+[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnMisiones" to="." method="_on_btn_4_misiones_pressed"]
+[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnConfig" to="." method="_on_btn_5_config_pressed"]
+[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnSalir" to="." method="_on_btn_6_salir_pressed"]

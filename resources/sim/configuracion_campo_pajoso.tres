@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="ConfiguracionGrillaIncendio" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/configuracion_grilla_incendio.gd" id="1_configuracion"]
+[ext_resource type="Script" path="res://scripts/sim/perfil_combustible.gd" id="2_perfil"]
+[ext_resource type="Resource" path="res://resources/sim/viento_rachas_campo_pajoso.tres" id="3_viento"]
+
+[sub_resource type="Resource" id="PerfilBosqueSeco"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.0575
+tasa_consumo = 2.5
+calor_umbral = 300.0
+duracion_mojado = 24.0
+k_viento = 0.25
+k_pendiente = 0.1
+
+[sub_resource type="Resource" id="PerfilPastizal"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.36
+tasa_consumo = 5.0
+calor_umbral = 130.0
+duracion_mojado = 45.0
+k_viento = 0.35
+k_pendiente = 0.1
+
+[sub_resource type="Resource" id="PerfilVivienda"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.04
+tasa_consumo = 1.8
+calor_umbral = 500.0
+duracion_mojado = 30.0
+k_viento = 0.25
+k_pendiente = 0.1
+
+[sub_resource type="Resource" id="PerfilSinCombustible"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.0
+tasa_consumo = 0.0
+calor_umbral = 2000.0
+duracion_mojado = 0.0
+k_viento = 0.25
+k_pendiente = 0.1
+
+[resource]
+script = ExtResource("1_configuracion")
+origen = Vector2(-500, -500)
+tamano_celdas = Vector2i(500, 500)
+centro_foco = Vector2(-120, -120)
+radio_foco = 8.0
+cantidad_celdas_foco_inicial = 10
+retardo_propagacion = 5.0
+radio_nucleo_arbol = 5.0
+radio_combustible_arbol = 12.0
+tipo_combustible_base = 1
+combustible_base = 45.0
+combustible_bosque = 105.0
+combustible_pastizal = 45.0
+combustible_vivienda = 150.0
+porcentaje_derrota = 25.0
+tipo_objetivo_derrota = 1
+ancho_lineas_sin_combustible = 10.0
+lineas_sin_combustible = Array[Vector4]([Vector4(-480, -300, 480, -300), Vector4(480, -300, 350, -160), Vector4(-470, -230, -290, -230), Vector4(-180, -135, 340, -135), Vector4(-180, -105, 340, -105)])
+zonas_sin_combustible = Array[Vector3]([Vector3(-260, -30, 40)])
+zonas_vivienda = Array[Vector3]([Vector3(320, -120, 45)])
+configuracion_viento = ExtResource("3_viento")
+perfil_bosque_seco = SubResource("PerfilBosqueSeco")
+perfil_pastizal = SubResource("PerfilPastizal")
+perfil_vivienda = SubResource("PerfilVivienda")
+perfil_sin_combustible = SubResource("PerfilSinCombustible")

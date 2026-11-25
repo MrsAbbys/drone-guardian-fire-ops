@@ -1,0 +1,79 @@
+[gd_resource type="Resource" script_class="ConfiguracionGrillaIncendio" load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/configuracion_grilla_incendio.gd" id="1_configuracion"]
+[ext_resource type="Script" path="res://scripts/sim/perfil_combustible.gd" id="2_perfil"]
+[ext_resource type="Resource" path="res://resources/sim/viento_erratico_interfase_urbana.tres" id="3_viento"]
+[ext_resource type="Resource" path="res://resources/world/objetivo_vivienda_norte.tres" id="4_vivienda_norte"]
+[ext_resource type="Resource" path="res://resources/world/objetivo_vivienda_centro.tres" id="5_vivienda_centro"]
+[ext_resource type="Resource" path="res://resources/world/objetivo_vivienda_sur.tres" id="6_vivienda_sur"]
+[ext_resource type="Resource" path="res://resources/world/objetivo_torre_oeste.tres" id="7_torre_oeste"]
+[ext_resource type="Resource" path="res://resources/world/objetivo_torre_este.tres" id="8_torre_este"]
+[ext_resource type="Resource" path="res://resources/world/objetivo_deposito_combustible.tres" id="9_deposito"]
+[ext_resource type="Resource" path="res://resources/world/objetivo_ducto_principal.tres" id="10_ducto"]
+
+[sub_resource type="Resource" id="PerfilBosque"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.13
+tasa_consumo = 4.0
+calor_umbral = 260.0
+duracion_mojado = 24.0
+k_viento = 0.34
+k_pendiente = 0.32
+
+[sub_resource type="Resource" id="PerfilPastizal"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.28
+tasa_consumo = 6.0
+calor_umbral = 150.0
+duracion_mojado = 35.0
+k_viento = 0.35
+k_pendiente = 0.18
+
+[sub_resource type="Resource" id="PerfilVivienda"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.055
+tasa_consumo = 2.5
+calor_umbral = 420.0
+duracion_mojado = 30.0
+k_viento = 0.3
+k_pendiente = 0.12
+
+[sub_resource type="Resource" id="PerfilSinCombustible"]
+script = ExtResource("2_perfil")
+tasa_ignicion = 0.0
+tasa_consumo = 0.0
+calor_umbral = 2000.0
+duracion_mojado = 0.0
+k_viento = 0.0
+k_pendiente = 0.0
+
+[resource]
+script = ExtResource("1_configuracion")
+origen = Vector2(-500, -500)
+tamano_celdas = Vector2i(500, 500)
+centro_foco = Vector2(0, 145)
+radio_foco = 24.0
+cantidad_celdas_foco_inicial = 16
+retardo_propagacion = 5.0
+radio_nucleo_arbol = 6.0
+radio_combustible_arbol = 14.0
+tipo_combustible_base = 1
+combustible_base = 45.0
+combustible_bosque = 110.0
+combustible_pastizal = 45.0
+combustible_vivienda = 170.0
+porcentaje_derrota = 35.0
+tipo_objetivo_derrota = 1
+bono_cero_perdidas = 10000
+ancho_lineas_sin_combustible = 8.0
+lineas_sin_combustible = Array[Vector4]([Vector4(-480, 285, 480, 285), Vector4(-480, 445, 480, 445)])
+zonas_sin_combustible = Array[Vector3]([])
+zonas_vivienda = Array[Vector3]([])
+objetivos_criticos = Array[Resource]([ExtResource("4_vivienda_norte"), ExtResource("5_vivienda_centro"), ExtResource("6_vivienda_sur"), ExtResource("7_torre_oeste"), ExtResource("8_torre_este"), ExtResource("9_deposito"), ExtResource("10_ducto")])
+zona_viento_erratico = Vector3(0, 190, 210)
+amplitud_viento_erratico_grados = 90.0
+configuracion_viento = ExtResource("3_viento")
+perfil_bosque_seco = SubResource("PerfilBosque")
+perfil_pastizal = SubResource("PerfilPastizal")
+perfil_vivienda = SubResource("PerfilVivienda")
+perfil_sin_combustible = SubResource("PerfilSinCombustible")

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="DroneRole" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/drone_role.gd" id="1_role"]
+
+[resource]
+script = ExtResource("1_role")
+identificador = &"explorador"
+nombre = "Explorador"
+descripcion = "S1 Scout: 50 L, alta velocidad, pulso térmico de 5 s y lanzamiento de retardante."
+agua_maxima = 50.0
+gasto_por_segundo = 3.0
+velocidad_base = 23.0
+velocidad_maxima = 40.0
+recarga_por_segundo = 25.0
+ancho_chorro = 1.5
+alcance_chorro = 27.0
+potencia_chorro = 7.0
+alcance_termico = 650.0
+bonus_recarga = 0.0
+radio_bono_recarga = 0.0
+color_equipo = Color(0.78, 0.87, 0.25, 1)
+escala_modelo = 0.92
+enfriamiento_especial = 24.0
+costo_especial_agua = 0.0
+radio_especial = 0.0
+potencia_especial = 1.0
+duracion_especial = 5.0
+costo_retardante = 12.0
+alcance_retardante = 40.0
+radio_retardante = 12.0
+enfriamiento_retardante = 6.0

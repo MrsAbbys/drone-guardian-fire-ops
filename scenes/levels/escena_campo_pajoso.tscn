@@ -1,0 +1,101 @@
+[gd_scene load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/campo_pajoso_generator.gd" id="1_generator"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/drone_player.tscn" id="2_drone"]
+[ext_resource type="PackedScene" path="res://scenes/ui/tactical_hud.tscn" id="3_hud"]
+[ext_resource type="PackedScene" path="res://scenes/actors/fire_source.tscn" id="4_fire"]
+[ext_resource type="Script" path="res://scripts/systems/water_refill_island.gd" id="5_refill"]
+[ext_resource type="Script" path="res://scripts/world/map_atmosphere.gd" id="6_atmosphere"]
+[ext_resource type="Script" path="res://scripts/world/fire_manager.gd" id="7_fire_manager"]
+[ext_resource type="PackedScene" path="res://scenes/ui/perf_overlay.tscn" id="8_perf"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat_Campo"]
+sky_top_color = Color(0.35, 0.52, 0.68, 1)
+sky_horizon_color = Color(0.72, 0.68, 0.55, 1)
+ground_bottom_color = Color(0.48, 0.45, 0.34, 1)
+ground_horizon_color = Color(0.72, 0.68, 0.55, 1)
+
+[sub_resource type="Sky" id="Sky_Campo"]
+sky_material = SubResource("SkyMat_Campo")
+
+[sub_resource type="Environment" id="Env_Campo"]
+background_mode = 2
+sky = SubResource("Sky_Campo")
+ambient_light_source = 2
+ambient_light_color = Color(0.83, 0.8, 0.7, 1)
+ambient_light_energy = 0.58
+fog_enabled = true
+fog_light_color = Color(0.72, 0.68, 0.55, 1)
+fog_density = 0.00032
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Mat_Pista"]
+albedo_color = Color(0.36, 0.34, 0.29, 1)
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="Mesh_Pista"]
+material = SubResource("Mat_Pista")
+size = Vector3(190, 0.2, 24)
+
+[sub_resource type="BoxShape3D" id="Shape_Pista"]
+size = Vector3(190, 0.2, 24)
+
+[sub_resource type="CylinderShape3D" id="Shape_RefillArea"]
+height = 2.3
+radius = 8.0
+
+[node name="EscenaCampoPajoso" type="Node3D"]
+
+[node name="TacticalHUD" parent="." instance=ExtResource("3_hud")]
+
+[node name="PerfOverlay" parent="." instance=ExtResource("8_perf")]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_Campo")
+
+[node name="SunLight" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 150, 280, 150)
+light_color = Color(1, 0.88, 0.7, 1)
+light_energy = 0.9
+shadow_enabled = true
+shadow_blur = 1.0
+
+[node name="CampoPajosoGenerator" type="Node3D" parent="."]
+script = ExtResource("1_generator")
+
+[node name="PistaAterrizaje" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -380, 0.1, -230)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PistaAterrizaje"]
+mesh = SubResource("Mesh_Pista")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PistaAterrizaje"]
+shape = SubResource("Shape_Pista")
+
+[node name="WaterRefillStation" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -260, 0, -30)
+script = ExtResource("5_refill")
+escala_isla = 1.0
+radio_recarga_metros = 10.0
+
+[node name="RefillArea" type="Area3D" parent="WaterRefillStation"]
+position = Vector3(0, 2, 0)
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WaterRefillStation/RefillArea"]
+shape = SubResource("Shape_RefillArea")
+
+[node name="FireManager" type="Node" parent="."]
+script = ExtResource("7_fire_manager")
+
+[node name="WildfireZone" parent="." instance=ExtResource("4_fire")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -120, 0, -120)
+objetivo_extinguible = false
+
+[node name="DronePlayer" parent="." instance=ExtResource("2_drone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -380, 3.5, -230)
+
+[node name="MapAtmosphere" type="Node3D" parent="."]
+script = ExtResource("6_atmosphere")

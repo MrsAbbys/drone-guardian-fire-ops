@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://tree_spruce_taiga_01"]
+
+[ext_resource type="Script" path="res://scenes/environment/trees/arbol_spruce_taiga.gd" id="1"]
+
+[node name="ArbolSpruceTaiga" type="Node3D"]
+script = ExtResource("1")

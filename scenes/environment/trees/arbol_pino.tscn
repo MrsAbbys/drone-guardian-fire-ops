@@ -1,0 +1,37 @@
+[gd_scene load_steps=5 format=3 uid="uid://tree_pino_custom"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_PineTrunk"]
+albedo_color = Color(0.18, 0.12, 0.08, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_PineWood"]
+material = SubResource("Mat_PineTrunk")
+size = Vector3(1.0, 7.5, 1.0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_PineLeaves"]
+albedo_color = Color(0.12, 0.26, 0.14, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_PineLeaves"]
+material = SubResource("Mat_PineLeaves")
+size = Vector3(1, 1, 1)
+
+[node name="ArbolPino" type="Node3D"]
+
+[node name="Tronco" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.75, 0)
+mesh = SubResource("Mesh_PineWood")
+
+[node name="Fila1_Baja" type="MeshInstance3D" parent="."]
+transform = Transform3D(4.5, 0, 0, 0, 1.0, 0, 0, 0, 4.5, 0, 3.5, 0)
+mesh = SubResource("Mesh_PineLeaves")
+
+[node name="Fila2_Media" type="MeshInstance3D" parent="."]
+transform = Transform3D(3.4, 0, 0, 0, 1.0, 0, 0, 0, 3.4, 0, 4.8, 0)
+mesh = SubResource("Mesh_PineLeaves")
+
+[node name="Fila3_Alta" type="MeshInstance3D" parent="."]
+transform = Transform3D(2.2, 0, 0, 0, 1.0, 0, 0, 0, 2.2, 0, 6.0, 0)
+mesh = SubResource("Mesh_PineLeaves")
+
+[node name="Fila4_Punta" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 0, 7.2, 0)
+mesh = SubResource("Mesh_PineLeaves")

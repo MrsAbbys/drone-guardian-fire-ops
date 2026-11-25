@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ObjetivoCritico" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/objetivo_critico.gd" id="1_objetivo"]
+
+[resource]
+script = ExtResource("1_objetivo")
+identificador = &"torre_este"
+nombre = "Torre eléctrica Este"
+tipo = 1
+posicion = Vector3(350, 0, 190)
+vida = 12.0
+penalizacion = 5000
+area = 4.0
