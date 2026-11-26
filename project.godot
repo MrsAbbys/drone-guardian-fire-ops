@@ -24,6 +24,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 AjustesAyuda="*res://scripts/autoload/ajustes_ayuda.gd"
 InputConfig="*res://scripts/autoload/input_config.gd"
+LocalizationManager="*res://scripts/autoload/localization_manager.gd"
 GraphicsSettings="*res://scripts/autoload/graphics_settings.gd"
 FirePool="*res://scripts/autoload/fire_pool.gd"
 FireGridServer="*res://scripts/sim/fire_grid_server.gd"
@@ -35,6 +36,11 @@ TutorialManager="*res://scripts/autoload/tutorial_manager.gd"
 [audio]
 
 default_bus_layout="res://assets/audio/audio_bus_layout.tres"
+
+[internationalization]
+
+locale/default_locale="es"
+locale/translations=PackedStringArray("res://translations/ui.csv")
 
 [display]
 

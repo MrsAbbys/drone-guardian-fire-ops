@@ -146,7 +146,7 @@ func obtener(clave: String, parametros: Dictionary = {}) -> String:
 		indice = (indice + 1) % variantes.size()
 	_ultima_variante_por_clave[clave] = indice
 
-	var texto: String = str(variantes[indice])
+	var texto: String = tr(str(variantes[indice]))
 	for nombre: String in parametros:
 		texto = texto.replace("{" + nombre + "}", str(parametros[nombre]))
 	return "«%s»" % texto

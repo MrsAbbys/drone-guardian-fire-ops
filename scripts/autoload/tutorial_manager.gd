@@ -6,28 +6,28 @@ const DURACION_PASO: float = 24.0
 const PASOS: Array[Dictionary] = [
 	{
 		"accion": "mover",
-		"titulo": "MOVER EL DRON",
-		"texto": "Usa W, A, S y D para desplazarte. El ratón orienta la cámara.",
+		"titulo": "TUTORIAL_MOVE_TITLE",
+		"texto": "TUTORIAL_MOVE_TEXT",
 	},
 	{
 		"accion": "altura",
-		"titulo": "SUBIR Y BAJAR",
-		"texto": "Mantén ESPACIO para subir y C para bajar.",
+		"titulo": "TUTORIAL_ALTITUDE_TITLE",
+		"texto": "TUTORIAL_ALTITUDE_TEXT",
 	},
 	{
 		"accion": "recargar",
-		"titulo": "RECARGAR AGUA",
-		"texto": "Acércate a una isla de agua y pulsa E para recargar.",
+		"titulo": "TUTORIAL_REFILL_TITLE",
+		"texto": "TUTORIAL_REFILL_TEXT",
 	},
 	{
 		"accion": "rociar",
-		"titulo": "ROCIAR EL INCENDIO",
-		"texto": "Mantén el botón izquierdo para rociar. Apunta a las celdas que arden.",
+		"titulo": "TUTORIAL_SPRAY_TITLE",
+		"texto": "TUTORIAL_SPRAY_TEXT",
 	},
 	{
 		"accion": "viento",
-		"titulo": "LEER EL VIENTO",
-		"texto": "Consulta la flecha y velocidad del panel meteorológico antes de atacar.",
+		"titulo": "TUTORIAL_WIND_TITLE",
+		"texto": "TUTORIAL_WIND_TEXT",
 	},
 ]
 
@@ -57,7 +57,7 @@ func _process(delta: float) -> void:
 		_actualizar_contenido()
 	_actualizar_progreso()
 	if _tiempo_transcurrido >= DURACION_TUTORIAL:
-		_boton.text = "Terminar"
+		_boton.text = tr("TUTORIAL_FINISH")
 		_boton.disabled = false
 
 
@@ -110,7 +110,7 @@ func _crear_interfaz() -> void:
 	_progreso = Label.new()
 	contenido.add_child(_progreso)
 	_boton = Button.new()
-	_boton.text = "Siguiente"
+	_boton.text = tr("TUTORIAL_NEXT")
 	_boton.pressed.connect(_avanzar_paso)
 	contenido.add_child(_boton)
 
@@ -154,20 +154,20 @@ func _avanzar_paso() -> void:
 
 func _actualizar_contenido() -> void:
 	if _indice_paso >= PASOS.size():
-		_titulo.text = "VUELO DE ENTRENAMIENTO"
-		_texto.text = "Practica lo aprendido. El tutorial termina al completar los dos minutos."
+		_titulo.text = tr("TUTORIAL_PRACTICE_TITLE")
+		_texto.text = tr("TUTORIAL_PRACTICE_TEXT")
 		_boton.disabled = _tiempo_transcurrido < DURACION_TUTORIAL
 		return
 	var paso: Dictionary = PASOS[_indice_paso]
-	_titulo.text = str(paso["titulo"])
-	_texto.text = str(paso["texto"])
+	_titulo.text = tr(str(paso["titulo"]))
+	_texto.text = tr(str(paso["texto"]))
 	_boton.disabled = false
 
 
 func _actualizar_progreso() -> void:
 	var restante := maxi(0, ceili(DURACION_TUTORIAL - _tiempo_transcurrido))
 	_progreso.text = (
-		"Paso %d/%d  |  %02d:%02d restantes"
+		tr("TUTORIAL_PROGRESS")
 		% [
 			mini(_indice_paso + 1, PASOS.size()),
 			PASOS.size(),

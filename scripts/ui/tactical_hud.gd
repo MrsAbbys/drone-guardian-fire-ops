@@ -13,6 +13,28 @@ const SHADER_VISION_TERMICA := preload("res://drone-guardian-fire-ops-main/asset
 const BLOQUEO_GUIA_ALARMA_MS: int = 4000
 const INTERVALO_MENSAJES_GUIA_MS: int = 2000
 const TIPOS_PING: Array[String] = ["fuego", "agua", "peligro"]
+const TEXTOS_ESCENA: Dictionary = {
+	"TopBar/TitleBox/GameTitle": "HUD_GAME_TITLE",
+	"TopBar/TitleBox/SectorLabel": "HUD_SECTOR_LABEL",
+	"TopBar/GridData/DroneModel": "HUD_DRONE_MODEL",
+	"TopBar/GridData/Signal": "HUD_TELEMETRY_STATUS",
+	"TopBar/GridData/GPS": "HUD_GPS_STATUS",
+	"WeatherPanel/Title": "HUD_WEATHER_TITLE",
+	"FireStatePanel/Title": "HUD_FIRE_TITLE",
+	"TacticalRadar/RadarTitle": "HUD_MAP_TITLE",
+	"TacticalRadar/Legend": "HUD_MAP_LEGEND",
+	"BottomBar/CamerasBox/CamHeader": "HUD_CAMERA_TITLE",
+	"BottomBar/CamerasBox/BtnRow/BtnRGB": "HUD_CAMERA_RGB",
+	"BottomBar/CamerasBox/BtnRow/BtnThermal": "HUD_CAMERA_THERMAL",
+	"BottomBar/CamerasBox/BtnRow/BtnRecon": "HUD_CAMERA_RECON",
+	"BottomBar/CamerasBox/CamInfo": "HUD_CAMERA_INFO",
+	"BottomBar/HartmanBox/PixelArtPortrait/PortraitLabel": "HUD_HARTMAN_PORTRAIT",
+	"BottomBar/HartmanBox/NameTag": "HUD_HARTMAN_NAME",
+	"BottomBar/MissionObjectives/ObjTitle": "HUD_OBJECTIVES_TITLE",
+	"BottomBar/AlertsBox/AlertTitle": "HUD_ALERTS_TITLE",
+	"BottomBar/TimerBox/TimerTitle": "HUD_TIMER_TITLE",
+	"BottomBar/TimerBox/BtnRTL": "HUD_RETURN_TO_BASE",
+}
 
 var textos_hartman = TextosHartman.new()
 @onready var lbl_alt: Label = $TopBar/GridData/AltVal
@@ -96,6 +118,7 @@ var _viento_inicializado: bool = false
 var _ultimo_evento_viento_ms: int = 0
 
 func _ready() -> void:
+	_traducir_textos_escena()
 	_decir_hartman("bienvenida", "near")
 	FireGridServer.viento_cambiado.connect(_al_cambiar_viento)
 	FireGridServer.viento_proximo.connect(_al_anunciar_viento)
@@ -120,7 +143,7 @@ func _ready() -> void:
 	speed_feedback_label.visible = false
 	add_child(speed_feedback_label)
 	alcance_chorro_label = Label.new()
-	alcance_chorro_label.text = "FUERA DE ALCANCE"
+	alcance_chorro_label.text = tr("HUD_OUT_OF_RANGE")
 	alcance_chorro_label.position = Vector2(520.0, 91.0)
 	alcance_chorro_label.add_theme_font_size_override("font_size", 14)
 	alcance_chorro_label.add_theme_color_override("font_color", Color("#ff684f"))
@@ -136,6 +159,14 @@ func _ready() -> void:
 		FireGridServer.obtener_direccion_viento(),
 		viento_actual.length()
 	)
+
+func _traducir_textos_escena() -> void:
+	for ruta in TEXTOS_ESCENA:
+		var control := get_node_or_null(str(ruta)) as Control
+		if not is_instance_valid(control):
+			push_error("No se encontró el texto del HUD en la ruta %s." % ruta)
+			continue
+		control.set("text", tr(str(TEXTOS_ESCENA[ruta])))
 
 func _process(delta: float) -> void:
 	_actualizar_pings_tacticos()
@@ -156,9 +187,8 @@ func _process(delta: float) -> void:
 	if _aviso_viento_segundos > 0.0:
 		_aviso_viento_segundos = maxf(0.0, _aviso_viento_segundos - delta)
 		_tiempo_parpadeo_viento += delta
-		aviso_viento.text = "VIENTO CAMBIA EN %d s → %s" % [
-			ceili(_aviso_viento_segundos),
-			_punto_cardinal(_aviso_viento_direccion)
+		aviso_viento.text = tr("HUD_WIND_CHANGE_IN") % [
+			ceili(_aviso_viento_segundos), _punto_cardinal(_aviso_viento_direccion)
 		]
 		aviso_viento.modulate.a = 0.35 + absf(sin(_tiempo_parpadeo_viento * 5.0)) * 0.65
 		aviso_viento.visible = _aviso_viento_segundos > 0.0
@@ -168,7 +198,7 @@ func _process(delta: float) -> void:
 	var f_min = int(flight_seconds) / 60
 	var f_sec = int(flight_seconds) % 60
 	if lbl_time:
-		lbl_time.text = "%02d:%02d\nTIEMPO" % [f_min, f_sec]
+		lbl_time.text = "%02d:%02d\n%s" % [f_min, f_sec, tr("HUD_TIME")]
 		
 	var m_min = int(mission_seconds_left) / 60
 	var m_sec = int(mission_seconds_left) % 60
@@ -196,24 +226,22 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func update_telemetry(alt: float, spd: float, dist: float, water: float, max_water: float, near_water: bool, health: float) -> void:
 	if lbl_alt:
-		lbl_alt.text = "%d M\nALTITUD" % int(alt)
+		lbl_alt.text = "%d M\n%s" % [int(alt), tr("HUD_ALTITUDE")]
 	if lbl_speed:
-		lbl_speed.text = "%d M/S\nVELOCIDAD" % int(spd)
+		lbl_speed.text = "%d M/S\n%s" % [int(spd), tr("HUD_SPEED")]
 	if lbl_dist:
-		lbl_dist.text = "%d M\nDIST. BASE" % int(dist)
+		lbl_dist.text = "%d M\n%s" % [int(dist), tr("HUD_BASE_DISTANCE")]
 
 	var water_pct = int((water / max_water) * 100.0) if max_water > 0 else 0
 	update_water_level(water, max_water)
 	if alert_label:
 		if health <= 35.0:
-			alert_label.text = "⚠ ALERTA CRÍTICA\nIntegridad: %d%%\n¡FUSELAJE DAÑADO!" % int(health)
+			alert_label.text = tr("HUD_CRITICAL_DAMAGE") % int(health)
 		elif near_water and water < max_water:
-			alert_label.text = "💧 SOBRE LA LAGUNA\n-> MANTENGA [E] PARA RECARGAR\nCarga: %d / %d L" % [int(water), int(max_water)]
+			alert_label.text = tr("HUD_REFILLING") % [int(water), int(max_water)]
 		else:
-			alert_label.text = "💧 AGUA: %d / %d L\n   [%s]\n🛡 CASCO: %d%%" % [
-				int(water), int(max_water),
-				get_ascii_bar(water_pct),
-				int(health)
+			alert_label.text = tr("HUD_WATER_HEALTH") % [
+				int(water), int(max_water), get_ascii_bar(water_pct), int(health)
 			]
 
 func update_water_level(current: float, maximum: float) -> void:
@@ -343,7 +371,7 @@ func _on_manager_incendio_descontrolado() -> void:
 	is_mission_failed = true
 	_decir_hartman("incendio_descontrolado", "angry")
 	if obj_checklist:
-		obj_checklist.text = "✖ Incendio fuera de control\n✖ Misión fallida"
+		obj_checklist.text = tr("HUD_MISSION_FAILED")
 		_mostrar_resumen_objetivos_criticos(
 			FireGridServer.obtener_resumen_objetivos_criticos(),
 			FireGridServer.obtener_puntaje_objetivos(),
@@ -358,7 +386,7 @@ func _completar_mision_incendio() -> void:
 	incendio_controlado.emit()
 	_decir_hartman("incendio_controlado")
 	if obj_checklist:
-		obj_checklist.text = "✔ Reconocimiento aéreo\n✔ Recarga de agua\n✔ Sofocar todos los focos\n☐ Aterrizar en helipuerto militar"
+		obj_checklist.text = tr("HUD_MISSION_CONTROLLED")
 		_mostrar_resumen_objetivos_criticos(
 			FireGridServer.obtener_resumen_objetivos_criticos(),
 			FireGridServer.obtener_puntaje_objetivos(),
@@ -370,7 +398,7 @@ func notify_speed_boost(speed: float) -> void:
 		return
 	if speed_feedback_tween and speed_feedback_tween.is_running():
 		speed_feedback_tween.kill()
-	speed_feedback_label.text = "VELOCIDAD +  |  %.1f m/s" % speed
+	speed_feedback_label.text = tr("HUD_SPEED_BOOST") % speed
 	speed_feedback_label.visible = true
 	speed_feedback_label.modulate.a = 1.0
 	speed_feedback_tween = create_tween()
@@ -388,17 +416,24 @@ func _actualizar_contador_fuego() -> void:
 		return
 	var extinguished_count := maxi(0, initial_fire_count - fires_remaining)
 	var percent := int(100.0 * float(extinguished_count) / float(initial_fire_count)) if initial_fire_count > 0 else 0
-	var condition := "DESCONTROLADO" if is_mission_failed else ("CONTROLADO" if fires_remaining == 0 and initial_fire_count > 0 else "CONTENIENDO")
+	var condition := (
+		tr("HUD_FIRE_UNCONTROLLED")
+		if is_mission_failed
+		else (tr("HUD_FIRE_CONTROLLED") if fires_remaining == 0 and initial_fire_count > 0 else tr("HUD_FIRE_CONTAINING"))
+	)
 	fire_ext_label.text = (
-		"Area afectada:   18.7 ha\nPerimetro:       2.8 km\n"
-		+ "Focos detectados: %d\nPropagacion:     %s\n" % [fires_remaining, condition]
-		+ "Intensidad:      %s\n%% Extincion:     %d %%\nFuegos restantes: %d" % [
-			"[□□□□] EXTINTO" if percent >= 100 else ("[■■□□] MEDIA" if percent >= 50 else "[■■■■] ALTA"),
+		tr("HUD_FIRE_SUMMARY")
+		% [
+			fires_remaining,
+			condition,
+			tr("HUD_FIRE_EXTINGUISHED")
+			if percent >= 100
+			else (tr("HUD_FIRE_MEDIUM") if percent >= 50 else tr("HUD_FIRE_HIGH")),
 			percent,
-			fires_remaining
+			fires_remaining,
+			initial_fire_count,
 		]
 	)
-	fire_ext_label.text += " / %d" % initial_fire_count
 
 func notify_successful_landing() -> void:
 	if drone_landed:
@@ -407,7 +442,7 @@ func notify_successful_landing() -> void:
 	AjustesAyuda.completar_primera_mision()
 	_decir_hartman("aterrizaje_exitoso", "happy")
 	if obj_checklist:
-		obj_checklist.text = "✔ Reconocimiento aereo\n✔ Recarga de agua\n✔ Sofocar foco de fuego\n✔ Aterrizaje completado con exito"
+		obj_checklist.text = tr("HUD_MISSION_LANDED")
 		if not _texto_resumen_objetivos.is_empty():
 			obj_checklist.text += "\n" + _texto_resumen_objetivos
 
@@ -636,9 +671,9 @@ func _actualizar_alerta_objetivo_critico(delta: float) -> void:
 		distancia = _dron_local_objetivo.global_position.distance_to(posicion_objetivo)
 		texto_distancia = "%.0f m" % distancia
 	_alerta_objetivo_critico.text = (
-		"OBJETIVO PERDIDO · %s · -%d · %s" % [nombre_objetivo, penalizacion, texto_distancia]
+		tr("HUD_CRITICAL_TARGET_LOST") % [nombre_objetivo, penalizacion, texto_distancia]
 		if estado_objetivo == "PERDIDO"
-		else "OBJETIVO AMENAZADO · %s · %s" % [nombre_objetivo, texto_distancia]
+		else tr("HUD_CRITICAL_TARGET_THREATENED") % [nombre_objetivo, texto_distancia]
 	)
 	_tiempo_parpadeo_objetivo += delta
 	_alerta_objetivo_critico.modulate.a = 0.45 + absf(sin(_tiempo_parpadeo_objetivo * 6.0)) * 0.55
@@ -688,18 +723,22 @@ func _mostrar_resumen_objetivos_criticos(
 		return
 	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server() and not autorizado_por_red:
 		return
-	var lineas := PackedStringArray(["OBJETIVOS CRÍTICOS · RESULTADO"])
-	lineas.append("Puntaje de objetivos: %d" % puntaje)
+	var lineas := PackedStringArray([tr("HUD_CRITICAL_OBJECTIVE_RESULT")])
+	lineas.append(tr("HUD_OBJECTIVE_SCORE") % puntaje)
 	if bono > 0:
-		lineas.append("BONO CERO PÉRDIDAS: +%d" % bono)
+		lineas.append(tr("HUD_NO_LOSS_BONUS") % bono)
 	for dato: Variant in resumen:
 		if not dato is Dictionary:
 			continue
 		var objetivo: Dictionary = dato
 		var salvado := str(objetivo.get("estado", "")) == "SALVADO"
 		lineas.append(
-			("%s %s" % ["✔" if salvado else "✖", str(objetivo.get("nombre", "Objetivo"))])
-			+ (" · penalización -%d" % int(objetivo.get("penalizacion", 0)) if not salvado else "")
+			("%s %s" % ["✔" if salvado else "✖", str(objetivo.get("nombre", tr("HUD_OBJECTIVE")))])
+			+ (
+				tr("HUD_PENALTY") % int(objetivo.get("penalizacion", 0))
+				if not salvado
+				else ""
+			)
 		)
 	_texto_resumen_objetivos = "\n".join(lineas)
 	obj_checklist.text += "\n" + _texto_resumen_objetivos
@@ -740,7 +779,7 @@ func _crear_interfaz_cooperativa() -> void:
 	_escuadron_panel.add_child(_escuadron_lista)
 
 	var titulo_escuadron := Label.new()
-	titulo_escuadron.text = ":: ESCUADRÓN ::"
+	titulo_escuadron.text = tr("HUD_SQUAD")
 	titulo_escuadron.add_theme_color_override("font_color", Color("#7fe8ff"))
 	titulo_escuadron.add_theme_font_size_override("font_size", 11)
 	_escuadron_lista.add_child(titulo_escuadron)
@@ -757,7 +796,7 @@ func _crear_interfaz_cooperativa() -> void:
 				icono.visible = false
 		var leyenda := get_node_or_null("TacticalRadar/Legend") as Label
 		if is_instance_valid(leyenda):
-			leyenda.text = "Verde sano · Rojo fuego · Gris quemado · Azul mojado"
+			leyenda.text = tr("HUD_FIREGRID_LEGEND")
 
 	_indicador_ping = Label.new()
 	_indicador_ping.name = "TipoPingActual"
@@ -937,7 +976,7 @@ func _actualizar_etiquetas_aliados() -> void:
 		if visible:
 			var datos: Dictionary = NetworkManager.jugadores.get(id, {})
 			etiqueta.text = "%s · %.0f m" % [
-				str(datos.get("nombre", aliado.get_meta("nombre_jugador", "Aliado"))),
+				str(datos.get("nombre", aliado.get_meta("nombre_jugador", tr("HUD_ALLY")))),
 				distancia,
 			]
 			etiqueta.add_theme_color_override(
@@ -975,19 +1014,19 @@ func _actualizar_indicador_ping() -> void:
 	if not is_instance_valid(_indicador_ping):
 		return
 	var etiquetas: Dictionary = {
-		"fuego": "FUEGO AQUÍ",
-		"agua": "NECESITO AGUA",
-		"peligro": "PELIGRO",
+		"fuego": tr("PING_FIRE"),
+		"agua": tr("PING_WATER"),
+		"peligro": tr("PING_DANGER"),
 	}
-	_indicador_ping.text = "G / clic central · %s" % str(etiquetas[TIPOS_PING[_indice_tipo_ping]])
+	_indicador_ping.text = tr("HUD_PING_GUIDE") % str(etiquetas[TIPOS_PING[_indice_tipo_ping]])
 
 func _al_recibir_ping_tactico(tipo: String, posicion: Vector3, emisor_id: int) -> void:
 	var datos: Dictionary = NetworkManager.jugadores.get(emisor_id, {})
-	var nombre := str(datos.get("nombre", "Piloto"))
+	var nombre := str(datos.get("nombre", tr("HUD_PILOT")))
 	var etiquetas: Dictionary = {
-		"fuego": "FUEGO AQUÍ",
-		"agua": "NECESITO AGUA",
-		"peligro": "PELIGRO",
+		"fuego": tr("PING_FIRE"),
+		"agua": tr("PING_WATER"),
+		"peligro": tr("PING_DANGER"),
 	}
 	var etiqueta := Label.new()
 	etiqueta.name = "Ping_%d" % Time.get_ticks_msec()
@@ -1046,10 +1085,10 @@ func _actualizar_pings_tacticos() -> void:
 		var dentro := not detras and rectangulo.has_point(proyectada)
 		var tipo := str(ping["tipo"])
 		var nombre_tipo: String = {
-			"fuego": "FUEGO",
-			"agua": "AGUA",
-			"peligro": "PELIGRO",
-		}.get(tipo, "PING")
+			"fuego": tr("PING_FIRE_SHORT"),
+			"agua": tr("PING_WATER_SHORT"),
+			"peligro": tr("PING_DANGER"),
+		}.get(tipo, tr("PING_UNKNOWN"))
 		etiqueta.text = "%s · %s" % [nombre_tipo, str(ping["emisor"])]
 		etiqueta.visible = dentro
 		flecha.visible = not dentro
@@ -1075,25 +1114,44 @@ func _actualizar_pings_tacticos() -> void:
 func _registrar_evento(texto: String) -> void:
 	if not is_instance_valid(_texto_eventos):
 		return
-	_eventos.push_front("%s  %s" % [Time.get_time_string_from_system(), texto])
+	_eventos.push_front(
+		"%s  %s" % [Time.get_time_string_from_system(), _traducir_evento(texto)]
+	)
 	while _eventos.size() > 5:
 		_eventos.pop_back()
 	_texto_eventos.text = "\n".join(_eventos)
+
+func _traducir_evento(texto: String) -> String:
+	var indice_apagado := texto.find(" apagó ")
+	if indice_apagado > 0:
+		var nombre := texto.substr(0, indice_apagado)
+		var celdas := texto.substr(indice_apagado + 7).to_int()
+		return tr("HUD_EVENT_EXTINGUISHED") % [nombre, celdas]
+	var partes_ping := texto.split(": ", false, 1)
+	if partes_ping.size() == 2:
+		var tipo_ping: String = {
+			"Fuego aquí": tr("PING_FIRE"),
+			"Necesito agua": tr("PING_WATER"),
+			"Peligro": tr("PING_DANGER"),
+		}.get(partes_ping[1], "")
+		if not tipo_ping.is_empty():
+			return tr("HUD_EVENT_PING") % [partes_ping[0], tipo_ping]
+	return tr(texto)
 
 func _al_recibir_evento_tactico(texto: String) -> void:
 	_registrar_evento(texto)
 
 func _mostrar_marcador_final(resultados: Array) -> void:
-	var lineas := PackedStringArray(["MARCADOR FINAL POR JUGADOR"])
+	var lineas := PackedStringArray([tr("HUD_FINAL_SCORE")])
 	for dato: Variant in resultados:
 		if not dato is Dictionary:
 			continue
 		var jugador: Dictionary = dato
 		lineas.append(
-			"%s · %s · %d celdas apagadas · %d L · %d asistencias"
+			tr("HUD_PLAYER_SCORE_LINE")
 			% [
-				str(jugador.get("nombre", "Piloto")),
-				str(jugador.get("rol_dron", "explorador")).capitalize(),
+				str(jugador.get("nombre", tr("HUD_PILOT"))),
+				_traducir_rol(str(jugador.get("rol_dron", "explorador"))),
 				int(jugador.get("celdas_apagadas", 0)),
 				int(jugador.get("agua_usada", 0)),
 				int(jugador.get("asistencias", 0)),
@@ -1113,6 +1171,15 @@ func _icono_rol(rol: String) -> String:
 			return "[T]"
 		_:
 			return "[E]"
+
+func _traducir_rol(rol: String) -> String:
+	match rol:
+		"cisterna":
+			return tr("ROLE_TANKER")
+		"tactico":
+			return tr("ROLE_TACTICIAN")
+		_:
+			return tr("ROLE_SCOUT")
 
 func _color_equipo(equipo: String) -> Color:
 	var colores: Array[Color] = [
@@ -1226,7 +1293,7 @@ func activar_vision_termica(alcance: float, duracion: float) -> void:
 func mostrar_marca_objetivo(posicion: Vector3, nombre_piloto: String, duracion: float) -> void:
 	_marca_objetivo_posicion = posicion
 	_marca_objetivo_hasta_ms = Time.get_ticks_msec() + int(maxf(duracion, 0.0) * 1000.0)
-	_etiqueta_marca_objetivo.text = "OBJETIVO: %s" % nombre_piloto
+	_etiqueta_marca_objetivo.text = tr("HUD_TARGET_MARKER") % nombre_piloto
 	_etiqueta_marca_objetivo.visible = true
 	_actualizar_posicion_marca_objetivo()
 
@@ -1246,12 +1313,11 @@ func _actualizar_posicion_marca_objetivo() -> void:
 func _actualizar_etiqueta_rol() -> void:
 	if _rol_local == &"tactico":
 		if _aviso_viento_segundos > 0.0:
-			_etiqueta_rol.text = "TÁCTICO · VIENTO CAMBIA EN %d s → %s" % [
-				ceili(_aviso_viento_segundos),
-				_punto_cardinal(_aviso_viento_direccion)
+			_etiqueta_rol.text = tr("HUD_TACTIC_WIND_CHANGE") % [
+				ceili(_aviso_viento_segundos), _punto_cardinal(_aviso_viento_direccion)
 			]
 		else:
-			_etiqueta_rol.text = "TÁCTICO · VIENTO ACTUAL %s" % _punto_cardinal(_viento_direccion)
+			_etiqueta_rol.text = tr("HUD_TACTIC_CURRENT_WIND") % _punto_cardinal(_viento_direccion)
 
 func _al_cambiar_viento(direccion: Vector2, velocidad: float) -> void:
 	if direccion.length_squared() > 0.0:
@@ -1259,7 +1325,7 @@ func _al_cambiar_viento(direccion: Vector2, velocidad: float) -> void:
 	if is_instance_valid(flecha_viento):
 		var direccion_pantalla := _viento_direccion
 		flecha_viento.rotation = direccion_pantalla.angle() + PI * 0.5
-		texto_viento.text = "%d km/h  %s" % [
+		texto_viento.text = tr("HUD_WIND_SPEED") % [
 			roundi(maxf(velocidad, 0.0) * 3.6),
 			_punto_cardinal(_viento_direccion)
 		]
@@ -1291,10 +1357,10 @@ func _actualizar_meteorologia() -> void:
 	var direccion_mostrada := _aviso_viento_direccion if _aviso_viento_segundos > 0.0 else _viento_direccion
 	var velocidad_rafaga := _aviso_viento_velocidad if _aviso_viento_segundos > 0.0 else _viento_velocidad
 	detalles_meteorologia.text = (
-		"Temp.:      34 *C\n"
-		+ "Humedad:    26 %\n"
-		+ "Viento:     %d km/h\n" % roundi(velocidad_mostrada * 3.6)
-		+ "Direccion:  %s\n" % _punto_cardinal(direccion_mostrada)
-		+ "Rafagas:    %d km/h\n" % roundi(velocidad_rafaga * 3.6)
-		+ "Visibilidad: 5 km\nCombustible: BAJA\nPendiente:  8 %"
+		tr("HUD_WEATHER_DETAILS")
+		% [
+			roundi(velocidad_mostrada * 3.6),
+			_punto_cardinal(direccion_mostrada),
+			roundi(velocidad_rafaga * 3.6),
+		]
 	)

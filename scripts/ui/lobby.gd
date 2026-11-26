@@ -74,7 +74,7 @@ func _crear_interfaz() -> void:
 	margen.add_child(columna)
 
 	var titulo := Label.new()
-	titulo.text = "CENTRO DE OPERACIONES — MULTIJUGADOR"
+	titulo.text = tr("CENTRO DE OPERACIONES — MULTIJUGADOR")
 	titulo.add_theme_font_size_override("font_size", 24)
 	columna.add_child(titulo)
 
@@ -88,9 +88,9 @@ func _crear_interfaz() -> void:
 	var fila_rol := HBoxContainer.new()
 	fila_rol.add_child(_nueva_etiqueta("Rol del dron"))
 	_selector_rol = OptionButton.new()
-	_selector_rol.add_item("Cisterna — 350 L", 0)
-	_selector_rol.add_item("Explorador — 50 L", 1)
-	_selector_rol.add_item("Táctico — 100 L", 2)
+	_selector_rol.add_item(tr("Cisterna — 350 L"), 0)
+	_selector_rol.add_item(tr("Explorador — 50 L"), 1)
+	_selector_rol.add_item(tr("Táctico — 100 L"), 2)
 	_selector_rol.item_selected.connect(_al_seleccionar_rol)
 	fila_rol.add_child(_selector_rol)
 	_roles_ocupados = _nueva_etiqueta("Roles ocupados: ninguno")
@@ -107,8 +107,8 @@ func _crear_interfaz() -> void:
 	columna.add_child(pestanas)
 	pestanas.add_child(_crear_pestana_directorio())
 	pestanas.add_child(_crear_pestana_directa())
-	pestanas.set_tab_title(0, "Directorio")
-	pestanas.set_tab_title(1, "Directo / LAN")
+	pestanas.set_tab_title(0, tr("Directorio"))
+	pestanas.set_tab_title(1, tr("Directo / LAN"))
 
 	_estado = _nueva_etiqueta("Listo para conectar.")
 	_estado.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -145,7 +145,7 @@ func _crear_interfaz() -> void:
 	var chat_columna := VBoxContainer.new()
 	fila_chat.add_child(chat_columna)
 	_chat_entrada = _nuevo_campo("")
-	_chat_entrada.placeholder_text = "Mensaje (máx. 160 caracteres)"
+	_chat_entrada.placeholder_text = tr("Mensaje (máx. 160 caracteres)")
 	_chat_entrada.max_length = 160
 	_chat_entrada.text_submitted.connect(_enviar_mensaje_chat)
 	chat_columna.add_child(_chat_entrada)
@@ -164,20 +164,20 @@ func _crear_pestana_directorio() -> Control:
 
 	contenido.add_child(_nueva_etiqueta("Servicio de salas"))
 	_url_directorio = _nuevo_campo(URL_DIRECTORIO_PREDETERMINADA)
-	_url_directorio.placeholder_text = "http://host:8080"
+	_url_directorio.placeholder_text = tr("http://host:8080")
 	contenido.add_child(_url_directorio)
 
 	var fila_config := HBoxContainer.new()
 	contenido.add_child(fila_config)
 	_escenario = OptionButton.new()
-	_escenario.add_item("Aguaragüe", 0)
-	_escenario.add_item("Campo Pajoso", 1)
-	_escenario.add_item("Interfase Urbana", 2)
+	_escenario.add_item(tr("Aguaragüe"), 0)
+	_escenario.add_item(tr("Campo Pajoso"), 1)
+	_escenario.add_item(tr("Interfase Urbana"), 2)
 	fila_config.add_child(_escenario)
 	_dificultad = OptionButton.new()
-	_dificultad.add_item("Baja", 0)
-	_dificultad.add_item("Media", 1)
-	_dificultad.add_item("Alta", 2)
+	_dificultad.add_item(tr("Baja"), 0)
+	_dificultad.add_item(tr("Media"), 1)
+	_dificultad.add_item(tr("Alta"), 2)
 	_dificultad.select(1)
 	fila_config.add_child(_dificultad)
 	_max_jugadores = _nuevo_spinbox(2, 6, 6)
@@ -187,7 +187,7 @@ func _crear_pestana_directorio() -> Control:
 	var fila_codigo := HBoxContainer.new()
 	contenido.add_child(fila_codigo)
 	_codigo_directorio = _nuevo_campo("")
-	_codigo_directorio.placeholder_text = "Código de 4 dígitos"
+	_codigo_directorio.placeholder_text = tr("Código de 4 dígitos")
 	_codigo_directorio.max_length = 4
 	fila_codigo.add_child(_codigo_directorio)
 	fila_codigo.add_child(_nuevo_boton("UNIRSE CON CÓDIGO", _unirse_con_codigo))
@@ -214,18 +214,18 @@ func _crear_pestana_directa() -> Control:
 
 	contenido.add_child(_nueva_etiqueta("Conexión directa por IP y puerto; no usa el directorio."))
 	_direccion_directa = _nuevo_campo("127.0.0.1")
-	_direccion_directa.placeholder_text = "IP o nombre de host"
+	_direccion_directa.placeholder_text = tr("IP o nombre de host")
 	contenido.add_child(_direccion_directa)
 	var fila_red := HBoxContainer.new()
 	contenido.add_child(fila_red)
 	_puerto_directo = _nuevo_spinbox(1, 65535, NetworkManager.PUERTO_PREDETERMINADO)
 	fila_red.add_child(_puerto_directo)
 	_transporte_directo = OptionButton.new()
-	_transporte_directo.add_item("WebSocket", 0)
-	_transporte_directo.add_item("ENet", 1)
+	_transporte_directo.add_item(tr("WebSocket"), 0)
+	_transporte_directo.add_item(tr("ENet"), 1)
 	fila_red.add_child(_transporte_directo)
 	_codigo_directo = _nuevo_campo("")
-	_codigo_directo.placeholder_text = "Código (opcional al crear)"
+	_codigo_directo.placeholder_text = tr("Código (opcional al crear)")
 	contenido.add_child(_codigo_directo)
 	contenido.add_child(_nuevo_boton("CREAR SALA DIRECTA", _crear_sala_directa))
 	contenido.add_child(_nuevo_boton("UNIRSE DIRECTAMENTE", _unirse_directamente))
@@ -233,7 +233,7 @@ func _crear_pestana_directa() -> Control:
 
 func _nueva_etiqueta(texto: String) -> Label:
 	var etiqueta := Label.new()
-	etiqueta.text = texto
+	etiqueta.text = tr(texto)
 	return etiqueta
 
 func _nuevo_campo(texto: String) -> LineEdit:
@@ -243,7 +243,7 @@ func _nuevo_campo(texto: String) -> LineEdit:
 
 func _nuevo_boton(texto: String, accion: Callable) -> Button:
 	var boton := Button.new()
-	boton.text = texto
+	boton.text = tr(texto)
 	boton.pressed.connect(accion)
 	return boton
 
@@ -258,7 +258,7 @@ func _nuevo_spinbox(minimo: float, maximo: float, valor: float) -> SpinBox:
 func _crear_sala_directorio() -> void:
 	NetworkManager.nombre_local = _nombre_piloto()
 	NetworkManager.rol_dron_local = _rol_seleccionado()
-	_estado.text = "Solicitando sala al directorio..."
+	_estado.text = tr("Solicitando sala al directorio...")
 	_cliente_directorio.crear_sala(
 		_url_directorio.text,
 		_escenario_seleccionado(),
@@ -269,10 +269,10 @@ func _crear_sala_directorio() -> void:
 func _unirse_con_codigo() -> void:
 	var codigo := _codigo_directorio.text.strip_edges()
 	if not _codigo_tiene_cuatro_digitos(codigo):
-		_estado.text = "Ingresa un código de sala de cuatro dígitos."
+		_estado.text = tr("Ingresa un código de sala de cuatro dígitos.")
 		return
 	NetworkManager.nombre_local = _nombre_piloto()
-	_estado.text = "Buscando la sala %s..." % codigo
+	_estado.text = tr("Buscando la sala %s...") % codigo
 	_cliente_directorio.obtener_sala(_url_directorio.text, codigo)
 
 func _solicitar_lista_salas() -> void:
@@ -282,12 +282,12 @@ func _solicitar_lista_salas() -> void:
 
 func _al_crear_sala_directorio(datos: Dictionary) -> void:
 	NetworkManager.nombre_local = _nombre_piloto()
-	_estado.text = "Sala %s creada; conectando..." % str(datos.get("codigo", ""))
+	_estado.text = tr("Sala %s creada; conectando...") % str(datos.get("codigo", ""))
 	_conectar_a_sala_directorio(datos)
 
 func _al_encontrar_sala(datos: Dictionary) -> void:
 	NetworkManager.nombre_local = _nombre_piloto()
-	_estado.text = "Sala encontrada; conectando..."
+	_estado.text = tr("Sala encontrada; conectando...")
 	_conectar_a_sala_directorio(datos)
 
 func _conectar_a_sala_directorio(datos: Dictionary) -> void:
@@ -295,11 +295,11 @@ func _conectar_a_sala_directorio(datos: Dictionary) -> void:
 	var host := str(datos.get("host", ""))
 	var puerto := int(datos.get("puerto", 0))
 	if not _codigo_tiene_cuatro_digitos(codigo) or host.is_empty() or puerto < 1 or puerto > 65535:
-		_estado.text = "El directorio devolvió datos de conexión inválidos."
+		_estado.text = tr("El directorio devolvió datos de conexión inválidos.")
 		return
 	NetworkManager.transporte = "ENet" if str(datos.get("transporte", "websocket")) == "enet" else "WebSocket"
 	if not NetworkManager.unirse_a_sala(host, puerto, codigo):
-		_estado.text = "No se pudo iniciar la conexión con %s:%d." % [host, puerto]
+		_estado.text = tr("No se pudo iniciar la conexión con %s:%d.") % [host, puerto]
 
 func _al_recibir_lista_salas(salas: Array) -> void:
 	if not is_instance_valid(_lista_salas):
@@ -312,37 +312,37 @@ func _al_recibir_lista_salas(salas: Array) -> void:
 		var sala: Dictionary = elemento
 		_salas_recibidas.append(sala)
 		_lista_salas.add_item(
-			"%s — %s — %d/%d — %s"
+			tr("%s — %s — %d/%d — %s")
 			% [
 				str(sala.get("codigo", "????")),
-				str(sala.get("escenario", "escenario")),
+				tr(str(sala.get("escenario", "escenario"))),
 				int(sala.get("jugadores", 0)),
 				int(sala.get("max_jugadores", 0)),
-				str(sala.get("dificultad", "")),
+				tr(str(sala.get("dificultad", ""))),
 			]
 		)
 	if salas.is_empty():
-		_estado.text = "No hay salas abiertas en el directorio."
+		_estado.text = tr("No hay salas abiertas en el directorio.")
 
 func _al_error_directorio(mensaje: String) -> void:
-	_estado.text = mensaje
+	_estado.text = tr(mensaje)
 
 func _unirse_a_sala_seleccionada() -> void:
 	var seleccion := _lista_salas.get_selected_items()
 	if seleccion.is_empty():
-		_estado.text = "Selecciona primero una sala de la lista."
+		_estado.text = tr("Selecciona primero una sala de la lista.")
 		return
 	var indice := seleccion[0]
 	if indice < 0 or indice >= _salas_recibidas.size():
-		_estado.text = "La selección de sala ya no está disponible; actualiza la lista."
+		_estado.text = tr("La selección de sala ya no está disponible; actualiza la lista.")
 		return
 	var sala: Dictionary = _salas_recibidas[indice]
 	var codigo := str(sala.get("codigo", ""))
 	if not _codigo_tiene_cuatro_digitos(codigo):
-		_estado.text = "El directorio entregó un código de sala inválido."
+		_estado.text = tr("El directorio entregó un código de sala inválido.")
 		return
 	NetworkManager.nombre_local = _nombre_piloto()
-	_estado.text = "Resolviendo la sala seleccionada..."
+	_estado.text = tr("Resolviendo la sala seleccionada...")
 	_cliente_directorio.obtener_sala(_url_directorio.text, codigo)
 
 func _crear_sala_directa() -> void:
@@ -358,12 +358,12 @@ func _crear_sala_directa() -> void:
 		"codigo": codigo,
 	}
 	if NetworkManager.crear_sala(configuracion):
-		_estado.text = "Sala directa creada en el puerto %d." % int(_puerto_directo.value)
+		_estado.text = tr("Sala directa creada en el puerto %d.") % int(_puerto_directo.value)
 
 func _unirse_directamente() -> void:
 	var codigo := _codigo_directo.text.strip_edges()
 	if codigo.is_empty():
-		_estado.text = "Ingresa el código de la sala directa."
+		_estado.text = tr("Ingresa el código de la sala directa.")
 		return
 	NetworkManager.nombre_local = _nombre_piloto()
 	NetworkManager.transporte = "ENet" if _transporte_directo.get_selected_id() == 1 else "WebSocket"
@@ -376,7 +376,9 @@ func _unirse_directamente() -> void:
 func _actualizar_sala(codigo: String, jugadores_sala: Dictionary) -> void:
 	if not is_instance_valid(_codigo_actual):
 		return
-	_codigo_actual.text = "Sala activa: %s" % (codigo if not codigo.is_empty() else "sin conexión")
+	_codigo_actual.text = tr("Sala activa: %s") % (
+		codigo if not codigo.is_empty() else tr("sin conexión")
+	)
 	var ids: Array = jugadores_sala.keys()
 	ids.sort()
 	var lineas := PackedStringArray()
@@ -387,30 +389,34 @@ func _actualizar_sala(codigo: String, jugadores_sala: Dictionary) -> void:
 		var rol_dron := str(datos.get("rol_dron", "explorador"))
 		conteos_roles[rol_dron] = int(conteos_roles.get(rol_dron, 0)) + 1
 		if rol_dron == "tactico":
-			tactico_ocupado_por = str(datos.get("nombre", "Piloto"))
+			tactico_ocupado_por = str(datos.get("nombre", tr("Piloto")))
 		lineas.append(
-			"%s — %s%s — %s — %d ms"
+			tr("%s — %s%s — %s — %d ms")
 			% [
-				str(datos.get("nombre", "Piloto")),
+				str(datos.get("nombre", tr("Piloto"))),
 				_nombre_rol_dron(rol_dron),
-				" (ANFITRIÓN)" if str(datos.get("rol", "")) == "anfitrion" else "",
-				"LISTO" if bool(datos.get("listo", false)) else "ESPERANDO",
+				(" (%s)" % tr("ANFITRIÓN")) if str(datos.get("rol", "")) == "anfitrion" else "",
+				tr("LISTO") if bool(datos.get("listo", false)) else tr("ESPERANDO"),
 				int(datos.get("ping", 0)),
 			]
 		)
-	_lista_jugadores.text = "PILOTOS CONECTADOS\n%s" % "\n".join(lineas)
-	_roles_ocupados.text = "Ocupados: Cisterna %d · Explorador %d · Táctico %s" % [
+	_lista_jugadores.text = tr("LOBBY_CONNECTED_PILOTS") % "\n".join(lineas)
+	_roles_ocupados.text = tr("Ocupados: Cisterna %d · Explorador %d · Táctico %s") % [
 		int(conteos_roles["cisterna"]),
 		int(conteos_roles["explorador"]),
-		tactico_ocupado_por if not tactico_ocupado_por.is_empty() else "libre",
+		tactico_ocupado_por if not tactico_ocupado_por.is_empty() else tr("libre"),
 	]
 	_actualizar_selector_rol(jugadores_sala, tactico_ocupado_por)
 	_boton_listo.disabled = codigo.is_empty() or not jugadores_sala.has(multiplayer.get_unique_id())
 	_boton_iniciar.disabled = codigo.is_empty() or not NetworkManager.es_anfitrion_local() or NetworkManager.partida_iniciada
 	if not codigo.is_empty():
-		_estado.text = "Conectado a la sala."
+		_estado.text = tr("Conectado a la sala.")
 	var jugador_local: Dictionary = jugadores_sala.get(multiplayer.get_unique_id(), {})
-	_boton_listo.text = "CANCELAR LISTO" if bool(jugador_local.get("listo", false)) else "MARCAR LISTO"
+	_boton_listo.text = (
+		tr("CANCELAR LISTO")
+		if bool(jugador_local.get("listo", false))
+		else tr("MARCAR LISTO")
+	)
 
 func _al_actualizar_sala(codigo: String, jugadores_sala: Dictionary) -> void:
 	_actualizar_sala(codigo, jugadores_sala)
@@ -423,7 +429,7 @@ func _al_desconectar_jugador(_id: int) -> void:
 
 func _alternar_listo() -> void:
 	if not NetworkManager.establecer_listo(not _jugador_local_listo()):
-		_estado.text = "No fue posible cambiar el estado de listo."
+		_estado.text = tr("No fue posible cambiar el estado de listo.")
 
 func _jugador_local_listo() -> bool:
 	var jugador: Dictionary = NetworkManager.jugadores.get(multiplayer.get_unique_id(), {})
@@ -431,18 +437,18 @@ func _jugador_local_listo() -> bool:
 
 func _iniciar_partida() -> void:
 	if not NetworkManager.iniciar_partida():
-		_estado.text = "No se pudo iniciar la partida."
+		_estado.text = tr("No se pudo iniciar la partida.")
 
 func _salir_de_sala() -> void:
 	NetworkManager.salir()
-	_estado.text = "Saliste de la sala."
+	_estado.text = tr("Saliste de la sala.")
 
 func _enviar_chat_desde_boton() -> void:
 	_enviar_mensaje_chat(_chat_entrada.text)
 
 func _enviar_mensaje_chat(texto: String) -> void:
 	if not NetworkManager.enviar_chat(texto):
-		_estado.text = "El mensaje está vacío, supera 160 caracteres o no estás en una sala."
+		_estado.text = tr("El mensaje está vacío, supera 160 caracteres o no estás en una sala.")
 		return
 	_chat_entrada.clear()
 
@@ -454,15 +460,15 @@ func _al_recibir_chat(nombre: String, texto: String) -> void:
 	_chat_historial.scroll_to_line(_chat_historial.get_line_count())
 
 func _al_error_conexion(mensaje: String) -> void:
-	_estado.text = mensaje
+	_estado.text = tr(mensaje)
 
 func _al_seleccionar_rol(indice: int) -> void:
 	var rol_id := _rol_id_por_indice(indice)
 	if not NetworkManager.seleccionar_rol_dron(rol_id):
-		_estado.text = "No se pudo seleccionar el rol."
+		_estado.text = tr("No se pudo seleccionar el rol.")
 
 func _al_rol_rechazado(motivo: String) -> void:
-	_estado.text = motivo
+	_estado.text = tr(motivo)
 	var jugador_local: Dictionary = NetworkManager.jugadores.get(multiplayer.get_unique_id(), {})
 	if not jugador_local.is_empty():
 		_seleccionar_rol_visual(str(jugador_local.get("rol_dron", "explorador")))
@@ -496,11 +502,11 @@ func _rol_id_por_indice(indice: int) -> String:
 func _nombre_rol_dron(rol_id: String) -> String:
 	match rol_id:
 		"cisterna":
-			return "Cisterna"
+			return tr("Cisterna")
 		"tactico":
-			return "Táctico"
+			return tr("Táctico")
 		_:
-			return "Explorador"
+			return tr("Explorador")
 
 func _volver_al_menu() -> void:
 	_temporizador_lista.stop()

@@ -18,16 +18,16 @@ const ACCIONES: Array[StringName] = [
 	&"drone_retardant",
 ]
 const ETIQUETAS: Dictionary = {
-	"drone_forward": "Avanzar",
-	"drone_backward": "Retroceder",
-	"drone_left": "Desplazarse a la izquierda",
-	"drone_right": "Desplazarse a la derecha",
-	"drone_ascend": "Subir",
-	"drone_descend": "Bajar",
-	"drone_refill": "Recargar agua",
-	"drone_special": "Habilidad especial",
-	"drone_spray": "Rociar agua",
-	"drone_retardant": "Lanzar retardante",
+	"drone_forward": "INPUT_FORWARD",
+	"drone_backward": "INPUT_BACKWARD",
+	"drone_left": "INPUT_LEFT",
+	"drone_right": "INPUT_RIGHT",
+	"drone_ascend": "INPUT_ASCEND",
+	"drone_descend": "INPUT_DESCEND",
+	"drone_refill": "INPUT_REFILL",
+	"drone_special": "INPUT_SPECIAL",
+	"drone_spray": "INPUT_SPRAY",
+	"drone_retardant": "INPUT_RETARDANT",
 }
 
 var _configuracion := ConfigFile.new()
@@ -63,7 +63,7 @@ func obtener_acciones() -> Array[StringName]:
 
 
 func obtener_etiqueta(accion: StringName) -> String:
-	return str(ETIQUETAS.get(str(accion), accion))
+	return tr(str(ETIQUETAS.get(str(accion), accion)))
 
 
 func obtener_resumen(accion: StringName) -> String:

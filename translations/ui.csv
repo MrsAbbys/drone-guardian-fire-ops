@@ -1,0 +1,387 @@
+keys,es,en
+MENU_BRAND,"DRONE GUARDIAN SYSTEM
+DG-FO v2.4.7","DRONE GUARDIAN SYSTEM
+DG-FO v2.4.7"
+MENU_START,"🎯  1. INICIAR OPERACIÓN","🎯  1. START OPERATION"
+MENU_DRONES,"🚁  2. SELECCIÓN DE DRON","🚁  2. DRONE SELECTION"
+MENU_ROULETTE,"🎲  3. RULETA PARA VALIENTES","🎲  3. BRAVEHEARTS ROULETTE"
+MENU_MISSIONS,"⭐  4. MISIONES","⭐  4. MISSIONS"
+MENU_SETTINGS,"⚙  5. CONFIGURACIÓN","⚙  5. SETTINGS"
+MENU_EXIT,"🚪  6. SALIR","🚪  6. EXIT"
+MENU_HARTMAN_PORTRAIT,"[SGTO.]
+HARTMAN
+------
+INSTRUCTOR
+★★","[SGT.]
+HARTMAN
+------
+INSTRUCTOR
+★★"
+MENU_HARTMAN_NAME,"SARGENTO HARTMAN","SERGEANT HARTMAN"
+MENU_HARTMAN_WELCOME,"«Aquí no vienes a pasear, soldado. El bosque está en llamas y tú eres lo único entre el caos y la civilización. Cumple tu misión.»","“You are not here for a joyride, soldier. The forest is burning, and you are all that stands between chaos and civilization. Do your job.”"
+ESCENARIO,ESCENARIO,SCENARIO
+Aguaragüe,Aguaragüe,Aguaragüe
+"Campo Pajoso","Campo Pajoso","Campo Pajoso"
+"Interfase Urbana","Interfase Urbana","Urban Interface"
+CONFIGURACIÓN,CONFIGURACIÓN,SETTINGS
+"Calidad gráfica","Calidad gráfica","Graphics quality"
+BAJA,BAJA,LOW
+MEDIA,MEDIA,MEDIUM
+ALTA,ALTA,HIGH
+Idioma,Idioma,Language
+Español,Español,Spanish
+English,English,English
+"Ayuda de puntería","Ayuda de puntería","Aiming assistance"
+"ALTA — voz, retícula y flecha","ALTA — voz, retícula y flecha","HIGH — voice, reticle and arrow"
+"MEDIA — retícula y flecha","MEDIA — retícula y flecha","MEDIUM — reticle and arrow"
+"BAJA — solo retícula","BAJA — solo retícula","LOW — reticle only"
+NINGUNA,NINGUNA,NONE
+"REASIGNAR TECLAS Y GAMEPAD","REASIGNAR TECLAS Y GAMEPAD","REBIND KEYBOARD AND GAMEPAD"
+VOLVER,VOLVER,BACK
+CONTROLES,CONTROLES,CONTROLS
+"Selecciona una asignación y pulsa una tecla, botón o dirección del mando. ESC cancela.","Selecciona una asignación y pulsa una tecla, botón o dirección del mando. ESC cancela.","Select a binding, then press a key, button, or stick direction. Press ESC to cancel."
+CERRAR,CERRAR,CLOSE
+"Pulsa una entrada...","Pulsa una entrada...","Press an input..."
+"🌐  MULTIJUGADOR","🌐  MULTIJUGADOR","🌐  MULTIPLAYER"
+"Volumen de efectos","Volumen de efectos","Effects volume"
+"Volumen de música","Volumen de música","Music volume"
+"Volumen de interfaz","Volumen de interfaz","UI volume"
+"Sensibilidad del ratón: %.4f","Sensibilidad del ratón: %.4f","Mouse sensitivity: %.4f"
+"Volumen maestro: %d%%","Volumen maestro: %d%%","Master volume: %d%%"
+MENU_SYSTEM_TITLE,"DRONE GUARDIAN SYSTEM
+DG-FO v2.4.7","DRONE GUARDIAN SYSTEM
+DG-FO v2.4.7"
+MENU_SYSTEM_STATUS,[●●●■],[●●●■]
+MENU_START_BUTTON,"🎯  1. INICIAR OPERACIÓN","🎯  1. START OPERATION"
+MENU_DRONES_BUTTON,"🚁  2. SELECCIÓN DE DRON","🚁  2. DRONE SELECTION"
+MENU_ROULETTE_BUTTON,"🎲  3. RULETA PARA VALIENTES","🎲  3. BRAVEHEARTS ROULETTE"
+MENU_MISSIONS_BUTTON,"⭐  4. MISIONES","⭐  4. MISSIONS"
+MENU_SETTINGS_BUTTON,"⚙  5. CONFIGURACIÓN","⚙  5. SETTINGS"
+MENU_EXIT_BUTTON,"🚪  6. SALIR","🚪  6. EXIT"
+HUD_GAME_TITLE,"[!] DRONE GUARDIAN
+    FIRE OPS :: v1.0","[!] DRONE GUARDIAN
+    FIRE OPS :: v1.0"
+HUD_SECTOR_LABEL,"[*] MISION 01 - YACUIBA
+    SECTOR: CAMPO PAJOSO","[*] MISSION 01 - YACUIBA
+    SECTOR: CAMPO PAJOSO"
+HUD_DRONE_MODEL,"GUARDIAN S1
+SCOUT (50L)","GUARDIAN S1
+SCOUT (50L)"
+HUD_TELEMETRY_STATUS,"[|||||] 92%
+TELEMETRIA","[|||||] 92%
+TELEMETRY"
+HUD_GPS_STATUS,"GPS LOCK
+OK (RTK)","GPS LOCK
+OK (RTK)"
+HUD_WEATHER_TITLE,":: METEOROLOGIA ::",":: WEATHER ::"
+HUD_FIRE_TITLE,":: ESTADO DEL FUEGO ::",":: FIRE STATUS ::"
+HUD_MAP_TITLE,"MAPA TACTICO        [N ^]","TACTICAL MAP        [N ^]"
+HUD_MAP_LEGEND,"[#] Fuego  [^] Dron  [H] Base  [O] Agua","[#] Fire  [^] Drone  [H] Base  [O] Water"
+HUD_CAMERA_TITLE,":: SENSOR DE CAMARA ::",":: CAMERA SENSOR ::"
+HUD_CAMERA_RGB,[RGB],[RGB]
+HUD_CAMERA_THERMAL,[TERMICA],[THERMAL]
+HUD_CAMERA_RECON,[RECON],[RECON]
+HUD_CAMERA_INFO,"CMOS DUAL 4K
+TELEMETRIA ACTIVA
+OBJETIVO: FOCO NORTE","DUAL CMOS 4K
+TELEMETRY ACTIVE
+TARGET: NORTH FIRE"
+HUD_HARTMAN_PORTRAIT,"[HARTMAN]
+SGTO. ART.
+INSTRUCTOR
+---------
+[::PIXEL::]
+[* * *]","[HARTMAN]
+SGT. ART.
+INSTRUCTOR
+---------
+[::PIXEL::]
+[* * *]"
+HUD_HARTMAN_NAME,"SGTO. HARTMAN - INSTRUCTOR DE VUELO","SGT. HARTMAN - FLIGHT INSTRUCTOR"
+HUD_OBJECTIVES_TITLE,":: OBJETIVOS ::",":: OBJECTIVES ::"
+HUD_ALERTS_TITLE,":: ALERTAS ::",":: ALERTS ::"
+HUD_TIMER_TITLE,"TIEMPO REST.","TIME LEFT"
+HUD_RETURN_TO_BASE,"[^] REGRESAR
+A LA BASE","[^] RETURN
+TO BASE"
+HUD_TIME,TIEMPO,TIME
+HUD_ALTITUDE,ALTITUD,ALTITUDE
+HUD_SPEED,VELOCIDAD,SPEED
+HUD_BASE_DISTANCE,"DIST. BASE","BASE DIST."
+HUD_OUT_OF_RANGE,"FUERA DE ALCANCE","OUT OF RANGE"
+HUD_WIND_CHANGE_IN,"VIENTO CAMBIA EN %d s → %s","WIND CHANGES IN %d s → %s"
+HUD_CRITICAL_DAMAGE,"⚠ ALERTA CRÍTICA
+Integridad: %d%%
+¡FUSELAJE DAÑADO!","⚠ CRITICAL ALERT
+Integrity: %d%%
+AIRFRAME DAMAGED!"
+HUD_REFILLING,"💧 SOBRE LA LAGUNA
+-> MANTENGA [E] PARA RECARGAR
+Carga: %d / %d L","💧 OVER WATER SOURCE
+HOLD [E] TO REFILL
+Load: %d / %d L"
+HUD_WATER_HEALTH,"💧 AGUA: %d / %d L
+   [%s]
+🛡 CASCO: %d%%","💧 WATER: %d / %d L
+   [%s]
+🛡 HULL: %d%%"
+HUD_MISSION_FAILED,"✖ Incendio fuera de control
+✖ Misión fallida","✖ Fire out of control
+✖ Mission failed"
+HUD_MISSION_CONTROLLED,"✔ Reconocimiento aéreo
+✔ Recarga de agua
+✔ Sofocar todos los focos
+☐ Aterrizar en helipuerto militar","✔ Aerial reconnaissance
+✔ Refill water
+✔ Extinguish all fires
+☐ Land at the military helipad"
+HUD_SPEED_BOOST,"VELOCIDAD +  |  %.1f m/s","SPEED +  |  %.1f m/s"
+HUD_FIRE_UNCONTROLLED,DESCONTROLADO,UNCONTROLLED
+HUD_FIRE_CONTROLLED,CONTROLADO,CONTROLLED
+HUD_FIRE_CONTAINING,CONTENIENDO,CONTAINING
+HUD_FIRE_EXTINGUISHED,"[□□□□] EXTINTO","[□□□□] EXTINGUISHED"
+HUD_FIRE_MEDIUM,"[■■□□] MEDIA","[■■□□] MEDIUM"
+HUD_FIRE_HIGH,"[■■■■] ALTA","[■■■■] HIGH"
+HUD_FIRE_SUMMARY,"Area afectada:   18.7 ha
+Perímetro:       2.8 km
+Focos detectados: %d
+Propagación:     %s
+Intensidad:      %s
+%% Extinción:     %d %%
+Fuegos restantes: %d / %d","Affected area:   18.7 ha
+Perimeter:       2.8 km
+Fires detected:  %d
+Spread:          %s
+Intensity:       %s
+%% Extinguished:  %d %%
+Fires remaining: %d / %d"
+HUD_MISSION_LANDED,"✔ Reconocimiento aéreo
+✔ Recarga de agua
+✔ Sofocar foco de fuego
+✔ Aterrizaje completado con éxito","✔ Aerial reconnaissance
+✔ Refill water
+✔ Extinguish fire
+✔ Landing completed"
+HUD_CRITICAL_TARGET_LOST,"OBJETIVO PERDIDO · %s · -%d · %s","TARGET LOST · %s · -%d · %s"
+HUD_CRITICAL_TARGET_THREATENED,"OBJETIVO AMENAZADO · %s · %s","TARGET THREATENED · %s · %s"
+HUD_CRITICAL_OBJECTIVE_RESULT,"OBJETIVOS CRÍTICOS · RESULTADO","CRITICAL OBJECTIVES · RESULTS"
+HUD_OBJECTIVE_SCORE,"Puntaje de objetivos: %d","Objective score: %d"
+HUD_NO_LOSS_BONUS,"BONO CERO PÉRDIDAS: +%d","NO-LOSS BONUS: +%d"
+HUD_OBJECTIVE,Objetivo,Objective
+HUD_PENALTY," · penalización -%d"," · penalty -%d"
+HUD_SQUAD,":: ESCUADRÓN ::",":: SQUAD ::"
+HUD_PING_GUIDE,"G / clic central · %s","G / middle-click · %s"
+PING_FIRE,"FUEGO AQUÍ","FIRE HERE"
+PING_WATER,"NECESITO AGUA","NEED WATER"
+PING_DANGER,PELIGRO,DANGER
+PING_UNKNOWN,PING,PING
+PING_FIRE_SHORT,FUEGO,FIRE
+PING_WATER_SHORT,AGUA,WATER
+HUD_FINAL_SCORE,"MARCADOR FINAL POR JUGADOR","FINAL PLAYER SCORE"
+HUD_PLAYER_SCORE_LINE,"%s · %s · %d celdas apagadas · %d L · %d asistencias","%s · %s · %d cells extinguished · %d L · %d assists"
+HUD_PILOT,Piloto,Pilot
+HUD_ALLY,Aliado,Ally
+ROLE_TANKER,Cisterna,Tanker
+ROLE_TACTICIAN,Táctico,Tactician
+ROLE_SCOUT,Explorador,Scout
+HUD_TACTIC_WIND_CHANGE,"TÁCTICO · VIENTO CAMBIA EN %d s → %s","TACTICIAN · WIND CHANGES IN %d s → %s"
+HUD_TACTIC_CURRENT_WIND,"TÁCTICO · VIENTO ACTUAL %s","TACTICIAN · CURRENT WIND %s"
+HUD_WIND_SPEED,"%d km/h  %s","%d km/h  %s"
+HUD_WEATHER_DETAILS,"Temp.:      34 °C
+Humedad:    26 %%
+Viento:     %d km/h
+Dirección:  %s
+Ráfagas:    %d km/h
+Visibilidad: 5 km
+Combustible: BAJA
+Pendiente:  8 %%","Temp.:      34 °C
+Humidity:   26 %%
+Wind:       %d km/h
+Direction:  %s
+Gusts:      %d km/h
+Visibility: 5 km
+Fuel:       LOW
+Slope:      8 %%"
+HUD_TARGET_MARKER,"OBJETIVO: %s","TARGET: %s"
+HUD_FIREGRID_LEGEND,"Verde sano · Rojo fuego · Gris quemado · Azul mojado","Healthy green · Burning red · Burned gray · Wet blue"
+TUTORIAL_MOVE_TITLE,"MOVER EL DRON","MOVE THE DRONE"
+TUTORIAL_MOVE_TEXT,"Usa W, A, S y D para desplazarte. El ratón orienta la cámara.","Use W, A, S, and D to move. The mouse turns the camera."
+TUTORIAL_ALTITUDE_TITLE,"SUBIR Y BAJAR","ASCEND AND DESCEND"
+TUTORIAL_ALTITUDE_TEXT,"Mantén ESPACIO para subir y C para bajar.","Hold SPACE to ascend and C to descend."
+TUTORIAL_REFILL_TITLE,"RECARGAR AGUA","REFILL WATER"
+TUTORIAL_REFILL_TEXT,"Acércate a una isla de agua y pulsa E para recargar.","Approach a water source and press E to refill."
+TUTORIAL_SPRAY_TITLE,"ROCIAR EL INCENDIO","SPRAY THE FIRE"
+TUTORIAL_SPRAY_TEXT,"Mantén el botón izquierdo para rociar. Apunta a las celdas que arden.","Hold the left mouse button to spray. Aim at burning cells."
+TUTORIAL_WIND_TITLE,"LEER EL VIENTO","READ THE WIND"
+TUTORIAL_WIND_TEXT,"Consulta la flecha y velocidad del panel meteorológico antes de atacar.","Check the weather panel's arrow and speed before attacking."
+TUTORIAL_PRACTICE_TITLE,"VUELO DE ENTRENAMIENTO","TRAINING FLIGHT"
+TUTORIAL_PRACTICE_TEXT,"Practica lo aprendido. El tutorial termina al completar los dos minutos.","Practice the controls. The tutorial ends after two minutes."
+TUTORIAL_NEXT,Siguiente,Next
+TUTORIAL_FINISH,Terminar,Finish
+TUTORIAL_PROGRESS,"Paso %d/%d  |  %02d:%02d restantes","Step %d/%d  |  %02d:%02d remaining"
+RESULT_RETRY,REINTENTAR,RETRY
+RESULT_MENU,MENÚ,MENU
+RESULT_COMPLETED,"MISIÓN COMPLETADA","MISSION COMPLETED"
+RESULT_FAILED,"MISIÓN FALLIDA","MISSION FAILED"
+RESULT_TIME,"Tiempo: %s","Time: %s"
+RESULT_SAVED_SURFACE,"Superficie salvada: %.1f%%","Saved surface: %.1f%%"
+RESULT_CRITICAL_OBJECTIVES,"Objetivos críticos: %d / %d","Critical objectives: %d / %d"
+RESULT_WASTED_WATER,"Agua desperdiciada: %.1f s","Water wasted: %.1f s"
+RESULT_RECORD_LOAD_FAILED,"No se pudo cargar el récord.","Could not load the record."
+RESULT_NEW_RECORD,"Récord nuevo: %.1f%%","New record: %.1f%%"
+RESULT_BEST_SCORE,"Mejor: %d estrellas · %.1f%%","Best: %d stars · %.1f%%"
+INPUT_FORWARD,Avanzar,Move forward
+INPUT_BACKWARD,Retroceder,Move backward
+INPUT_LEFT,"Desplazarse a la izquierda","Move left"
+INPUT_RIGHT,"Desplazarse a la derecha","Move right"
+INPUT_ASCEND,Subir,Ascend
+INPUT_DESCEND,Bajar,Descend
+INPUT_REFILL,"Recargar agua","Refill water"
+INPUT_SPECIAL,"Habilidad especial","Special ability"
+INPUT_SPRAY,"Rociar agua","Spray water"
+INPUT_RETARDANT,"Lanzar retardante","Drop retardant"
+"CENTRO DE OPERACIONES — MULTIJUGADOR","CENTRO DE OPERACIONES — MULTIJUGADOR","MULTIPLAYER OPERATIONS CENTER"
+"Nombre de piloto","Nombre de piloto","Pilot name"
+"Rol del dron","Rol del dron","Drone role"
+"Roles ocupados: ninguno","Roles ocupados: ninguno","Occupied roles: none"
+"Q: habilidad del rol · clic derecho: retardante (Explorador)","Q: habilidad del rol · clic derecho: retardante (Explorador)","Q: role ability · right-click: retardant (Scout)"
+"Listo para conectar.","Listo para conectar.","Ready to connect."
+"Sin conexión","Sin conexión","Disconnected"
+"PILOTOS CONECTADOS","PILOTOS CONECTADOS","CONNECTED PILOTS"
+"MARCAR LISTO","MARCAR LISTO","READY UP"
+"INICIAR PARTIDA","INICIAR PARTIDA","START GAME"
+"SALIR DE LA SALA","SALIR DE LA SALA","LEAVE ROOM"
+"VOLVER AL MENÚ","VOLVER AL MENÚ","BACK TO MENU"
+"Mensaje (máx. 160 caracteres)","Mensaje (máx. 160 caracteres)","Message (max. 160 characters)"
+"Servicio de salas","Servicio de salas","Room directory"
+"Código de 4 dígitos","Código de 4 dígitos","4-digit code"
+"CREAR SALA","CREAR SALA","CREATE ROOM"
+"UNIRSE CON CÓDIGO","UNIRSE CON CÓDIGO","JOIN WITH CODE"
+"Salas abiertas","Salas abiertas","Open rooms"
+"ACTUALIZAR","ACTUALIZAR","REFRESH"
+"UNIRSE A SALA SELECCIONADA","UNIRSE A SALA SELECCIONADA","JOIN SELECTED ROOM"
+"Conexión directa por IP y puerto; no usa el directorio.","Conexión directa por IP y puerto; no usa el directorio.","Direct IP and port connection; does not use the directory."
+"Código (opcional al crear)","Código (opcional al crear)","Code (optional when creating)"
+"CREAR SALA DIRECTA","CREAR SALA DIRECTA","CREATE DIRECT ROOM"
+"UNIRSE DIRECTAMENTE","UNIRSE DIRECTAMENTE","JOIN DIRECTLY"
+"Directorio","Directorio","Directory"
+"Directo / LAN","Directo / LAN","Direct / LAN"
+"http://host:8080","http://host:8080","http://host:8080"
+"IP o nombre de host","IP o nombre de host","IP or hostname"
+"Baja","Baja","Low"
+"Media","Media","Medium"
+"Alta","Alta","High"
+"Cisterna — 350 L","Cisterna — 350 L","Tanker — 350 L"
+"Explorador — 50 L","Explorador — 50 L","Scout — 50 L"
+"Táctico — 100 L","Táctico — 100 L","Tactician — 100 L"
+WebSocket,WebSocket,WebSocket
+ENet,ENet,ENet
+"Solicitando sala al directorio...","Solicitando sala al directorio...","Requesting a room from the directory..."
+"Ingresa un código de sala de cuatro dígitos.","Ingresa un código de sala de cuatro dígitos.","Enter a four-digit room code."
+"Buscando la sala %s...","Buscando la sala %s...","Searching for room %s..."
+"Sala %s creada; conectando...","Sala %s creada; conectando...","Room %s created; connecting..."
+"Sala encontrada; conectando...","Sala encontrada; conectando...","Room found; connecting..."
+"El directorio devolvió datos de conexión inválidos.","El directorio devolvió datos de conexión inválidos.","The directory returned invalid connection details."
+"No se pudo iniciar la conexión con %s:%d.","No se pudo iniciar la conexión con %s:%d.","Could not start the connection to %s:%d."
+"No hay salas abiertas en el directorio.","No hay salas abiertas en el directorio.","There are no open rooms in the directory."
+"Selecciona primero una sala de la lista.","Selecciona primero una sala de la lista.","Select a room from the list first."
+"La selección de sala ya no está disponible; actualiza la lista.","La selección de sala ya no está disponible; actualiza la lista.","The selected room is no longer available; refresh the list."
+"El directorio entregó un código de sala inválido.","El directorio entregó un código de sala inválido.","The directory returned an invalid room code."
+"Resolviendo la sala seleccionada...","Resolviendo la sala seleccionada...","Resolving the selected room..."
+"Sala directa creada en el puerto %d.","Sala directa creada en el puerto %d.","Direct room created on port %d."
+"Ingresa el código de la sala directa.","Ingresa el código de la sala directa.","Enter the direct room code."
+"Sala activa: %s","Sala activa: %s","Active room: %s"
+"sin conexión","sin conexión","disconnected"
+LOBBY_CONNECTED_PILOTS,"PILOTOS CONECTADOS
+%s","CONNECTED PILOTS
+%s"
+"Ocupados: Cisterna %d · Explorador %d · Táctico %s","Ocupados: Cisterna %d · Explorador %d · Táctico %s","Occupied: Tanker %d · Scout %d · Tactician %s"
+"Piloto",Piloto,Pilot
+"Cisterna",Cisterna,Tanker
+"Táctico",Táctico,Tactician
+"Explorador",Explorador,Scout
+"ANFITRIÓN","ANFITRIÓN","HOST"
+LISTO,LISTO,READY
+ESPERANDO,ESPERANDO,WAITING
+libre,libre,available
+"Conectado a la sala.","Conectado a la sala.","Connected to the room."
+"CANCELAR LISTO","CANCELAR LISTO","CANCEL READY"
+"No fue posible cambiar el estado de listo.","No fue posible cambiar el estado de listo.","Could not change ready status."
+"No se pudo iniciar la partida.","No se pudo iniciar la partida.","Could not start the game."
+"Saliste de la sala.","Saliste de la sala.","You left the room."
+"El mensaje está vacío, supera 160 caracteres o no estás en una sala.","El mensaje está vacío, supera 160 caracteres o no estás en una sala.","The message is empty, exceeds 160 characters, or you are not in a room."
+"No se pudo seleccionar el rol.","No se pudo seleccionar el rol.","Could not select the role."
+"%s — %s%s — %s — %d ms","%s — %s%s — %s — %d ms","%s — %s%s — %s — %d ms"
+"%s — %s — %d/%d — %s","%s — %s — %d/%d — %s","%s — %s — %d/%d — %s"
+"Viento cambia","Viento cambia","Wind changes"
+"Vivienda en peligro","Vivienda en peligro","Residence in danger"
+HUD_EVENT_EXTINGUISHED,"%s apagó %d celdas","%s extinguished %d cells"
+HUD_EVENT_PING,"%s: %s","%s: %s"
+aguarague,aguarague,Aguaragüe
+campo_pajoso,campo_pajoso,"Campo Pajoso"
+interfase_urbana,interfase_urbana,"Urban Interface"
+baja,baja,low
+media,media,medium
+alta,alta,high
+"Piloto, revise el sector y mantenga el chorro sobre los focos. Vigile el agua y regrese al helipuerto al terminar.","Piloto, revise el sector y mantenga el chorro sobre los focos. Vigile el agua y regrese al helipuerto al terminar.","Pilot, survey the area and keep the stream on the fires. Watch your water and return to the helipad when finished."
+"Atento: localice el incendio, controle los focos y cuide la aeronave. Recargue en la fuente de agua cuando lo necesite.","Atento: localice el incendio, controle los focos y cuide la aeronave. Recargue en la fuente de agua cuando lo necesite.","Stay alert: locate the fire, control the hotspots, and protect the aircraft. Refill at the water source when needed."
+"¡Piloto, regrese al helipuerto y aterrice de inmediato!","¡Piloto, regrese al helipuerto y aterrice de inmediato!","Pilot, return to the helipad and land immediately!"
+"¡Deje de dar vueltas y vuelva al helipuerto, piloto!","¡Deje de dar vueltas y vuelva al helipuerto, piloto!","Stop circling and get back to the helipad, pilot!"
+"Recargando en la fuente de agua. Mantenga la posición, piloto.","Recargando en la fuente de agua. Mantenga la posición, piloto.","Refilling at the water source. Hold your position, pilot."
+"Depósito en recarga. Manténgase firme junto a la fuente de agua.","Depósito en recarga. Manténgase firme junto a la fuente de agua.","Tank refilling. Stay steady beside the water source."
+"Aún no, piloto. El foco está fuera de alcance.","Aún no, piloto. El foco está fuera de alcance.","Not yet, pilot. The fire is out of range."
+"Espere, piloto. Acérquese; el chorro no llega.","Espere, piloto. Acérquese; el chorro no llega.","Wait, pilot. Move closer; the spray cannot reach."
+"¡Piloto, mueva esa aeronave! El incendio no espera.","¡Piloto, mueva esa aeronave! El incendio no espera.","Move that aircraft, pilot! The fire won't wait."
+"¡Atento a los mandos! El sector necesita su intervención.","¡Atento a los mandos! El sector necesita su intervención.","Stay on the controls! The area needs your help."
+"Está lejos de la fuente de agua. Regrese al punto de recarga.","Está lejos de la fuente de agua. Regrese al punto de recarga.","You are far from the water source. Return to the refill point."
+"Piloto, acérquese a la fuente de agua para recargar.","Piloto, acérquese a la fuente de agua para recargar.","Pilot, approach the water source to refill."
+"¡Depósito vacío! Regrese a la fuente de agua y recargue.","¡Depósito vacío! Regrese a la fuente de agua y recargue.","Tank empty! Return to the water source and refill."
+"¡Sin agua, piloto! Vuelva al punto de recarga.","¡Sin agua, piloto! Vuelva al punto de recarga.","You're out of water, pilot! Return to the refill point."
+"¡Alto! El foco está fuera de alcance. Acérquese.","¡Alto! El foco está fuera de alcance. Acérquese.","Hold it! The fire is out of range. Move closer."
+"El chorro no llega al incendio. Acérquese antes de disparar.","El chorro no llega al incendio. Acérquese antes de disparar.","The spray cannot reach the fire. Move closer before spraying."
+"Está apuntando muy bajo, piloto. Suba la boquilla.","Está apuntando muy bajo, piloto. Suba la boquilla.","You're aiming too low, pilot. Raise the nozzle."
+"Suba la puntería; el foco está más alto.","Suba la puntería; el foco está más alto.","Aim higher; the fire is above you."
+"Está apuntando muy alto. Baje la boquilla.","Está apuntando muy alto. Baje la boquilla.","You're aiming too high. Lower the nozzle."
+"Baje la puntería, piloto. Mantenga el foco a la vista.","Baje la puntería, piloto. Mantenga el foco a la vista.","Aim lower, pilot. Keep the fire in sight."
+"El chorro pasa al lado del foco. Corrija la puntería.","El chorro pasa al lado del foco. Corrija la puntería.","The spray is missing the fire. Correct your aim."
+"Está desviando el chorro, piloto. Centre el incendio.","Está desviando el chorro, piloto. Centre el incendio.","You're missing the fire, pilot. Center your aim."
+"¡Está rociando terreno limpio! Centre el foco en la retícula.","¡Está rociando terreno limpio! Centre el foco en la retícula.","You're spraying clear ground! Center the fire in your reticle."
+"¡No desperdicie agua en terreno sin fuego! Corrija la puntería.","¡No desperdicie agua en terreno sin fuego! Corrija la puntería.","Don't waste water on ground without fire! Correct your aim."
+"¡Cuidado con la aeronave! Controle el vuelo antes de dañar el equipo.","¡Cuidado con la aeronave! Controle el vuelo antes de dañar el equipo.","Watch the aircraft! Control your flight before you damage the equipment."
+"¡Mire por dónde vuela, piloto! Proteja la aeronave.","¡Mire por dónde vuela, piloto! Proteja la aeronave.","Watch where you're flying, pilot! Protect the aircraft."
+"¡Alarma térmica! Aléjese de las llamas y gane altura.","¡Alarma térmica! Aléjese de las llamas y gane altura.","Thermal alarm! Move away from the flames and gain altitude."
+"¡Está demasiado cerca del fuego! Suba y proteja los motores.","¡Está demasiado cerca del fuego! Suba y proteja los motores.","You're too close to the fire! Climb and protect the engines."
+"¡El incendio está controlado! Regrese al helipuerto de inmediato.","¡El incendio está controlado! Regrese al helipuerto de inmediato.","The fire is under control! Return to the helipad immediately."
+"¡Misión de extinción terminada! Aterrice en el helipuerto, piloto.","¡Misión de extinción terminada! Aterrice en el helipuerto, piloto.","Fire suppression mission complete! Land at the helipad, pilot."
+"¡Foco neutralizado! Mantenga el chorro sobre el siguiente.","¡Foco neutralizado! Mantenga el chorro sobre el siguiente.","Fire contained! Keep the spray on the next one."
+"¡Buen trabajo! Pase al siguiente foco y mantenga la presión.","¡Buen trabajo! Pase al siguiente foco y mantenga la presión.","Good work! Move to the next hotspot and keep the pressure on."
+"¡Chorro efectivo! Manténgalo sobre el foco.","¡Chorro efectivo! Manténgalo sobre el foco.","Effective spray! Keep it on the fire."
+"¡Así se hace! Sostenga el chorro sobre las llamas.","¡Así se hace! Sostenga el chorro sobre las llamas.","That's it! Keep the spray on the flames."
+"¡Incendio controlado! Regrese al helipuerto.","¡Incendio controlado! Regrese al helipuerto.","Fire under control! Return to the helipad."
+"¡Todos los focos están controlados! Vuelva al helipuerto.","¡Todos los focos están controlados! Vuelva al helipuerto.","All hotspots are under control! Return to the helipad."
+"¡El incendio se extendió demasiado! Misión fallida, piloto.","¡El incendio se extendió demasiado! Misión fallida, piloto.","The fire has spread too far! Mission failed, pilot."
+"¡No pudimos contener el incendio! La misión ha terminado.","¡No pudimos contener el incendio! La misión ha terminado.","We couldn't contain the fire! The mission is over."
+"¡Misión cumplida! Aeronave asegurada. Buen trabajo, piloto.","¡Misión cumplida! Aeronave asegurada. Buen trabajo, piloto.","Mission accomplished! Aircraft secured. Good work, pilot."
+"¡Buen aterrizaje! El sector está protegido. Puede descansar, piloto.","¡Buen aterrizaje! El sector está protegido. Puede descansar, piloto.","Good landing! The area is secure. You can stand down, pilot."
+"Gire a la izquierda, piloto.","Gire a la izquierda, piloto.","Turn left, pilot."
+"Un poco más a la izquierda. Corrija el rumbo.","Un poco más a la izquierda. Corrija el rumbo.","A little farther left. Correct your heading."
+"Gire a la derecha, piloto.","Gire a la derecha, piloto.","Turn right, pilot."
+"Un poco más a la derecha. Corrija el rumbo.","Un poco más a la derecha. Corrija el rumbo.","A little farther right. Correct your heading."
+"Suba, el fuego está más alto.","Suba, el fuego está más alto.","Climb; the fire is higher."
+"Eleve la boquilla, piloto. El foco está arriba.","Eleve la boquilla, piloto. El foco está arriba.","Raise the nozzle, pilot. The fire is above."
+"Baje la boquilla, el fuego está más bajo.","Baje la boquilla, el fuego está más bajo.","Lower the nozzle; the fire is below."
+"Apunte más abajo, piloto. Corrija la elevación.","Apunte más abajo, piloto. Corrija la elevación.","Aim lower, pilot. Adjust your elevation."
+"Acérquese. Está fuera de alcance.","Acérquese. Está fuera de alcance.","Move closer. It is out of range."
+"El chorro no llega, piloto. Avance hacia el foco.","El chorro no llega, piloto. Avance hacia el foco.","The spray can't reach, pilot. Move toward the fire."
+"¡Así, mantenga el chorro!","¡Así, mantenga el chorro!","That's it, keep spraying!"
+"¡Buen blanco! Sostenga la puntería.","¡Buen blanco! Sostenga la puntería.","Good hit! Hold your aim."
+"Ajuste la puntería, piloto. Centre el foco.","Ajuste la puntería, piloto. Centre el foco.","Adjust your aim, pilot. Center the fire."
+"Corrija el rumbo y alinee el chorro con las llamas.","Corrija el rumbo y alinee el chorro con las llamas.","Correct your heading and align the spray with the flames."
+"Flota Guardian lista. Elija su aeronave y cumpla la tarea, piloto.","Flota Guardian lista. Elija su aeronave y cumpla la tarea, piloto.","Guardian fleet ready. Choose your aircraft and complete the task, pilot."
+"Unidades de respuesta disponibles. Seleccione su aeronave y prepárese.","Unidades de respuesta disponibles. Seleccione su aeronave y prepárese.","Response units available. Select your aircraft and prepare."
+"¿Ruleta para valientes? El viento puede complicar el vuelo. Domine los mandos antes de despegar.","¿Ruleta para valientes? El viento puede complicar el vuelo. Domine los mandos antes de despegar.","A roulette for the brave? Wind can make flying difficult. Master the controls before takeoff."
+"En esta prueba, el viento pondrá a prueba su control. Mantenga la cabeza fría, piloto.","En esta prueba, el viento pondrá a prueba su control. Mantenga la cabeza fría, piloto.","In this trial, the wind will test your control. Keep a cool head, pilot."
+"Operación activa. Proteja el sector y controle los focos del incendio.","Operación activa. Proteja el sector y controle los focos del incendio.","Operation active. Protect the area and control the fires."
+"Prioridad: contener el incendio y proteger la zona. Prepárese para despegar.","Prioridad: contener el incendio y proteger la zona. Prepárese para despegar.","Priority: contain the fire and protect the area. Prepare for takeoff."
+"Ajustes de vuelo listos. Calibre los mandos antes de entrar en acción.","Ajustes de vuelo listos. Calibre los mandos antes de entrar en acción.","Flight settings ready. Calibrate the controls before entering the action."
+"Revise los controles y deje la aeronave lista para la misión.","Revise los controles y deje la aeronave lista para la misión.","Check the controls and get the aircraft ready for the mission."

@@ -5,6 +5,18 @@ const TextosHartman := preload("res://scripts/ui/textos_hartman.gd")
 const ESCENA_AGUARAGUE: String = "res://scenes/levels/escena_aguarague.tscn"
 const ESCENA_CAMPO_PAJOSO: String = "res://scenes/levels/escena_campo_pajoso.tscn"
 const ESCENA_INTERFASE_URBANA: String = "res://scenes/levels/escena_interfase_urbana.tscn"
+const TEXTOS_ESCENA: Dictionary = {
+	"FrontUILayer/LeftTacticalPanel/HeaderBox/SystemLabel": "MENU_BRAND",
+	"FrontUILayer/LeftTacticalPanel/ButtonList/BtnIniciar": "MENU_START",
+	"FrontUILayer/LeftTacticalPanel/ButtonList/BtnDrones": "MENU_DRONES",
+	"FrontUILayer/LeftTacticalPanel/ButtonList/BtnRuleta": "MENU_ROULETTE",
+	"FrontUILayer/LeftTacticalPanel/ButtonList/BtnMisiones": "MENU_MISSIONS",
+	"FrontUILayer/LeftTacticalPanel/ButtonList/BtnConfig": "MENU_SETTINGS",
+	"FrontUILayer/LeftTacticalPanel/ButtonList/BtnSalir": "MENU_EXIT",
+	"FrontUILayer/LeftTacticalPanel/HartmanCard/PortraitBox/PortraitText": "MENU_HARTMAN_PORTRAIT",
+	"FrontUILayer/LeftTacticalPanel/HartmanCard/NameTag": "MENU_HARTMAN_NAME",
+	"FrontUILayer/LeftTacticalPanel/HartmanCard/DialogueText": "MENU_HARTMAN_WELCOME",
+}
 
 var textos_hartman = TextosHartman.new()
 @onready var bg_rect: TextureRect = $MenuArtBackground
@@ -20,6 +32,7 @@ var slider_volumen: HSlider
 var etiqueta_sensibilidad: Label
 var etiqueta_volumen: Label
 var selector_escenario: OptionButton
+var selector_idioma: OptionButton
 var panel_reasignacion: PanelContainer
 var botones_reasignacion: Dictionary = {}
 
@@ -34,6 +47,7 @@ func _ready() -> void:
 	InputConfig.asignaciones_actualizadas.connect(_actualizar_etiquetas_reasignacion)
 	InputConfig.reasignacion_iniciada.connect(_al_iniciar_reasignacion)
 	InputConfig.reasignacion_finalizada.connect(_al_finalizar_reasignacion)
+	_traducir_textos_escena()
 
 func load_art() -> void:
 	var background_texture = ResourceLoader.load("res://assets/ui/menu_background.png")
@@ -41,6 +55,14 @@ func load_art() -> void:
 		bg_rect.texture = background_texture
 	else:
 		push_error("No se pudo cargar el fondo del menú: res://assets/ui/menu_background.png")
+
+func _traducir_textos_escena() -> void:
+	for ruta in TEXTOS_ESCENA:
+		var control := get_node_or_null(str(ruta)) as Control
+		if not is_instance_valid(control):
+			push_error("No se encontró el texto del menú en la ruta %s." % ruta)
+			continue
+		control.set("text", tr(str(TEXTOS_ESCENA[ruta])))
 
 func _on_btn_1_iniciar_pressed() -> void:
 	var target: String = ESCENA_AGUARAGUE
@@ -63,13 +85,13 @@ func _crear_selector_escenario() -> void:
 	fila.name = "SelectorEscenario"
 	fila.add_theme_constant_override("separation", 8)
 	var etiqueta := Label.new()
-	etiqueta.text = "ESCENARIO"
+	etiqueta.text = tr("ESCENARIO")
 	etiqueta.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	fila.add_child(etiqueta)
 	selector_escenario = OptionButton.new()
-	selector_escenario.add_item("Aguaragüe", 0)
-	selector_escenario.add_item("Campo Pajoso", 1)
-	selector_escenario.add_item("Interfase Urbana", 2)
+	selector_escenario.add_item(tr("Aguaragüe"), 0)
+	selector_escenario.add_item(tr("Campo Pajoso"), 1)
+	selector_escenario.add_item(tr("Interfase Urbana"), 2)
 	selector_escenario.select(0)
 	fila.add_child(selector_escenario)
 	lista.add_child(fila)
@@ -109,21 +131,31 @@ func _crear_panel_ajustes() -> void:
 	panel_ajustes.add_child(contenido)
 
 	var titulo := Label.new()
-	titulo.text = "CONFIGURACIÓN"
+	titulo.text = tr("CONFIGURACIÓN")
 	titulo.add_theme_font_size_override("font_size", 18)
 	contenido.add_child(titulo)
 
 	var etiqueta_calidad := Label.new()
-	etiqueta_calidad.text = "Calidad gráfica"
+	etiqueta_calidad.text = tr("Calidad gráfica")
 	contenido.add_child(etiqueta_calidad)
 
 	selector_calidad = OptionButton.new()
-	selector_calidad.add_item("BAJA", GraphicsSettings.Calidad.BAJO)
-	selector_calidad.add_item("MEDIA", GraphicsSettings.Calidad.MEDIO)
-	selector_calidad.add_item("ALTA", GraphicsSettings.Calidad.ALTO)
+	selector_calidad.add_item(tr("BAJA"), GraphicsSettings.Calidad.BAJO)
+	selector_calidad.add_item(tr("MEDIA"), GraphicsSettings.Calidad.MEDIO)
+	selector_calidad.add_item(tr("ALTA"), GraphicsSettings.Calidad.ALTO)
 	selector_calidad.select(GraphicsSettings.calidad_actual)
 	selector_calidad.item_selected.connect(_al_cambiar_calidad)
 	contenido.add_child(selector_calidad)
+
+	var etiqueta_idioma := Label.new()
+	etiqueta_idioma.text = tr("Idioma")
+	contenido.add_child(etiqueta_idioma)
+	selector_idioma = OptionButton.new()
+	selector_idioma.add_item(tr("Español"), 0)
+	selector_idioma.add_item(tr("English"), 1)
+	selector_idioma.select(0 if LocalizationManager.idioma_actual() == "es" else 1)
+	selector_idioma.item_selected.connect(_al_cambiar_idioma)
+	contenido.add_child(selector_idioma)
 
 	etiqueta_sensibilidad = Label.new()
 	contenido.add_child(etiqueta_sensibilidad)
@@ -153,23 +185,23 @@ func _crear_panel_ajustes() -> void:
 	_crear_slider_audio(contenido, "UI", "Volumen de interfaz")
 
 	var etiqueta_ayuda := Label.new()
-	etiqueta_ayuda.text = "Ayuda de puntería"
+	etiqueta_ayuda.text = tr("Ayuda de puntería")
 	contenido.add_child(etiqueta_ayuda)
 	selector_ayuda = OptionButton.new()
-	selector_ayuda.add_item("ALTA — voz, retícula y flecha", AjustesAyuda.AYUDA_ALTA)
-	selector_ayuda.add_item("MEDIA — retícula y flecha", AjustesAyuda.AYUDA_MEDIA)
-	selector_ayuda.add_item("BAJA — solo retícula", AjustesAyuda.AYUDA_BAJA)
-	selector_ayuda.add_item("NINGUNA", AjustesAyuda.AYUDA_NINGUNA)
+	selector_ayuda.add_item(tr("ALTA — voz, retícula y flecha"), AjustesAyuda.AYUDA_ALTA)
+	selector_ayuda.add_item(tr("MEDIA — retícula y flecha"), AjustesAyuda.AYUDA_MEDIA)
+	selector_ayuda.add_item(tr("BAJA — solo retícula"), AjustesAyuda.AYUDA_BAJA)
+	selector_ayuda.add_item(tr("NINGUNA"), AjustesAyuda.AYUDA_NINGUNA)
 	selector_ayuda.item_selected.connect(_al_cambiar_nivel_ayuda)
 	contenido.add_child(selector_ayuda)
 
 	var boton_controles := Button.new()
-	boton_controles.text = "REASIGNAR TECLAS Y GAMEPAD"
+	boton_controles.text = tr("REASIGNAR TECLAS Y GAMEPAD")
 	boton_controles.pressed.connect(_alternar_panel_reasignacion)
 	contenido.add_child(boton_controles)
 
 	var volver := Button.new()
-	volver.text = "VOLVER"
+	volver.text = tr("VOLVER")
 	volver.pressed.connect(_cerrar_panel_ajustes)
 	contenido.add_child(volver)
 	_seleccionar_nivel_ayuda_guardado()
@@ -185,11 +217,11 @@ func _crear_panel_reasignacion() -> void:
 	contenido.add_theme_constant_override("separation", 8)
 	panel_reasignacion.add_child(contenido)
 	var titulo := Label.new()
-	titulo.text = "CONTROLES"
+	titulo.text = tr("CONTROLES")
 	titulo.add_theme_font_size_override("font_size", 18)
 	contenido.add_child(titulo)
 	var instruccion := Label.new()
-	instruccion.text = (
+	instruccion.text = tr(
 		"Selecciona una asignación y pulsa una tecla, botón o dirección del mando. ESC cancela."
 	)
 	instruccion.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -214,7 +246,7 @@ func _crear_panel_reasignacion() -> void:
 		botones_reasignacion[accion] = boton
 	_actualizar_etiquetas_reasignacion()
 	var cerrar := Button.new()
-	cerrar.text = "CERRAR"
+	cerrar.text = tr("CERRAR")
 	cerrar.pressed.connect(func() -> void: panel_reasignacion.visible = false)
 	contenido.add_child(cerrar)
 
@@ -232,7 +264,7 @@ func _actualizar_etiquetas_reasignacion() -> void:
 func _al_iniciar_reasignacion(accion: StringName) -> void:
 	var boton := botones_reasignacion.get(accion) as Button
 	if is_instance_valid(boton):
-		boton.text = "Pulsa una entrada..."
+		boton.text = tr("Pulsa una entrada...")
 
 func _al_finalizar_reasignacion(accion: StringName, cancelada: bool) -> void:
 	if not cancelada:
@@ -246,7 +278,7 @@ func _crear_panel_multijugador() -> void:
 	var lista_botones := $FrontUILayer/LeftTacticalPanel/ButtonList as VBoxContainer
 	var boton_multijugador := Button.new()
 	boton_multijugador.name = "BtnMultijugador"
-	boton_multijugador.text = "🌐  MULTIJUGADOR"
+	boton_multijugador.text = tr("🌐  MULTIJUGADOR")
 	boton_multijugador.custom_minimum_size = Vector2(0, 44)
 	boton_multijugador.pressed.connect(_abrir_lobby_multijugador)
 	lista_botones.add_child(boton_multijugador)
@@ -259,6 +291,12 @@ func _abrir_lobby_multijugador() -> void:
 func _al_cambiar_calidad(indice: int) -> void:
 	GraphicsSettings.configurar_calidad(selector_calidad.get_item_id(indice))
 
+func _al_cambiar_idioma(indice: int) -> void:
+	LocalizationManager.configurar_idioma("es" if indice == 0 else "en")
+	var error_recarga := get_tree().reload_current_scene()
+	if error_recarga != OK:
+		push_error("No se pudo actualizar el idioma del menú (error %d)." % error_recarga)
+
 func _al_cambiar_sensibilidad_mouse(valor: float) -> void:
 	GraphicsSettings.configurar_sensibilidad_mouse(valor)
 	_actualizar_etiqueta_sensibilidad(valor)
@@ -269,7 +307,7 @@ func _al_cambiar_volumen_maestro(valor: float) -> void:
 
 func _crear_slider_audio(contenido: VBoxContainer, bus: String, titulo: String) -> void:
 	var etiqueta := Label.new()
-	etiqueta.text = titulo
+	etiqueta.text = tr(titulo)
 	contenido.add_child(etiqueta)
 	var slider := HSlider.new()
 	slider.name = "Volumen%s" % bus
@@ -285,10 +323,10 @@ func _crear_slider_audio(contenido: VBoxContainer, bus: String, titulo: String) 
 	contenido.add_child(slider)
 
 func _actualizar_etiqueta_sensibilidad(valor: float) -> void:
-	etiqueta_sensibilidad.text = "Sensibilidad del ratón: %.4f" % valor
+	etiqueta_sensibilidad.text = tr("Sensibilidad del ratón: %.4f") % valor
 
 func _actualizar_etiqueta_volumen(valor: float) -> void:
-	etiqueta_volumen.text = "Volumen maestro: %d%%" % int(round(valor * 100.0))
+	etiqueta_volumen.text = tr("Volumen maestro: %d%%") % int(round(valor * 100.0))
 
 func _seleccionar_nivel_ayuda_guardado() -> void:
 	for indice in range(selector_ayuda.get_item_count()):

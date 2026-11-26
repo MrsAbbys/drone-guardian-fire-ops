@@ -15,6 +15,8 @@ const RUTA_REGISTROS: String = "user://records.cfg"
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	boton_reintentar.text = tr("RESULT_RETRY")
+	boton_menu.text = tr("RESULT_MENU")
 	boton_reintentar.disabled = (
 		not NetworkManager.codigo_sala.is_empty() and not NetworkManager.es_anfitrion_local()
 	)
@@ -37,14 +39,14 @@ func _mostrar_resultado() -> void:
 	var estrellas := _calcular_estrellas(
 		victoria, porcentaje, objetivos_salvados, objetivos_totales, agua_desperdiciada
 	)
-	etiqueta_estado.text = "MISIÓN COMPLETADA" if victoria else "MISIÓN FALLIDA"
+	etiqueta_estado.text = tr("RESULT_COMPLETED") if victoria else tr("RESULT_FAILED")
 	etiqueta_estrellas.text = "★".repeat(estrellas) + "☆".repeat(3 - estrellas)
-	etiqueta_tiempo.text = "Tiempo: %s" % _formatear_tiempo(segundos)
-	etiqueta_superficie.text = "Superficie salvada: %.1f%%" % porcentaje
+	etiqueta_tiempo.text = tr("RESULT_TIME") % _formatear_tiempo(segundos)
+	etiqueta_superficie.text = tr("RESULT_SAVED_SURFACE") % porcentaje
 	etiqueta_objetivos.text = (
-		"Objetivos críticos: %d / %d" % [objetivos_salvados, objetivos_totales]
+		tr("RESULT_CRITICAL_OBJECTIVES") % [objetivos_salvados, objetivos_totales]
 	)
-	etiqueta_agua.text = "Agua desperdiciada: %.1f s" % agua_desperdiciada
+	etiqueta_agua.text = tr("RESULT_WASTED_WATER") % agua_desperdiciada
 	etiqueta_record.text = _guardar_y_leer_record(datos, estrellas)
 
 
@@ -75,7 +77,7 @@ func _guardar_y_leer_record(datos: Dictionary, estrellas: int) -> String:
 	var error_carga := registros.load(RUTA_REGISTROS)
 	if error_carga != OK and error_carga != ERR_FILE_NOT_FOUND:
 		push_error("No se pudieron leer los mejores puntajes: %s." % error_carga)
-		return "No se pudo cargar el récord."
+		return tr("RESULT_RECORD_LOAD_FAILED")
 	var escenario := str(datos.get("escenario", "sin_escenario"))
 	var actual := {
 		"estrellas": estrellas,
@@ -91,10 +93,10 @@ func _guardar_y_leer_record(datos: Dictionary, estrellas: int) -> String:
 		var error_guardado := registros.save(RUTA_REGISTROS)
 		if error_guardado != OK:
 			push_error("No se pudo guardar el mejor puntaje (error %d)." % error_guardado)
-			return "Récord nuevo: %.1f%%" % float(actual["superficie_salvada_pct"])
+			return tr("RESULT_NEW_RECORD") % float(actual["superficie_salvada_pct"])
 		anterior = actual
 	return (
-		"Mejor: %d estrellas · %.1f%%"
+		tr("RESULT_BEST_SCORE")
 		% [
 			int(anterior.get("estrellas", 0)),
 			float(anterior.get("superficie_salvada_pct", 0.0)),
