@@ -29,6 +29,7 @@ FireGridServer="*res://scripts/sim/fire_grid_server.gd"
 NetworkManager="*res://scripts/network/network_manager.gd"
 AudioManager="*res://scripts/autoload/audio_manager.gd"
 MissionResults="*res://scripts/autoload/mission_results.gd"
+TutorialManager="*res://scripts/autoload/tutorial_manager.gd"
 
 [audio]
 
