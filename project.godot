@@ -23,6 +23,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 [autoload]
 
 AjustesAyuda="*res://scripts/autoload/ajustes_ayuda.gd"
+InputConfig="*res://scripts/autoload/input_config.gd"
 GraphicsSettings="*res://scripts/autoload/graphics_settings.gd"
 FirePool="*res://scripts/autoload/fire_pool.gd"
 FireGridServer="*res://scripts/sim/fire_grid_server.gd"

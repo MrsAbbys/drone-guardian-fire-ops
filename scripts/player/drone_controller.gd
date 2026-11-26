@@ -130,7 +130,6 @@ func _ready() -> void:
 	add_to_group("jugador")
 	var es_autoridad_local := is_multiplayer_authority()
 	if es_autoridad_local:
-		crear_acciones_de_entrada()
 		mouse_sensitivity = GraphicsSettings.sensibilidad_mouse
 		GraphicsSettings.sensibilidad_mouse_cambiada.connect(_al_cambiar_sensibilidad_mouse)
 	current_health = max_health
@@ -242,34 +241,6 @@ func _al_sincronizar_dron() -> void:
 		velocity,
 		Time.get_ticks_msec()
 	)
-
-func crear_acciones_de_entrada() -> void:
-	_agregar_accion_tecla("drone_forward", KEY_W)
-	_agregar_accion_tecla("drone_backward", KEY_S)
-	_agregar_accion_tecla("drone_left", KEY_A)
-	_agregar_accion_tecla("drone_right", KEY_D)
-	_agregar_accion_tecla("drone_ascend", KEY_SPACE)
-	_agregar_accion_tecla("drone_descend", KEY_C)
-	_agregar_accion_tecla("drone_refill", KEY_E)
-	_agregar_accion_tecla("drone_special", KEY_Q)
-	_agregar_accion_boton_mouse("drone_spray", MOUSE_BUTTON_LEFT)
-	_agregar_accion_boton_mouse("drone_retardant", MOUSE_BUTTON_RIGHT)
-
-func _agregar_accion_tecla(action: StringName, key: Key) -> void:
-	if not InputMap.has_action(action):
-		InputMap.add_action(action)
-	var event := InputEventKey.new()
-	event.physical_keycode = key
-	if not InputMap.action_has_event(action, event):
-		InputMap.action_add_event(action, event)
-
-func _agregar_accion_boton_mouse(action: StringName, button: MouseButton) -> void:
-	if not InputMap.has_action(action):
-		InputMap.add_action(action)
-	var event := InputEventMouseButton.new()
-	event.button_index = button
-	if not InputMap.action_has_event(action, event):
-		InputMap.action_add_event(action, event)
 
 func _configurar_colision() -> void:
 	var body_shape := BoxShape3D.new()

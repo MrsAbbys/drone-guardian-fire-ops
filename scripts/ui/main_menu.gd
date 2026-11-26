@@ -20,6 +20,8 @@ var slider_volumen: HSlider
 var etiqueta_sensibilidad: Label
 var etiqueta_volumen: Label
 var selector_escenario: OptionButton
+var panel_reasignacion: PanelContainer
+var botones_reasignacion: Dictionary = {}
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -27,7 +29,11 @@ func _ready() -> void:
 	load_art()
 	_crear_selector_escenario()
 	_crear_panel_ajustes()
+	_crear_panel_reasignacion()
 	_crear_panel_multijugador()
+	InputConfig.asignaciones_actualizadas.connect(_actualizar_etiquetas_reasignacion)
+	InputConfig.reasignacion_iniciada.connect(_al_iniciar_reasignacion)
+	InputConfig.reasignacion_finalizada.connect(_al_finalizar_reasignacion)
 
 func load_art() -> void:
 	var background_texture = ResourceLoader.load("res://assets/ui/menu_background.png")
@@ -93,8 +99,8 @@ func _crear_panel_ajustes() -> void:
 	panel_ajustes = PanelContainer.new()
 	panel_ajustes.name = "PanelConfiguracion"
 	panel_ajustes.position = Vector2(420.0, 70.0)
-	panel_ajustes.size = Vector2(480.0, 580.0)
-	panel_ajustes.custom_minimum_size = Vector2(480.0, 580.0)
+	panel_ajustes.size = Vector2(480.0, 630.0)
+	panel_ajustes.custom_minimum_size = Vector2(480.0, 630.0)
 	panel_ajustes.visible = false
 	capa_ui.add_child(panel_ajustes)
 
@@ -157,11 +163,84 @@ func _crear_panel_ajustes() -> void:
 	selector_ayuda.item_selected.connect(_al_cambiar_nivel_ayuda)
 	contenido.add_child(selector_ayuda)
 
+	var boton_controles := Button.new()
+	boton_controles.text = "REASIGNAR TECLAS Y GAMEPAD"
+	boton_controles.pressed.connect(_alternar_panel_reasignacion)
+	contenido.add_child(boton_controles)
+
 	var volver := Button.new()
 	volver.text = "VOLVER"
 	volver.pressed.connect(_cerrar_panel_ajustes)
 	contenido.add_child(volver)
 	_seleccionar_nivel_ayuda_guardado()
+
+func _crear_panel_reasignacion() -> void:
+	panel_reasignacion = PanelContainer.new()
+	panel_reasignacion.name = "PanelReasignacion"
+	panel_reasignacion.position = Vector2(830.0, 70.0)
+	panel_reasignacion.custom_minimum_size = Vector2(420.0, 580.0)
+	panel_reasignacion.visible = false
+	capa_ui.add_child(panel_reasignacion)
+	var contenido := VBoxContainer.new()
+	contenido.add_theme_constant_override("separation", 8)
+	panel_reasignacion.add_child(contenido)
+	var titulo := Label.new()
+	titulo.text = "CONTROLES"
+	titulo.add_theme_font_size_override("font_size", 18)
+	contenido.add_child(titulo)
+	var instruccion := Label.new()
+	instruccion.text = (
+		"Selecciona una asignación y pulsa una tecla, botón o dirección del mando. ESC cancela."
+	)
+	instruccion.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	contenido.add_child(instruccion)
+	var lista := VBoxContainer.new()
+	lista.add_theme_constant_override("separation", 4)
+	contenido.add_child(lista)
+	for accion in InputConfig.obtener_acciones():
+		var fila := HBoxContainer.new()
+		fila.add_theme_constant_override("separation", 6)
+		lista.add_child(fila)
+		var etiqueta := Label.new()
+		etiqueta.text = InputConfig.obtener_etiqueta(accion)
+		etiqueta.custom_minimum_size = Vector2(158.0, 34.0)
+		etiqueta.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		fila.add_child(etiqueta)
+		var boton := Button.new()
+		boton.custom_minimum_size = Vector2(205.0, 34.0)
+		boton.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		boton.pressed.connect(InputConfig.iniciar_reasignacion.bind(accion))
+		fila.add_child(boton)
+		botones_reasignacion[accion] = boton
+	_actualizar_etiquetas_reasignacion()
+	var cerrar := Button.new()
+	cerrar.text = "CERRAR"
+	cerrar.pressed.connect(func() -> void: panel_reasignacion.visible = false)
+	contenido.add_child(cerrar)
+
+func _alternar_panel_reasignacion() -> void:
+	panel_reasignacion.visible = not panel_reasignacion.visible
+	if panel_reasignacion.visible:
+		_actualizar_etiquetas_reasignacion()
+
+func _actualizar_etiquetas_reasignacion() -> void:
+	for accion in botones_reasignacion:
+		var boton := botones_reasignacion[accion] as Button
+		if is_instance_valid(boton):
+			boton.text = InputConfig.obtener_resumen(accion)
+
+func _al_iniciar_reasignacion(accion: StringName) -> void:
+	var boton := botones_reasignacion.get(accion) as Button
+	if is_instance_valid(boton):
+		boton.text = "Pulsa una entrada..."
+
+func _al_finalizar_reasignacion(accion: StringName, cancelada: bool) -> void:
+	if not cancelada:
+		_actualizar_etiquetas_reasignacion()
+	else:
+		var boton := botones_reasignacion.get(accion) as Button
+		if is_instance_valid(boton):
+			boton.text = InputConfig.obtener_resumen(accion)
 
 func _crear_panel_multijugador() -> void:
 	var lista_botones := $FrontUILayer/LeftTacticalPanel/ButtonList as VBoxContainer
