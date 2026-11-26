@@ -432,6 +432,11 @@ func salir() -> void:
 	sala_actualizada.emit(codigo_sala, jugadores)
 	metricas_red_actualizadas.emit(_bytes_por_jugador)
 
+func reiniciar_estadisticas_mision() -> void:
+	_estadisticas_jugadores.clear()
+	_colaboradores_por_celda.clear()
+	_marcador_final_enviado = false
+
 func publicar_estado_fuego(deltas: Array, inicial: bool = false) -> void:
 	if not multiplayer.is_server() or not multiplayer.has_multiplayer_peer():
 		return
@@ -1237,11 +1242,6 @@ func _terminar_sala_en_directorio() -> void:
 func _al_finalizar_mision() -> void:
 	if multiplayer.is_server():
 		_publicar_marcador_final()
-	if not _servidor_dedicado or _directorio_finalizado:
-		return
-	_directorio_finalizado = true
-	_temporizador_directorio.stop()
-	_terminar_sala_en_directorio()
 
 func _conectar_fin_mision() -> void:
 	if not multiplayer.is_server():

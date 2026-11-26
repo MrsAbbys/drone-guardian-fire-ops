@@ -24,10 +24,11 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 AjustesAyuda="*res://scripts/autoload/ajustes_ayuda.gd"
 GraphicsSettings="*res://scripts/autoload/graphics_settings.gd"
-AudioManager="*res://scripts/autoload/audio_manager.gd"
 FirePool="*res://scripts/autoload/fire_pool.gd"
 FireGridServer="*res://scripts/sim/fire_grid_server.gd"
 NetworkManager="*res://scripts/network/network_manager.gd"
+AudioManager="*res://scripts/autoload/audio_manager.gd"
+MissionResults="*res://scripts/autoload/mission_results.gd"
 
 [audio]
 

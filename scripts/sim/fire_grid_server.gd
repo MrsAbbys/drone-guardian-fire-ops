@@ -242,6 +242,23 @@ func obtener_estado_celdas() -> PackedByteArray:
 		return PackedByteArray()
 	return grilla.get("estado")
 
+func obtener_porcentaje_superficie_salvada() -> float:
+	if not activa or not is_instance_valid(grilla):
+		return 0.0
+	var estados: PackedByteArray = grilla.get("estado")
+	var combustibles: PackedByteArray = grilla.get("tipo_combustible")
+	var total_combustible: int = 0
+	var superficie_salvada: int = 0
+	for indice in range(mini(estados.size(), combustibles.size())):
+		if combustibles[indice] == FireGrid.SIN_COMBUSTIBLE:
+			continue
+		total_combustible += 1
+		if estados[indice] == FireGrid.SANO or estados[indice] == FireGrid.MOJADO:
+			superficie_salvada += 1
+	if total_combustible == 0:
+		return 0.0
+	return 100.0 * float(superficie_salvada) / float(total_combustible)
+
 func obtener_alturas() -> PackedFloat32Array:
 	if not activa:
 		return PackedFloat32Array()

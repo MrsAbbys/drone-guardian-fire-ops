@@ -1,0 +1,92 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/resultados.gd" id="1_resultados"]
+
+[node name="Resultados" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_resultados")
+
+[node name="Fondo" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.025, 0.045, 0.07, 1)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -290.0
+offset_top = -260.0
+offset_right = 290.0
+offset_bottom = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Contenido" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Estado" type="Label" parent="Panel/Contenido"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "RESULTADOS"
+horizontal_alignment = 1
+
+[node name="Estrellas" type="Label" parent="Panel/Contenido"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.77, 0.19, 1)
+theme_override_font_sizes/font_size = 38
+text = "★★★"
+horizontal_alignment = 1
+
+[node name="Tiempo" type="Label" parent="Panel/Contenido"]
+layout_mode = 2
+text = "Tiempo: 00:00"
+horizontal_alignment = 1
+
+[node name="Superficie" type="Label" parent="Panel/Contenido"]
+layout_mode = 2
+text = "Superficie salvada: 0%"
+horizontal_alignment = 1
+
+[node name="Objetivos" type="Label" parent="Panel/Contenido"]
+layout_mode = 2
+text = "Objetivos críticos: 0 / 0"
+horizontal_alignment = 1
+
+[node name="AguaDesperdiciada" type="Label" parent="Panel/Contenido"]
+layout_mode = 2
+text = "Agua desperdiciada: 0 s"
+horizontal_alignment = 1
+
+[node name="Record" type="Label" parent="Panel/Contenido"]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="Botones" type="HBoxContainer" parent="Panel/Contenido"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Reintentar" type="Button" parent="Panel/Contenido/Botones"]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+text = "REINTENTAR"
+
+[node name="Menu" type="Button" parent="Panel/Contenido/Botones"]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+text = "MENÚ"

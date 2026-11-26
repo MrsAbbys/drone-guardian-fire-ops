@@ -124,6 +124,7 @@ var _tiempo_aplicar_agua: float = 0.0
 var _agua_pendiente_rociado: float = 0.0
 var _proxima_habilidad_ms: int = 0
 var _proximo_retardante_ms: int = 0
+var _tiempo_desperdicio_continuo: float = 0.0
 
 func _ready() -> void:
 	add_to_group("jugador")
@@ -468,7 +469,7 @@ func _actualizar_disparo_solitario(delta: float) -> void:
 		return
 	if not is_discharging:
 		empty_water_warning_sent = false
-		wasted_water_time = 0.0
+		_tiempo_desperdicio_continuo = 0.0
 		_notificar_alcance_chorro(false)
 		return
 	if Input.is_action_just_pressed("drone_spray") and apuntando_fuego_fuera_de_alcance:
@@ -483,7 +484,7 @@ func _actualizar_disparo_solitario(delta: float) -> void:
 	var target := _detectar_fuego()
 	_notificar_alcance_chorro(apuntando_fuego_fuera_de_alcance)
 	if target and is_instance_valid(target):
-		wasted_water_time = 0.0
+		_tiempo_desperdicio_continuo = 0.0
 		var extinguished := false
 		if FireGridServer.activa:
 			var informacion := obtener_info_puntería()
@@ -514,11 +515,12 @@ func _actualizar_disparo_solitario(delta: float) -> void:
 				radio,
 				used_water * potencia_chorro
 			)
-			wasted_water_time = 0.0
+			_tiempo_desperdicio_continuo = 0.0
 	else:
 		wasted_water_time += delta
-		if wasted_water_time >= 0.35:
-			wasted_water_time = 0.0
+		_tiempo_desperdicio_continuo += delta
+		if _tiempo_desperdicio_continuo >= 0.35:
+			_tiempo_desperdicio_continuo = 0.0
 			if hud_node:
 				var info := obtener_info_puntería()
 				var causa := str(info.get("causa_desperdicio", "pasto_limpio"))
@@ -598,6 +600,7 @@ func _procesar_rociado_servidor(delta: float) -> void:
 		is_discharging = false
 		_agua_pendiente_rociado = 0.0
 		_tiempo_aplicar_agua = 0.0
+		_tiempo_desperdicio_continuo = 0.0
 		return
 	is_discharging = true
 	var usado := minf(agua_actual, gasto_por_segundo * delta)
@@ -617,6 +620,7 @@ func _procesar_rociado_servidor(delta: float) -> void:
 	var direccion_actual := (-nozzle.global_basis.z).normalized()
 	var impacto: Variant = _buscar_celda_en_chorro(direccion_actual)
 	if impacto is Vector3:
+		_tiempo_desperdicio_continuo = 0.0
 		var distancia := nozzle.global_position.distance_to(impacto)
 		var radio := radio_chorro_base + distancia * ensanche_chorro
 		FireGridServer.aplicar_agua_atribuida(
@@ -625,6 +629,13 @@ func _procesar_rociado_servidor(delta: float) -> void:
 			radio,
 			_agua_pendiente_rociado * potencia_chorro
 		)
+	else:
+		wasted_water_time += _tiempo_aplicar_agua
+		_tiempo_desperdicio_continuo += _tiempo_aplicar_agua
+		if _tiempo_desperdicio_continuo >= 0.35:
+			_tiempo_desperdicio_continuo = 0.0
+			if hud_node:
+				hud_node.trigger_hartman_warning("wasted_water")
 	_agua_pendiente_rociado = 0.0
 	_tiempo_aplicar_agua = 0.0
 
