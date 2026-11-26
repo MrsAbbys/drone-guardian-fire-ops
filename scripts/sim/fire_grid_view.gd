@@ -33,17 +33,25 @@ func _ready() -> void:
 		_reconciliar_visuales()
 
 func _exit_tree() -> void:
+	if is_instance_valid(_temporizador):
+		_temporizador.stop()
 	if FireGridServer.celdas_modificadas.is_connected(_al_modificarse_celdas):
 		FireGridServer.celdas_modificadas.disconnect(_al_modificarse_celdas)
 	if FireGridServer.estado_inicial.is_connected(_al_recibir_estado_inicial):
 		FireGridServer.estado_inicial.disconnect(_al_recibir_estado_inicial)
 	for indice in _visuales_por_celda.keys().duplicate():
 		_liberar_visual(int(indice))
+	_visuales_por_celda.clear()
+	_arboles_por_celda.clear()
+	arboles_iniciales.clear()
+	_fuego_central = null
+	_temporizador = null
 
 func olvidar_visual_fuego(visual: Node3D) -> void:
 	var celdas_anteriores: Array = []
-	for indice in _visuales_por_celda.keys():
-		if _visuales_por_celda[indice] == visual:
+	for indice in _visuales_por_celda.keys().duplicate():
+		var visual_guardado: Variant = _visuales_por_celda[indice]
+		if not is_instance_valid(visual_guardado) or visual_guardado == visual:
 			celdas_anteriores.append(indice)
 	for indice in celdas_anteriores:
 		_visuales_por_celda.erase(indice)
@@ -61,13 +69,16 @@ func _reconstruir_mapa_arboles() -> void:
 	var origen: Vector2 = FireGridServer.obtener_origen()
 	var tamano: Vector2i = FireGridServer.obtener_tamano_celdas()
 	for arbol in arboles_iniciales:
-		if not is_instance_valid(arbol):
+		if not is_instance_valid(arbol) or arbol.is_queued_for_deletion():
 			continue
 		var celda_x := floori((arbol.global_position.x - origen.x) / CELDA_METROS)
 		var celda_y := floori((arbol.global_position.z - origen.y) / CELDA_METROS)
 		if celda_x < 0 or celda_y < 0 or celda_x >= tamano.x or celda_y >= tamano.y:
 			continue
 		_arboles_por_celda[celda_y * tamano.x + celda_x] = arbol
+	for indice in _arboles_por_celda:
+		if indice >= 0 and indice < _estados_por_celda.size():
+			_actualizar_estado_arbol(int(indice), int(_estados_por_celda[indice]))
 
 func _al_modificarse_celdas(deltas: Array) -> void:
 	for delta_estado in deltas:
@@ -77,12 +88,10 @@ func _al_modificarse_celdas(deltas: Array) -> void:
 		var estado := int(delta_estado[1])
 		if indice < 0 or indice >= _estados_por_celda.size():
 			continue
-		var estado_anterior := int(_estados_por_celda[indice])
 		_estados_por_celda[indice] = estado
+		_actualizar_estado_arbol(indice, estado)
 		if estado == ESTADO_SANO or estado == ESTADO_QUEMADO or estado == ESTADO_MOJADO:
 			_liberar_visual(indice)
-		if estado_anterior == ESTADO_ARDIENDO and estado == ESTADO_QUEMADO:
-			_carbonizar_arbol(indice)
 	_actualizar_efecto_central()
 
 func _reconciliar_visuales() -> void:
@@ -111,8 +120,10 @@ func _reconciliar_visuales() -> void:
 		if (
 			camara.global_position.distance_squared_to(visual.global_position)
 			> DISTANCIA_MAXIMA_VISUAL * DISTANCIA_MAXIMA_VISUAL
-		):
+		) and not FireGridServer.es_celda_arbol_foco(int(indice)):
 			_liberar_visual(int(indice))
+			continue
+		_actualizar_intensidad_fuego(int(indice))
 
 	for indice in celdas_ardiendo:
 		if indice < 0 or indice >= alturas.size():
@@ -126,13 +137,20 @@ func _reconciliar_visuales() -> void:
 			origen.y + (float(celda.y) + 0.5) * CELDA_METROS
 		)
 		var distancia_cuadrada := camara.global_position.distance_squared_to(posicion)
-		if distancia_cuadrada <= DISTANCIA_MAXIMA_VISUAL * DISTANCIA_MAXIMA_VISUAL:
+		var es_foco := FireGridServer.es_celda_arbol_foco(indice)
+		if (
+			distancia_cuadrada <= DISTANCIA_MAXIMA_VISUAL * DISTANCIA_MAXIMA_VISUAL
+			or es_foco
+		):
 			candidatas.append({
 				"indice": indice,
 				"posicion": posicion,
 				"distancia": distancia_cuadrada,
+				"foco": es_foco,
 			})
 	candidatas.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if bool(a["foco"]) != bool(b["foco"]):
+			return bool(a["foco"])
 		return float(a["distancia"]) < float(b["distancia"])
 	)
 	var limite := mini(FirePool.tamano_max_actual, FirePool.TAMANO_MAX)
@@ -152,6 +170,7 @@ func _reconciliar_visuales() -> void:
 			FirePool.liberar(visual)
 			continue
 		_visuales_por_celda[indice] = visual
+		_actualizar_intensidad_fuego(indice)
 
 func _distancia_visual_mas_lejana(camara: Camera3D) -> float:
 	var distancia_maxima: float = -1.0
@@ -182,15 +201,37 @@ func _actualizar_efecto_central() -> void:
 func _liberar_visual(indice: int) -> void:
 	if not _visuales_por_celda.has(indice):
 		return
-	var visual: Node3D = _visuales_por_celda[indice]
+	var visual: Variant = _visuales_por_celda[indice]
 	_visuales_por_celda.erase(indice)
 	if is_instance_valid(visual):
 		FirePool.liberar(visual)
 
 func _carbonizar_arbol(indice: int) -> void:
-	if not _arboles_por_celda.has(indice):
-		return
-	var arbol: Node = _arboles_por_celda[indice]
-	_arboles_por_celda.erase(indice)
-	if is_instance_valid(arbol) and arbol.has_method("carbonizar_por_grilla"):
-		arbol.call("carbonizar_por_grilla")
+	_actualizar_estado_arbol(indice, ESTADO_QUEMADO)
+
+func _actualizar_estado_arbol(indice: int, estado: int) -> void:
+	var arbol_variant: Variant = _arboles_por_celda.get(indice)
+	if (
+		is_instance_valid(arbol_variant)
+		and not arbol_variant.is_queued_for_deletion()
+		and arbol_variant.has_method("actualizar_estado_fuego")
+	):
+		arbol_variant.call("actualizar_estado_fuego", estado)
+	_actualizar_intensidad_fuego(indice)
+
+func _actualizar_intensidad_fuego(indice: int) -> void:
+	var intensidad: float = FireGridServer.obtener_intensidad_fuego(indice)
+	var arbol_variant: Variant = _arboles_por_celda.get(indice)
+	if (
+		is_instance_valid(arbol_variant)
+		and not arbol_variant.is_queued_for_deletion()
+		and arbol_variant.has_method("actualizar_intensidad_fuego")
+	):
+		arbol_variant.call("actualizar_intensidad_fuego", intensidad)
+	var visual_variant: Variant = _visuales_por_celda.get(indice)
+	if (
+		is_instance_valid(visual_variant)
+		and not visual_variant.is_queued_for_deletion()
+		and visual_variant.has_method("set_intensidad")
+	):
+		visual_variant.call("set_intensidad", intensidad / 100.0)

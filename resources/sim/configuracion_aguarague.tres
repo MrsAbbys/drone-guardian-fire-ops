@@ -6,8 +6,8 @@
 
 [sub_resource type="Resource" id="PerfilBosqueSeco"]
 script = ExtResource("2_perfil")
-tasa_ignicion = 0.0575
-tasa_consumo = 2.5
+tasa_ignicion = 0.03
+tasa_consumo = 1.5
 calor_umbral = 300.0
 duracion_mojado = 12.0
 k_viento = 0.25
@@ -15,8 +15,8 @@ k_pendiente = 0.1
 
 [sub_resource type="Resource" id="PerfilPastizal"]
 script = ExtResource("2_perfil")
-tasa_ignicion = 0.135
-tasa_consumo = 4.0
+tasa_ignicion = 0.08
+tasa_consumo = 2.0
 calor_umbral = 150.0
 duracion_mojado = 7.0
 k_viento = 0.25
@@ -46,8 +46,9 @@ origen = Vector2(-600, -600)
 tamano_celdas = Vector2i(600, 600)
 centro_foco = Vector2(55, -120)
 radio_foco = 65.0
-cantidad_celdas_foco_inicial = 8
-retardo_propagacion = 5.0
+cantidad_celdas_foco_inicial = 3
+retardo_propagacion = 0.0
+velocidad_propagacion = 1.5
 radio_nucleo_arbol = 5.0
 radio_combustible_arbol = 12.0
 combustible_bosque = 100.0

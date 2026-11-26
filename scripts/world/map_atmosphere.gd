@@ -35,7 +35,7 @@ var clear_sun_energy: float = 0.78
 func _ready() -> void:
 	world_environment = get_tree().root.find_child("WorldEnvironment", true, false) as WorldEnvironment
 	sun = get_tree().root.find_child("SunLight", true, false) as DirectionalLight3D
-	if not world_environment or not world_environment.environment:
+	if not is_instance_valid(world_environment) or not is_instance_valid(world_environment.environment):
 		push_error("MapAtmosphere requiere un WorldEnvironment con Environment asignado.")
 		return
 	environment = world_environment.environment
@@ -44,12 +44,15 @@ func _ready() -> void:
 	var viento_actual := FireGridServer.obtener_viento()
 	if viento_actual.length_squared() > 0.0:
 		_al_cambiar_viento(viento_actual.normalized(), viento_actual.length())
-	if environment.sky and environment.sky.sky_material is ProceduralSkyMaterial:
+	if (
+		is_instance_valid(environment.sky)
+		and environment.sky.sky_material is ProceduralSkyMaterial
+	):
 		sky_material = environment.sky.sky_material as ProceduralSkyMaterial
 		sky_material.sky_top_color = clear_top_color
 		sky_material.sky_horizon_color = clear_horizon_color
 		sky_material.ground_horizon_color = clear_ground_color
-	if sun:
+	if is_instance_valid(sun):
 		sun.light_color = PALETA.SOL
 		clear_sun_energy = 0.78
 	_configure_clear_weather()
@@ -59,8 +62,12 @@ func _ready() -> void:
 		_create_clouds()
 
 func _process(delta: float) -> void:
-	for index in range(cloud_roots.size()):
+	for index in range(cloud_roots.size() - 1, -1, -1):
 		var cloud := cloud_roots[index]
+		if not is_instance_valid(cloud) or cloud.is_queued_for_deletion():
+			cloud_roots.remove_at(index)
+			cloud_directions.remove_at(index)
+			continue
 		var avance := velocidad_nubes * cloud_directions[index] * velocidad_viento / 8.3 * delta
 		cloud.position.x += direccion_viento.x * avance
 		cloud.position.z += direccion_viento.y * avance
@@ -76,6 +83,17 @@ func _process(delta: float) -> void:
 func _exit_tree() -> void:
 	if FireGridServer.viento_cambiado.is_connected(_al_cambiar_viento):
 		FireGridServer.viento_cambiado.disconnect(_al_cambiar_viento)
+	if GraphicsSettings.calidad_cambiada.is_connected(_aplicar_perfil_calidad):
+		GraphicsSettings.calidad_cambiada.disconnect(_aplicar_perfil_calidad)
+	if is_instance_valid(ambient_tween) and ambient_tween.is_running():
+		ambient_tween.kill()
+	ambient_tween = null
+	cloud_roots.clear()
+	cloud_directions.clear()
+	world_environment = null
+	environment = null
+	sky_material = null
+	sun = null
 
 func _al_cambiar_viento(nueva_direccion: Vector2, nueva_velocidad: float) -> void:
 	if nueva_direccion.length_squared() > 0.0:
@@ -93,11 +111,11 @@ func _configure_clear_weather() -> void:
 	environment.glow_enabled = true
 	environment.glow_intensity = 0.04
 	environment.glow_strength = 0.12
-	if sky_material:
+	if is_instance_valid(sky_material):
 		sky_material.sky_top_color = clear_top_color
 		sky_material.sky_horizon_color = clear_horizon_color
 		sky_material.ground_horizon_color = clear_ground_color
-	if sun:
+	if is_instance_valid(sun):
 		sun.light_color = PALETA.SOL
 		sun.shadow_enabled = true
 
@@ -106,10 +124,10 @@ func _aplicar_perfil_calidad(calidad: int) -> void:
 	if perfil.is_empty():
 		return
 	densidad_niebla_incendio = float(perfil["fog_density"])
-	if environment:
+	if is_instance_valid(environment):
 		environment.fog_depth_end = float(perfil["fog_depth_end"])
 		environment.fog_density = densidad_niebla_incendio if is_in_fire_zone else DENSIDAD_NIEBLA_CLARA
-	if sun:
+	if is_instance_valid(sun):
 		sun.shadow_enabled = bool(perfil["shadow_enabled"])
 		sun.directional_shadow_max_distance = float(perfil["directional_shadow_max_distance"])
 		sun.directional_shadow_mode = int(perfil["directional_shadow_mode"])
@@ -140,18 +158,18 @@ func _sync_overlapping_bodies(area: Area3D) -> void:
 		_on_body_entered(body)
 
 func _on_body_entered(body: Node3D) -> void:
-	if body.is_in_group("jugador"):
+	if is_instance_valid(body) and not body.is_queued_for_deletion() and body.is_in_group("jugador"):
 		_set_fire_ambience(true)
 
 func _on_body_exited(body: Node3D) -> void:
-	if body.is_in_group("jugador"):
+	if is_instance_valid(body) and body.is_in_group("jugador"):
 		_set_fire_ambience(false)
 
 func _set_fire_ambience(active: bool) -> void:
-	if is_in_fire_zone == active or not environment:
+	if is_in_fire_zone == active or not is_instance_valid(environment):
 		return
 	is_in_fire_zone = active
-	if ambient_tween and ambient_tween.is_running():
+	if is_instance_valid(ambient_tween) and ambient_tween.is_running():
 		ambient_tween.kill()
 	ambient_tween = create_tween().set_parallel(true)
 	var target_fog := densidad_niebla_incendio if active else DENSIDAD_NIEBLA_CLARA
@@ -160,14 +178,14 @@ func _set_fire_ambience(active: bool) -> void:
 	ambient_tween.tween_property(environment, "fog_density", target_fog, duracion_transicion)
 	ambient_tween.tween_property(environment, "fog_light_color", target_fog_color, duracion_transicion)
 	ambient_tween.tween_property(environment, "ambient_light_energy", target_ambient, duracion_transicion)
-	if sky_material:
+	if is_instance_valid(sky_material):
 		var fire_top := Color(0.43, 0.47, 0.52, 1.0) if active else clear_top_color
 		var fire_horizon := Color(0.72, 0.55, 0.43, 1.0) if active else clear_horizon_color
 		var fire_ground := Color(0.42, 0.36, 0.33, 1.0) if active else clear_ground_color
 		ambient_tween.tween_property(sky_material, "sky_top_color", fire_top, duracion_transicion)
 		ambient_tween.tween_property(sky_material, "sky_horizon_color", fire_horizon, duracion_transicion)
 		ambient_tween.tween_property(sky_material, "ground_horizon_color", fire_ground, duracion_transicion)
-	if sun:
+	if is_instance_valid(sun):
 		ambient_tween.tween_property(sun, "light_energy", 0.72 if active else clear_sun_energy, duracion_transicion)
 		ambient_tween.tween_property(sun, "light_color", Color(0.82, 0.62, 0.48, 1.0) if active else Color(1.0, 0.91, 0.74, 1.0), duracion_transicion)
 

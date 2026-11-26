@@ -20,12 +20,17 @@ config/version="1.0.0"
 run/main_scene="res://scenes/menus/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[audio]
+
+default_bus_layout="res://assets/audio/audio_bus_layout.tres"
+
 [autoload]
 
 AjustesAyuda="*res://scripts/autoload/ajustes_ayuda.gd"
 InputConfig="*res://scripts/autoload/input_config.gd"
 LocalizationManager="*res://scripts/autoload/localization_manager.gd"
 GraphicsSettings="*res://scripts/autoload/graphics_settings.gd"
+MissionLaunchOptions="*res://scripts/autoload/mission_launch_options.gd"
 FirePool="*res://scripts/autoload/fire_pool.gd"
 FireGridServer="*res://scripts/sim/fire_grid_server.gd"
 NetworkManager="*res://scripts/network/network_manager.gd"
@@ -33,20 +38,16 @@ AudioManager="*res://scripts/autoload/audio_manager.gd"
 MissionResults="*res://scripts/autoload/mission_results.gd"
 TutorialManager="*res://scripts/autoload/tutorial_manager.gd"
 
-[audio]
-
-default_bus_layout="res://assets/audio/audio_bus_layout.tres"
-
-[internationalization]
-
-locale/default_locale="es"
-locale/translations=PackedStringArray("res://translations/ui.csv")
-
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://translations/ui.es.translation", "res://translations/ui.en.translation")
+locale/default_locale="es"
 
 [rendering]
 

@@ -27,10 +27,31 @@ func _ready() -> void:
 	refill_area.body_exited.connect(_on_body_exited)
 	set_physics_process(false)
 	await get_tree().physics_frame
-	if not is_inside_tree():
+	if (
+		not is_instance_valid(self)
+		or not is_inside_tree()
+		or not is_instance_valid(refill_area)
+	):
 		return
 	for body in refill_area.get_overlapping_bodies():
 		_on_body_entered(body)
+
+func _exit_tree() -> void:
+	if is_instance_valid(refill_area):
+		if refill_area.body_entered.is_connected(_on_body_entered):
+			refill_area.body_entered.disconnect(_on_body_entered)
+		if refill_area.body_exited.is_connected(_on_body_exited):
+			refill_area.body_exited.disconnect(_on_body_exited)
+	for dron_variant in drones_en_area.values():
+		if (
+			is_instance_valid(dron_variant)
+			and not dron_variant.is_queued_for_deletion()
+			and dron_variant.has_method("set_fuente_agua_cercana")
+		):
+			dron_variant.call("set_fuente_agua_cercana", false, false)
+	drones_en_area.clear()
+	recargando = false
+	refill_area = null
 
 func _physics_process(_delta: float) -> void:
 	var hay_red := multiplayer.has_multiplayer_peer()
@@ -38,7 +59,11 @@ func _physics_process(_delta: float) -> void:
 	var hay_recarga_activa := false
 	for id_variant in drones_en_area.keys().duplicate():
 		var dron: Variant = drones_en_area[id_variant]
-		if not is_instance_valid(dron) or not dron.is_inside_tree():
+		if (
+			not is_instance_valid(dron)
+			or dron.is_queued_for_deletion()
+			or not dron.is_inside_tree()
+		):
 			drones_en_area.erase(id_variant)
 			continue
 		var cerca := _esta_en_rango_de_agua(dron)
@@ -66,6 +91,8 @@ func _physics_process(_delta: float) -> void:
 		recarga_completada.emit()
 
 func _on_body_entered(body: Node3D) -> void:
+	if not is_instance_valid(body) or body.is_queued_for_deletion():
+		return
 	if not body.is_in_group("jugador"):
 		return
 	if not body.has_method("recibir_agua") or not body.has_method("tanque_lleno"):
@@ -80,6 +107,8 @@ func _on_body_entered(body: Node3D) -> void:
 	set_physics_process(true)
 
 func _on_body_exited(body: Node3D) -> void:
+	if not is_instance_valid(body):
+		return
 	var id := body.get_instance_id()
 	if not drones_en_area.has(id):
 		return
@@ -107,7 +136,12 @@ func _esta_en_rango_de_agua(body: Node3D) -> bool:
 func _bonus_tactico_cercano(dron: Node3D) -> float:
 	var bonus_maximo: float = 0.0
 	for candidato in get_tree().get_nodes_in_group("jugador"):
-		if candidato == dron or not candidato is Node3D:
+		if (
+			not is_instance_valid(candidato)
+			or candidato.is_queued_for_deletion()
+			or candidato == dron
+			or not candidato is Node3D
+		):
 			continue
 		var aliado := candidato as Node3D
 		var rol: Variant = aliado.get("rol_actual")

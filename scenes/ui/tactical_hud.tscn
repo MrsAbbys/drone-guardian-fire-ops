@@ -1,17 +1,51 @@
-[gd_scene load_steps=2 format=3 uid="uid://c_tactical_hud_01"]
+[gd_scene load_steps=4 format=3 uid="uid://c_tactical_hud_01"]
 
 [ext_resource type="Script" path="res://scripts/ui/tactical_hud.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="HudPanelStyle"]
+bg_color = Color(0.05, 0.08, 0.12, 0.82)
+border_color = Color(0.14, 0.45, 0.62, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="HudCriticalPanelStyle"]
+bg_color = Color(0.05, 0.08, 0.12, 0.82)
+border_color = Color(0.88, 0.3, 0.16, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
 
 [node name="TacticalHUD" type="CanvasLayer" groups=["tactical_hud"]]
 script = ExtResource("1_hud")
 
 [node name="TopBar" type="Panel" parent="."]
+mouse_filter = 2
 anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 56.0
 grow_horizontal = 2
 
 [node name="ColorRect" type="ColorRect" parent="TopBar"]
+mouse_filter = 2
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -21,6 +55,7 @@ grow_vertical = 2
 color = Color(0.02, 0.06, 0.12, 0.98)
 
 [node name="PixelBorderTop" type="ReferenceRect" parent="TopBar"]
+mouse_filter = 2
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -109,48 +144,77 @@ theme_override_colors/font_color = Color(0.3, 1, 0.4, 1)
 theme_override_font_sizes/font_size = 11
 text = "GPS LOCK\nOK (RTK)"
 
-[node name="WeatherPanel" type="Panel" parent="."]
+[node name="LeftColumn" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 1.0
 offset_left = 12.0
-offset_top = 225.0
-offset_right = 195.0
-offset_bottom = 410.0
+offset_top = 64.0
+offset_right = 252.0
+offset_bottom = -180.0
+grow_vertical = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
 
-[node name="Bg" type="ColorRect" parent="WeatherPanel"]
+[node name="LeftStack" type="VBoxContainer" parent="LeftColumn"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SquadSlot" type="MarginContainer" parent="LeftColumn/LeftStack"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="WeatherPanel" type="Panel" parent="LeftColumn/LeftStack"]
+mouse_filter = 2
+layout_mode = 2
+custom_minimum_size = Vector2(0, 210)
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("HudPanelStyle")
+
+[node name="Bg" type="ColorRect" parent="LeftColumn/LeftStack/WeatherPanel"]
+mouse_filter = 2
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.04, 0.1, 0.18, 0.94)
+color = Color(0.05, 0.08, 0.12, 0.82)
 
-[node name="PixelBorder" type="ReferenceRect" parent="WeatherPanel"]
+[node name="PixelBorder" type="ReferenceRect" parent="LeftColumn/LeftStack/WeatherPanel"]
+mouse_filter = 2
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-border_color = Color(0.2, 0.7, 1, 1)
-border_width = 2.0
+border_color = Color(0.14, 0.45, 0.62, 0.85)
+border_width = 1.0
 editor_only = false
 
-[node name="Title" type="Label" parent="WeatherPanel"]
+[node name="Title" type="Label" parent="LeftColumn/LeftStack/WeatherPanel"]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 6.0
-offset_right = 185.0
+offset_right = 224.0
 offset_bottom = 26.0
-theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_colors/font_color = Color(0.35, 0.75, 0.9, 1)
 theme_override_font_sizes/font_size = 11
 text = ":: METEOROLOGIA ::"
 
-[node name="Details" type="Label" parent="WeatherPanel"]
+[node name="Details" type="Label" parent="LeftColumn/LeftStack/WeatherPanel"]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 30.0
-offset_right = 185.0
-offset_bottom = 172.0
+offset_right = 224.0
+offset_bottom = 142.0
 theme_override_font_sizes/font_size = 11
 theme_override_constants/line_spacing = 3
 text = "Temp.:      34 *C
@@ -162,26 +226,48 @@ Visibilidad: 5 km
 Combustible: BAJA
 Pendiente:  8 %"
 
-[node name="FireStatePanel" type="Panel" parent="."]
-anchors_preset = 1
+[node name="RightColumn" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_top = 0.0
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -225.0
-offset_top = 66.0
+anchor_bottom = 1.0
+offset_left = -252.0
+offset_top = 64.0
 offset_right = -12.0
-offset_bottom = 236.0
+offset_bottom = -180.0
 grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
 
-[node name="Bg" type="ColorRect" parent="FireStatePanel"]
+[node name="RightStack" type="VBoxContainer" parent="RightColumn"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FireStatePanel" type="Panel" parent="RightColumn/RightStack"]
+mouse_filter = 2
+layout_mode = 2
+custom_minimum_size = Vector2(0, 170)
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("HudCriticalPanelStyle")
+
+[node name="Bg" type="ColorRect" parent="RightColumn/RightStack/FireStatePanel"]
+mouse_filter = 2
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.12, 0.04, 0.04, 0.94)
+color = Color(0.05, 0.08, 0.12, 0.82)
 
-[node name="PixelBorder" type="ReferenceRect" parent="FireStatePanel"]
+[node name="PixelBorder" type="ReferenceRect" parent="RightColumn/RightStack/FireStatePanel"]
+mouse_filter = 2
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -189,24 +275,24 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 border_color = Color(1, 0.3, 0.1, 1)
-border_width = 2.0
+border_width = 1.0
 editor_only = false
 
-[node name="Title" type="Label" parent="FireStatePanel"]
+[node name="Title" type="Label" parent="RightColumn/RightStack/FireStatePanel"]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 6.0
-offset_right = 205.0
+offset_right = 224.0
 offset_bottom = 26.0
 theme_override_colors/font_color = Color(1, 0.3, 0.1, 1)
 theme_override_font_sizes/font_size = 11
 text = ":: ESTADO DEL FUEGO ::"
 
-[node name="FireData" type="Label" parent="FireStatePanel"]
+[node name="FireData" type="Label" parent="RightColumn/RightStack/FireStatePanel"]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 30.0
-offset_right = 205.0
+offset_right = 224.0
 offset_bottom = 162.0
 theme_override_font_sizes/font_size = 11
 theme_override_constants/line_spacing = 3
@@ -217,55 +303,58 @@ Propagacion:     CRITICA
 Intensidad:      [■■■■] ALTA
 % Extincion:     0 %"
 
-[node name="TacticalRadar" type="Panel" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -225.0
-offset_top = 244.0
-offset_right = -12.0
-offset_bottom = 440.0
-grow_horizontal = 0
+[node name="TacticalRadar" type="Panel" parent="RightColumn/RightStack"]
+mouse_filter = 2
+layout_mode = 2
+custom_minimum_size = Vector2(0, 196)
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("HudPanelStyle")
 
-[node name="Bg" type="ColorRect" parent="TacticalRadar"]
+[node name="Bg" type="ColorRect" parent="RightColumn/RightStack/TacticalRadar"]
+mouse_filter = 2
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.04, 0.14, 0.06, 0.92)
+color = Color(0.05, 0.08, 0.12, 0.82)
 
-[node name="PixelBorder" type="ReferenceRect" parent="TacticalRadar"]
+[node name="PixelBorder" type="ReferenceRect" parent="RightColumn/RightStack/TacticalRadar"]
+mouse_filter = 2
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-border_color = Color(0.2, 0.85, 0.3, 1)
-border_width = 2.0
+border_color = Color(0.14, 0.45, 0.62, 0.85)
+border_width = 1.0
 editor_only = false
 
-[node name="RadarTitle" type="Label" parent="TacticalRadar"]
+[node name="RadarTitle" type="Label" parent="RightColumn/RightStack/TacticalRadar"]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 6.0
-offset_right = 205.0
+offset_right = 224.0
 offset_bottom = 24.0
-theme_override_colors/font_color = Color(0.4, 1, 0.4, 1)
+theme_override_colors/font_color = Color(0.35, 0.75, 0.9, 1)
 theme_override_font_sizes/font_size = 11
 text = "MAPA TACTICO        [N ^]"
 
-[node name="MapSim" type="ColorRect" parent="TacticalRadar"]
+[node name="MapSim" type="ColorRect" parent="RightColumn/RightStack/TacticalRadar"]
+mouse_filter = 2
 layout_mode = 0
 offset_left = 10.0
 offset_top = 28.0
-offset_right = 202.0
+offset_right = 230.0
 offset_bottom = 155.0
 color = Color(0.18, 0.30, 0.14, 1)
 
-[node name="FirePoint" type="ColorRect" parent="TacticalRadar/MapSim"]
+[node name="FirePoint" type="ColorRect" parent="RightColumn/RightStack/TacticalRadar/MapSim"]
+mouse_filter = 2
 layout_mode = 0
 offset_left = 86.0
 offset_top = 18.0
@@ -273,7 +362,7 @@ offset_right = 112.0
 offset_bottom = 44.0
 color = Color(1, 0.2, 0.05, 0.95)
 
-[node name="DroneIcon" type="Label" parent="TacticalRadar/MapSim"]
+[node name="DroneIcon" type="Label" parent="RightColumn/RightStack/TacticalRadar/MapSim"]
 layout_mode = 0
 offset_left = 89.0
 offset_top = 70.0
@@ -282,7 +371,7 @@ offset_bottom = 93.0
 theme_override_colors/font_color = Color(0.2, 0.9, 1, 1)
 text = "^"
 
-[node name="BaseIcon" type="Label" parent="TacticalRadar/MapSim"]
+[node name="BaseIcon" type="Label" parent="RightColumn/RightStack/TacticalRadar/MapSim"]
 layout_mode = 0
 offset_left = 22.0
 offset_top = 95.0
@@ -291,7 +380,7 @@ offset_bottom = 118.0
 theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
 text = "[H]"
 
-[node name="WaterIcon" type="Label" parent="TacticalRadar/MapSim"]
+[node name="WaterIcon" type="Label" parent="RightColumn/RightStack/TacticalRadar/MapSim"]
 layout_mode = 0
 offset_left = 40.0
 offset_top = 95.0
@@ -300,16 +389,44 @@ offset_bottom = 118.0
 theme_override_colors/font_color = Color(0.1, 0.7, 1, 1)
 text = "[O]"
 
-[node name="Legend" type="Label" parent="TacticalRadar"]
+[node name="Legend" type="Label" parent="RightColumn/RightStack/TacticalRadar"]
 layout_mode = 0
-offset_left = 6.0
+offset_left = 8.0
 offset_top = 160.0
-offset_right = 206.0
+offset_right = 232.0
 offset_bottom = 190.0
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 text = "[#] Fuego  [^] Dron  [H] Base  [O] Agua"
 
+[node name="EventsPanel" type="PanelContainer" parent="RightColumn/RightStack"]
+mouse_filter = 2
+layout_mode = 2
+custom_minimum_size = Vector2(0, 80)
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("HudPanelStyle")
+
+[node name="EventsContent" type="VBoxContainer" parent="RightColumn/RightStack/EventsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="RightColumn/RightStack/EventsPanel/EventsContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.75, 0.9, 1)
+theme_override_font_sizes/font_size = 10
+text = ":: LOG DE RADIO ::"
+
+[node name="EventsScroll" type="ScrollContainer" parent="RightColumn/RightStack/EventsPanel/EventsContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Events" type="Label" parent="RightColumn/RightStack/EventsPanel/EventsContent/EventsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+
 [node name="BottomBar" type="Panel" parent="."]
+mouse_filter = 2
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -319,6 +436,7 @@ grow_horizontal = 2
 grow_vertical = 0
 
 [node name="Bg" type="ColorRect" parent="BottomBar"]
+mouse_filter = 2
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -328,6 +446,7 @@ grow_vertical = 2
 color = Color(0.02, 0.06, 0.12, 0.98)
 
 [node name="PixelBorderBottom" type="ReferenceRect" parent="BottomBar"]
+mouse_filter = 2
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -338,59 +457,89 @@ border_color = Color(0.1, 0.8, 1, 1)
 border_width = 2.0
 editor_only = false
 
-[node name="CamerasBox" type="VBoxContainer" parent="BottomBar"]
-layout_mode = 0
-offset_left = 12.0
+[node name="BottomContent" type="MarginContainer" parent="BottomBar"]
+mouse_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
 offset_top = 10.0
-offset_right = 265.0
-offset_bottom = 162.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
 
-[node name="CamHeader" type="Label" parent="BottomBar/CamerasBox"]
+[node name="BottomBlocks" type="HBoxContainer" parent="BottomBar/BottomContent"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CamerasBox" type="PanelContainer" parent="BottomBar/BottomContent/BottomBlocks"]
+layout_mode = 2
+custom_minimum_size = Vector2(240, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("HudPanelStyle")
+
+[node name="Content" type="VBoxContainer" parent="BottomBar/BottomContent/BottomBlocks/CamerasBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CamHeader" type="Label" parent="BottomBar/BottomContent/BottomBlocks/CamerasBox/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3, 0.8, 1, 1)
 theme_override_font_sizes/font_size = 11
 text = ":: SENSOR DE CAMARA ::"
 
-[node name="BtnRow" type="HBoxContainer" parent="BottomBar/CamerasBox"]
+[node name="BtnRow" type="HBoxContainer" parent="BottomBar/BottomContent/BottomBlocks/CamerasBox/Content"]
 layout_mode = 2
+theme_override_constants/separation = 4
 
-[node name="BtnRGB" type="Button" parent="BottomBar/CamerasBox/BtnRow"]
+[node name="BtnRGB" type="Button" parent="BottomBar/BottomContent/BottomBlocks/CamerasBox/Content/BtnRow"]
 layout_mode = 2
 text = "[RGB]"
 
-[node name="BtnThermal" type="Button" parent="BottomBar/CamerasBox/BtnRow"]
+[node name="BtnThermal" type="Button" parent="BottomBar/BottomContent/BottomBlocks/CamerasBox/Content/BtnRow"]
 layout_mode = 2
 text = "[TERMICA]"
 
-[node name="BtnRecon" type="Button" parent="BottomBar/CamerasBox/BtnRow"]
+[node name="BtnRecon" type="Button" parent="BottomBar/BottomContent/BottomBlocks/CamerasBox/Content/BtnRow"]
 layout_mode = 2
 text = "[RECON]"
 
-[node name="CamInfo" type="Label" parent="BottomBar/CamerasBox"]
+[node name="CamInfo" type="Label" parent="BottomBar/BottomContent/BottomBlocks/CamerasBox/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 text = "CMOS DUAL 4K\nTELEMETRIA ACTIVA\nOBJETIVO: FOCO NORTE"
 
-[node name="HartmanBox" type="Panel" parent="BottomBar"]
-layout_mode = 0
-offset_left = 278.0
-offset_top = 10.0
-offset_right = 725.0
-offset_bottom = 162.0
+[node name="HartmanBox" type="Panel" parent="BottomBar/BottomContent/BottomBlocks"]
+mouse_filter = 2
+layout_mode = 2
+custom_minimum_size = Vector2(240, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("HudPanelStyle")
 
-[node name="Border" type="ReferenceRect" parent="BottomBar/HartmanBox"]
+[node name="Border" type="ReferenceRect" parent="BottomBar/BottomContent/BottomBlocks/HartmanBox"]
+mouse_filter = 2
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-border_color = Color(0.2, 0.7, 1, 1)
-border_width = 2.0
+border_color = Color(0.14, 0.45, 0.62, 0.85)
+border_width = 1.0
 editor_only = false
 
-[node name="PixelArtPortrait" type="TextureRect" parent="BottomBar/HartmanBox"]
+[node name="PixelArtPortrait" type="TextureRect" parent="BottomBar/BottomContent/BottomBlocks/HartmanBox"]
+mouse_filter = 2
 layout_mode = 0
 offset_left = 8.0
 offset_top = 8.0
@@ -399,18 +548,19 @@ offset_bottom = 144.0
 expand_mode = 1
 stretch_mode = 6
 
-[node name="PixelFrame" type="ReferenceRect" parent="BottomBar/HartmanBox/PixelArtPortrait"]
+[node name="PixelFrame" type="ReferenceRect" parent="BottomBar/BottomContent/BottomBlocks/HartmanBox/PixelArtPortrait"]
+mouse_filter = 2
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-border_color = Color(0.8, 0.7, 0.3, 1)
+border_color = Color(0.14, 0.45, 0.62, 0.85)
 border_width = 2.0
 editor_only = false
 
-[node name="PortraitLabel" type="Label" parent="BottomBar/HartmanBox/PixelArtPortrait"]
+[node name="PortraitLabel" type="Label" parent="BottomBar/BottomContent/BottomBlocks/HartmanBox/PixelArtPortrait"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -424,163 +574,201 @@ horizontal_alignment = 1
 vertical_alignment = 1
 visible = false
 
-[node name="NameTag" type="Label" parent="BottomBar/HartmanBox"]
-layout_mode = 0
+[node name="NameTag" type="Label" parent="BottomBar/BottomContent/BottomBlocks/HartmanBox"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
 offset_left = 110.0
 offset_top = 8.0
-offset_right = 438.0
+offset_right = -8.0
 offset_bottom = 28.0
-theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.35, 0.75, 0.9, 1)
 theme_override_font_sizes/font_size = 12
 text = "SGTO. HARTMAN - INSTRUCTOR DE VUELO"
 
-[node name="DialogueText" type="Label" parent="BottomBar/HartmanBox"]
-layout_mode = 0
+[node name="DialogueText" type="Label" parent="BottomBar/BottomContent/BottomBlocks/HartmanBox"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
 offset_left = 110.0
 offset_top = 32.0
-offset_right = 438.0
-offset_bottom = 144.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
 theme_override_font_sizes/font_size = 11
 theme_override_constants/line_spacing = 3
 text = "«¡Atencion piloto! Guardian S1 Scout: mantenga [E] sobre la laguna y use clic izquierdo para lanzar agua.»"
 autowrap_mode = 3
 
-[node name="MissionObjectives" type="Panel" parent="BottomBar"]
-layout_mode = 0
-offset_left = 735.0
-offset_top = 10.0
-offset_right = 975.0
-offset_bottom = 162.0
+[node name="MissionObjectives" type="Panel" parent="BottomBar/BottomContent/BottomBlocks"]
+mouse_filter = 2
+layout_mode = 2
+custom_minimum_size = Vector2(240, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("HudPanelStyle")
 
-[node name="Border" type="ReferenceRect" parent="BottomBar/MissionObjectives"]
+[node name="Border" type="ReferenceRect" parent="BottomBar/BottomContent/BottomBlocks/MissionObjectives"]
+mouse_filter = 2
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-border_color = Color(0.2, 0.7, 1, 1)
-border_width = 1.5
+border_color = Color(0.14, 0.45, 0.62, 0.85)
+border_width = 1.0
 editor_only = false
 
-[node name="ObjTitle" type="Label" parent="BottomBar/MissionObjectives"]
-layout_mode = 0
+[node name="ObjTitle" type="Label" parent="BottomBar/BottomContent/BottomBlocks/MissionObjectives"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
 offset_left = 8.0
 offset_top = 6.0
-offset_right = 230.0
+offset_right = -8.0
 offset_bottom = 24.0
-theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.35, 0.75, 0.9, 1)
 theme_override_font_sizes/font_size = 11
 text = ":: OBJETIVOS ::"
 
-[node name="ObjList" type="Label" parent="BottomBar/MissionObjectives"]
-layout_mode = 0
+[node name="ObjList" type="Label" parent="BottomBar/BottomContent/BottomBlocks/MissionObjectives"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
 offset_left = 8.0
 offset_top = 28.0
-offset_right = 232.0
-offset_bottom = 145.0
+offset_right = -8.0
+offset_bottom = 144.0
+grow_horizontal = 2
 theme_override_font_sizes/font_size = 10
 theme_override_constants/line_spacing = 4
 text = "[*] Reconocimiento aereo\n[ ] Recarga en la isla (50L)\n[ ] Extinguir foco Campo Pajoso\n[ ] Aterrizar en helipuerto"
 
-[node name="AlertsBox" type="Panel" parent="BottomBar"]
-layout_mode = 0
-offset_left = 985.0
-offset_top = 10.0
-offset_right = 1135.0
-offset_bottom = 162.0
+[node name="AlertsTimeBlock" type="HBoxContainer" parent="BottomBar/BottomContent/BottomBlocks"]
+layout_mode = 2
+custom_minimum_size = Vector2(240, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
 
-[node name="Border" type="ReferenceRect" parent="BottomBar/AlertsBox"]
+[node name="AlertsBox" type="Panel" parent="BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock"]
+mouse_filter = 2
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("HudPanelStyle")
+
+[node name="Border" type="ReferenceRect" parent="BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/AlertsBox"]
+mouse_filter = 2
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-border_color = Color(1, 0.4, 0.1, 1)
-border_width = 1.5
+border_color = Color(0.14, 0.45, 0.62, 0.85)
+border_width = 1.0
 editor_only = false
 
-[node name="AlertTitle" type="Label" parent="BottomBar/AlertsBox"]
-layout_mode = 0
-offset_left = 6.0
+[node name="AlertTitle" type="Label" parent="BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/AlertsBox"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 8.0
 offset_top = 6.0
-offset_right = 144.0
+offset_right = -8.0
 offset_bottom = 22.0
-theme_override_colors/font_color = Color(1, 0.4, 0.1, 1)
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.3, 0.85, 1, 1)
 theme_override_font_sizes/font_size = 10
 text = ":: ALERTAS ::"
 
-[node name="AlertList" type="Label" parent="BottomBar/AlertsBox"]
-layout_mode = 0
-offset_left = 6.0
+[node name="AlertList" type="Label" parent="BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/AlertsBox"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 8.0
 offset_top = 26.0
-offset_right = 144.0
+offset_right = -8.0
 offset_bottom = 119.0
+grow_horizontal = 2
 theme_override_font_sizes/font_size = 10
 text = "💧 TANQUE: 0 / 50 L\n   [□□□□□□□□□□]\n\n🔥 Foco Crítico: 1"
 
-[node name="WaterBar" type="ProgressBar" parent="BottomBar/AlertsBox"]
-layout_mode = 0
-offset_left = 6.0
+[node name="WaterBar" type="ProgressBar" parent="BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/AlertsBox"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 8.0
 offset_top = 125.0
-offset_right = 144.0
+offset_right = -8.0
 offset_bottom = 143.0
+grow_horizontal = 2
 show_percentage = false
 max_value = 50.0
 
-[node name="TimerBox" type="Panel" parent="BottomBar"]
-layout_mode = 1
-anchors_preset = 11
-anchor_left = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -140.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
-grow_horizontal = 0
-grow_vertical = 2
+[node name="TimerBox" type="Panel" parent="BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock"]
+mouse_filter = 2
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("HudPanelStyle")
 
-[node name="Border" type="ReferenceRect" parent="BottomBar/TimerBox"]
+[node name="Border" type="ReferenceRect" parent="BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/TimerBox"]
+mouse_filter = 2
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-border_color = Color(0.2, 0.8, 1, 1)
-border_width = 1.5
+border_color = Color(0.14, 0.45, 0.62, 0.85)
+border_width = 1.0
 editor_only = false
 
-[node name="TimerTitle" type="Label" parent="BottomBar/TimerBox"]
-layout_mode = 0
+[node name="TimerTitle" type="Label" parent="BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/TimerBox"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
 offset_left = 6.0
 offset_top = 10.0
-offset_right = 124.0
+offset_right = -8.0
 offset_bottom = 28.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(0.3, 0.85, 1, 1)
 theme_override_font_sizes/font_size = 10
 text = "TIEMPO REST."
 horizontal_alignment = 1
 
-[node name="TimeLeftVal" type="Label" parent="BottomBar/TimerBox"]
-layout_mode = 0
+[node name="TimeLeftVal" type="Label" parent="BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/TimerBox"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
 offset_left = 6.0
 offset_top = 34.0
-offset_right = 124.0
+offset_right = -8.0
 offset_bottom = 68.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.2, 1)
 theme_override_font_sizes/font_size = 18
 text = "15:32"
 horizontal_alignment = 1
 
-[node name="BtnRTL" type="Button" parent="BottomBar/TimerBox"]
-layout_mode = 0
+[node name="BtnRTL" type="Button" parent="BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/TimerBox"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
 offset_left = 8.0
 offset_top = 80.0
-offset_right = 122.0
+offset_right = -8.0
 offset_bottom = 135.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(0.2, 1, 0.4, 1)
 theme_override_font_sizes/font_size = 10
 text = "[^] REGRESAR\nA LA BASE"

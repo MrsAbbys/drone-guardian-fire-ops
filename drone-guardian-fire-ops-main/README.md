@@ -29,8 +29,8 @@ corresponde a esta carpeta del proyecto.
 Desde PowerShell, con el clúster activo:
 
 ```powershell
-docker exec --user mpiuser -w /workspace fireops-master gcc -O2 src/sequential/fire_sim_seq.c -o src/sequential/fire_sim_seq
-docker exec --user mpiuser -w /workspace fireops-master gcc -O2 -fopenmp src/parallel/openmp/fire_sim_omp.c -o src/parallel/openmp/fire_sim_omp
+docker exec --user mpiuser -w /workspace fireops-master gcc -O2 src/sequential/fire_sim_seq.c -lm -o src/sequential/fire_sim_seq
+docker exec --user mpiuser -w /workspace fireops-master gcc -O2 -fopenmp src/parallel/openmp/fire_sim_omp.c -lm -o src/parallel/openmp/fire_sim_omp
 docker exec --user mpiuser -w /workspace fireops-master mpicc -O2 src/parallel/mpi/fire_sim_mpi.c -o src/parallel/mpi/fire_sim_mpi
 ```
 
@@ -53,6 +53,43 @@ docker exec --user mpiuser -w /workspace fireops-master mpirun -np 4 --hostfile 
 ```
 
 Los argumentos son el tamaño de la grilla (`N`) y la cantidad de pasos.
+Secuencial y OpenMP aceptan además el vector de viento `(vx, vy)` y un
+gradiente fijo en metros de elevación por celda en el eje `y`. Los valores
+predeterminados son viento `(0.5, 0.5)` y gradiente `0`:
+
+```sh
+docker exec --user mpiuser -w /workspace fireops-master ./src/sequential/fire_sim_seq 600 150 0.5 0.5 0.1
+docker exec --user mpiuser -w /workspace -e OMP_NUM_THREADS=4 fireops-master ./src/parallel/openmp/fire_sim_omp 600 150 0.5 0.5 0.1
+```
+
+La forma anterior `N pasos` sigue siendo válida. El viento y la pendiente
+aplican los factores direccionales y la probabilidad por tick del modelo
+FireGrid; la secuencia pseudoaleatoria C es determinista para que OpenMP y el
+motor secuencial produzcan los mismos estados.
+
+## Benchmark de FireGrid y gráficas C
+
+Con Godot 4.7 instalado, desde la raíz del proyecto Godot (donde está
+`project.godot`):
+
+```sh
+godot --headless --path . --script res://scripts/tools/benchmark_fire_grid.gd
+```
+
+El benchmark usa semilla fija, 150 ticks, viento `(0.5, 0.5)` y reporta
+`ms/tick` y celdas que ardieron para tamaños 100, 200, 400 y 600. El CSV queda
+en la carpeta de datos de usuario que imprime el script. También compara el
+total FireGrid de `N=600` con las mediciones C históricas del CSV.
+
+Para generar las cuatro gráficas de los resultados C:
+
+```sh
+python docs/graficas.py
+```
+
+Los PNG se guardan en `docs/graficas/`. El script calcula speedup,
+eficiencia y fracción serial estimada con la ley de Amdahl a partir de
+`data/benchmark_results.csv`.
 
 ## Prueba de conectividad MPI
 
@@ -88,6 +125,7 @@ configurar un túnel y controlar quién está autorizado antes de habilitarlo.
 ## Resultados de referencia
 
 Las mediciones de `data/benchmark_results.csv` corresponden a una corrida por
-configuración con grilla `600 x 600` y 150 pasos. En las ejecuciones registradas,
-los motores reportaron 10 440 celdas consumidas y 1 036 focos activos. Los
-tiempos pueden variar según el equipo y la carga del sistema.
+configuración con grilla `600 x 600` y 150 pasos, tomadas antes de alinear los
+factores de propagación C con FireGrid. Son una referencia histórica de
+rendimiento y de salida del modelo previo; deben volver a medirse antes de
+comparar resultados o reportar celdas consumidas para el código actual.

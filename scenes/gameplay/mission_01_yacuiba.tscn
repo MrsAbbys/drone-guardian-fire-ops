@@ -1,8 +1,7 @@
-[gd_scene load_steps=32 format=3 uid="uid://yacuiba01scene"]
+[gd_scene load_steps=36 format=3 uid="uid://yacuiba01scene"]
 
+[ext_resource type="Script" path="res://scripts/world/gameplay_scene.gd" id="0_gameplay"]
 [ext_resource type="PackedScene" uid="uid://b8dronplayer01" path="res://scenes/gameplay/drone_player.tscn" id="1_dronescene"]
-[ext_resource type="PackedScene" uid="uid://c_tactical_hud_01" path="res://scenes/ui/tactical_hud.tscn" id="2_hudscene"]
-[ext_resource type="PackedScene" uid="uid://firesource_voxel_01" path="res://scenes/actors/fire_source.tscn" id="3_firesource"]
 
 [sub_resource type="Environment" id="Env_ChacoReal"]
 background_mode = 1
@@ -142,8 +141,8 @@ height = 10.0
 radius = 0.35
 
 [node name="Mission01Yacuiba" type="Node3D"]
-
-[node name="TacticalHUD" parent="." instance=ExtResource("2_hudscene")]
+script = ExtResource("0_gameplay")
+fuego_central_position = Vector3(110, 0, -260)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Env_ChacoReal")
@@ -288,9 +287,6 @@ mesh = SubResource("Mesh_Pole")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PowerPoleRuta9"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
 shape = SubResource("Shape_PoleCol")
-
-[node name="WildfireZone" parent="." instance=ExtResource("3_firesource")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 110, 0, -260)
 
 [node name="DronePlayer" parent="." instance=ExtResource("1_dronescene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 3.5, 20)

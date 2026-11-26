@@ -4,6 +4,8 @@ signal fuego_apagado(fuego: Node3D)
 
 const PALETA := preload("res://scripts/world/paleta.gd")
 const INTERVALO_LOD_HUMO: float = 0.25
+const TASA_EXTINCION_AGUA: float = 30.0
+const DURACION_VAPOR_ENFRIAMIENTO: float = 1.2
 static var faceted_flame_mesh: ArrayMesh
 
 @export var objetivo_extinguible: bool = true
@@ -23,29 +25,38 @@ var propietario_pool: Node
 var current_health: float = 60.0
 var flicker_time: float = 0.0
 var intensity: float = 1.0
+var intensidad_fuego: float = 100.0
 var extinguishing: bool = false
 var flame_material: Material
 var _malla_llama_original: Mesh
 var _administrado_por_pool: bool = false
 var _humo_habilitado: bool = true
 var _temporizador_lod_humo: Timer
+var _temporizador_extincion: Timer
 var _generacion: int = 0
+var _generacion_extinguiendose: int = -1
 var _escuchando_viento: bool = false
+var _tiempo_vapor_restante: float = 0.0
 
 func _ready() -> void:
-	if flame_particles and flame_particles.draw_pass_1 and flame_particles.draw_pass_1.get_surface_count() > 0:
+	if (
+		is_instance_valid(flame_particles)
+		and is_instance_valid(flame_particles.draw_pass_1)
+		and flame_particles.draw_pass_1.get_surface_count() > 0
+	):
 		flame_material = flame_particles.draw_pass_1.surface_get_material(0)
-	if flame_particles:
+	if is_instance_valid(flame_particles):
 		_malla_llama_original = flame_particles.draw_pass_1
-	if legacy_smoke:
+	if is_instance_valid(legacy_smoke):
 		legacy_smoke.emitting = false
 		legacy_smoke.amount_ratio = 0.0
-	if fire_light:
+	if is_instance_valid(fire_light):
 		fire_light.light_color = PALETA.LUZ_FUEGO
 		fire_light.light_energy = 4.0
 		fire_light.omni_range = 18.0
 	_create_smoke()
 	_crear_temporizador_lod_humo()
+	_crear_temporizador_extincion()
 	if _administrado_por_pool:
 		_desactivar_efectos()
 	else:
@@ -54,10 +65,38 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	_desconectar_viento()
+	if is_instance_valid(_temporizador_lod_humo):
+		if _temporizador_lod_humo.timeout.is_connected(_actualizar_lod_humo):
+			_temporizador_lod_humo.timeout.disconnect(_actualizar_lod_humo)
+		_temporizador_lod_humo.stop()
+	if is_instance_valid(_temporizador_extincion):
+		if _temporizador_extincion.timeout.is_connected(_al_terminar_extincion):
+			_temporizador_extincion.timeout.disconnect(_al_terminar_extincion)
+		_temporizador_extincion.stop()
+	linked_tree = null
+	propietario_pool = null
+	flame_particles = null
+	legacy_smoke = null
+	fire_light = null
+	dense_smoke = null
+	high_smoke = null
+	steam_particles = null
+	_temporizador_lod_humo = null
+	_temporizador_extincion = null
 
 func _process(delta: float) -> void:
 	flicker_time += delta
-	if fire_light and not extinguishing:
+	if _tiempo_vapor_restante > 0.0:
+		_tiempo_vapor_restante = maxf(_tiempo_vapor_restante - delta, 0.0)
+		if is_instance_valid(steam_particles):
+			steam_particles.amount_ratio = clampf(
+				_tiempo_vapor_restante / DURACION_VAPOR_ENFRIAMIENTO,
+				0.0,
+				1.0
+			)
+			if _tiempo_vapor_restante <= 0.0 and not extinguishing:
+				steam_particles.emitting = false
+	if is_instance_valid(fire_light) and not extinguishing:
 		fire_light.light_energy = 4.0 * intensity * (0.9 + 0.1 * sin(flicker_time * 10.0))
 
 func set_viento(value: Vector3) -> void:
@@ -65,7 +104,7 @@ func set_viento(value: Vector3) -> void:
 	_apply_wind()
 
 func set_linked_tree(tree: Node3D) -> void:
-	linked_tree = tree
+	linked_tree = tree if is_instance_valid(tree) else null
 
 func preparar_para_pool() -> void:
 	_administrado_por_pool = true
@@ -75,6 +114,9 @@ func preparar_para_pool() -> void:
 
 func reset(posicion: Vector3, viento_nuevo: Vector3) -> void:
 	_generacion += 1
+	_generacion_extinguiendose = -1
+	if is_instance_valid(_temporizador_extincion):
+		_temporizador_extincion.stop()
 	_conectar_viento()
 	global_position = posicion
 	scale = Vector3.ONE
@@ -86,33 +128,35 @@ func reset(posicion: Vector3, viento_nuevo: Vector3) -> void:
 	linked_tree = null
 	flicker_time = 0.0
 	intensity = 1.0
+	intensidad_fuego = 100.0
+	_tiempo_vapor_restante = 0.0
 	extinguishing = false
 	visible = true
 	process_mode = Node.PROCESS_MODE_INHERIT
 
-	if flame_particles:
+	if is_instance_valid(flame_particles):
 		flame_particles.draw_pass_1 = _malla_llama_original
 		flame_particles.amount_ratio = 1.0
 		flame_particles.scale = Vector3.ONE
 		flame_particles.emitting = true
 		flame_particles.restart()
-	if legacy_smoke:
+	if is_instance_valid(legacy_smoke):
 		legacy_smoke.amount_ratio = 0.0
 		legacy_smoke.emitting = false
-	if dense_smoke:
+	if is_instance_valid(dense_smoke):
 		dense_smoke.amount_ratio = 1.0
 		dense_smoke.emitting = true
 		dense_smoke.restart()
-	if high_smoke:
+	if is_instance_valid(high_smoke):
 		high_smoke.amount_ratio = 0.75
 		high_smoke.emitting = _humo_habilitado
 		high_smoke.restart()
-	if steam_particles:
+	if is_instance_valid(steam_particles):
 		steam_particles.amount_ratio = 0.0
 		steam_particles.emitting = false
-	if dense_smoke:
+	if is_instance_valid(dense_smoke):
 		dense_smoke.emitting = _humo_habilitado
-	if fire_light:
+	if is_instance_valid(fire_light):
 		fire_light.visible = true
 		fire_light.light_color = PALETA.LUZ_FUEGO
 		fire_light.light_energy = 4.0
@@ -132,18 +176,23 @@ func reset(posicion: Vector3, viento_nuevo: Vector3) -> void:
 			hud.call("register_fire_tree", self)
 
 	_apply_wind()
-	if _temporizador_lod_humo:
+	if is_instance_valid(_temporizador_lod_humo):
 		_temporizador_lod_humo.start(INTERVALO_LOD_HUMO)
 	_actualizar_lod_humo()
 
 func desactivar_para_pool() -> void:
 	_generacion += 1
+	_generacion_extinguiendose = -1
 	_desconectar_viento()
 	extinguishing = false
 	intensity = 0.0
+	intensidad_fuego = 0.0
 	current_health = 0.0
-	if _temporizador_lod_humo:
+	_tiempo_vapor_restante = 0.0
+	if is_instance_valid(_temporizador_lod_humo):
 		_temporizador_lod_humo.stop()
+	if is_instance_valid(_temporizador_extincion):
+		_temporizador_extincion.stop()
 	remove_from_group("fuego")
 	linked_tree = null
 	_actualizar_grupos_particulas(false)
@@ -171,12 +220,12 @@ func configurar_max_particulas_humo(cantidad: int) -> void:
 	var total_particulas := max_particulas_humo
 	var cantidad_densa := maxi(1, int(total_particulas * 2 / 3))
 	var cantidad_fina := maxi(1, total_particulas - cantidad_densa)
-	if dense_smoke:
+	if is_instance_valid(dense_smoke):
 		dense_smoke.amount = cantidad_densa
 		if not _humo_habilitado:
 			dense_smoke.amount_ratio = 0.0
 			dense_smoke.emitting = false
-	if high_smoke:
+	if is_instance_valid(high_smoke):
 		high_smoke.amount = cantidad_fina
 		if not _humo_habilitado:
 			high_smoke.amount_ratio = 0.0
@@ -185,30 +234,42 @@ func configurar_max_particulas_humo(cantidad: int) -> void:
 func apply_water_damage(amount: float) -> bool:
 	if not objetivo_extinguible or extinguishing or amount <= 0.0:
 		return false
-	current_health = maxf(0.0, current_health - amount)
-	set_intensidad(current_health / maxf(max_health, 1.0))
-	if current_health <= 0.0:
+	var reduccion_intensidad: float = minf(amount, intensidad_fuego)
+	set_intensidad((intensidad_fuego - reduccion_intensidad) / 100.0)
+	_emitir_vapor_enfriamiento(reduccion_intensidad)
+	if intensidad_fuego <= 0.0:
 		extinguish()
 		return true
 	return false
 
 func apagar(delta: float) -> bool:
-	return apply_water_damage(maxf(delta, 0.0) * 25.0)
+	return apply_water_damage(maxf(delta, 0.0) * TASA_EXTINCION_AGUA)
 
 func set_intensidad(value: float) -> void:
 	intensity = clampf(value, 0.0, 1.0)
-	if flame_particles:
+	intensidad_fuego = intensity * 100.0
+	current_health = max_health * intensity
+	if is_instance_valid(flame_particles):
 		flame_particles.amount_ratio = intensity
-		flame_particles.scale = Vector3.ONE * lerpf(0.4, 1.0, intensity)
-	if dense_smoke:
+		flame_particles.scale = Vector3.ONE * lerpf(0.08, 1.0, intensity)
+	if is_instance_valid(dense_smoke):
 		dense_smoke.amount_ratio = intensity
-	if high_smoke:
+	if is_instance_valid(high_smoke):
 		high_smoke.amount_ratio = intensity * 0.75
-	if fire_light:
+	if is_instance_valid(fire_light):
 		fire_light.light_energy = 4.0 * intensity
 
+func _emitir_vapor_enfriamiento(reduccion: float) -> void:
+	_tiempo_vapor_restante = DURACION_VAPOR_ENFRIAMIENTO
+	if not is_instance_valid(steam_particles):
+		return
+	steam_particles.amount_ratio = clampf(0.35 + reduccion / 30.0, 0.35, 1.0)
+	if not steam_particles.emitting:
+		steam_particles.restart()
+	steam_particles.emitting = true
+
 func set_fire_variant(variant: int) -> void:
-	if not flame_particles:
+	if not is_instance_valid(flame_particles):
 		return
 	if variant % 2 == 0:
 		flame_particles.draw_pass_1 = _malla_llama_original
@@ -267,31 +328,36 @@ func _crear_malla_llama_faceteada() -> ArrayMesh:
 func extinguish() -> void:
 	if extinguishing:
 		return
-	var generacion_extinguida := _generacion
 	extinguishing = true
-	intensity = 0.0
-	current_health = 0.0
+	_generacion_extinguiendose = _generacion
+	set_intensidad(0.0)
 	remove_from_group("fuego")
 	if not FireGridServer.activa and is_instance_valid(linked_tree):
 		_burn_tree(linked_tree)
 	fuego_apagado.emit(self)
-	if flame_particles:
+	if is_instance_valid(flame_particles):
 		flame_particles.emitting = false
-	if dense_smoke:
+	if is_instance_valid(dense_smoke):
 		dense_smoke.emitting = false
-	if high_smoke:
+	if is_instance_valid(high_smoke):
 		high_smoke.emitting = false
-	if fire_light:
+	if is_instance_valid(fire_light):
 		fire_light.visible = false
 	var area := get_node_or_null("Area3D") as Area3D
 	if area:
 		area.monitoring = false
 		area.monitorable = false
-	if steam_particles:
+	if is_instance_valid(steam_particles):
+		_tiempo_vapor_restante = 0.0
+		steam_particles.amount_ratio = 1.0
 		steam_particles.restart()
 		steam_particles.emitting = true
-	await get_tree().create_timer(1.6).timeout
-	if generacion_extinguida != _generacion or not extinguishing:
+	if not is_instance_valid(_temporizador_extincion):
+		return
+	_temporizador_extincion.start(1.6)
+
+func _al_terminar_extincion() -> void:
+	if _generacion_extinguiendose != _generacion or not extinguishing:
 		return
 	FirePool.liberar(self)
 	if not _administrado_por_pool:
@@ -336,32 +402,39 @@ func _crear_temporizador_lod_humo() -> void:
 	_temporizador_lod_humo.timeout.connect(_actualizar_lod_humo)
 	add_child(_temporizador_lod_humo)
 
+func _crear_temporizador_extincion() -> void:
+	_temporizador_extincion = Timer.new()
+	_temporizador_extincion.name = "TemporizadorExtincion"
+	_temporizador_extincion.one_shot = true
+	_temporizador_extincion.timeout.connect(_al_terminar_extincion)
+	add_child(_temporizador_extincion)
+
 func _actualizar_lod_humo() -> void:
 	if extinguishing or not is_inside_tree():
 		return
 	var camara := get_viewport().get_camera_3d()
-	if not camara:
+	if not is_instance_valid(camara):
 		return
 	var distancia := global_position.distance_to(camara.global_position)
 	if distancia > 250.0:
-		if dense_smoke:
+		if is_instance_valid(dense_smoke):
 			dense_smoke.emitting = false
 			dense_smoke.amount_ratio = 0.0
-		if high_smoke:
+		if is_instance_valid(high_smoke):
 			high_smoke.emitting = false
 			high_smoke.amount_ratio = 0.0
 	elif distancia > 120.0:
-		if dense_smoke:
+		if is_instance_valid(dense_smoke):
 			dense_smoke.emitting = _humo_habilitado
 			dense_smoke.amount_ratio = intensity * 0.35 if _humo_habilitado else 0.0
-		if high_smoke:
+		if is_instance_valid(high_smoke):
 			high_smoke.emitting = false
 			high_smoke.amount_ratio = 0.0
 	else:
-		if dense_smoke:
+		if is_instance_valid(dense_smoke):
 			dense_smoke.emitting = _humo_habilitado
 			dense_smoke.amount_ratio = intensity if _humo_habilitado else 0.0
-		if high_smoke:
+		if is_instance_valid(high_smoke):
 			high_smoke.emitting = _humo_habilitado
 			high_smoke.amount_ratio = intensity * 0.75 if _humo_habilitado else 0.0
 

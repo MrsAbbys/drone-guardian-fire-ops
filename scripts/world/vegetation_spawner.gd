@@ -5,19 +5,65 @@ const FIRE_GRID_VIEW_SCRIPT: Script = preload("res://scripts/sim/fire_grid_view.
 const CONFIGURACION_GRILLA: Resource = preload("res://resources/sim/configuracion_aguarague.tres")
 const PALETA := preload("res://scripts/world/paleta.gd")
 const FOREST_MESHES := preload("res://scripts/world/procedural_forest_meshes.gd")
+const POISSON_SAMPLER: Script = preload("res://scripts/world/poisson_disk_sampler.gd")
+const DIRECCIONES_DRENAJE := [
+	Vector2.RIGHT,
+	Vector2.LEFT,
+	Vector2.UP,
+	Vector2.DOWN,
+]
+const PESOS_CHACO := [0.34, 0.24, 0.03, 0.24, 0.02, 0.13]
+const PESOS_MIXTO := [0.20, 0.15, 0.19, 0.14, 0.14, 0.18]
+const PESOS_ALTURA := [0.04, 0.04, 0.42, 0.10, 0.35, 0.05]
+const RUTA_SENDEROS := [
+	Vector2(230.0, -235.0),
+	Vector2(320.0, -80.0),
+	Vector2(300.0, 60.0),
+	Vector2(170.0, 90.0),
+	Vector2(20.0, 65.0),
+	Vector2(-120.0, 40.0),
+]
 
 @export_group("Bosque")
-@export_range(4, 40, 1) var separacion_arboles: int = 22
-@export_range(0.0, 1.0, 0.01) var densidad_bosque: float = 0.58
+@export_range(4, 40, 1) var separacion_arboles: int = 16
+@export_range(0.0, 1.0, 0.01) var densidad_bosque: float = 0.68
 @export_range(1, 60, 1) var cantidad_arboles_en_llamas: int = 30
 @export var semilla_mapa: int = 12345
 @export_enum("Baja:0", "Media:1", "Alta:2") var calidad_vegetacion: int = 1
 @export var configuracion_grilla_incendio: Resource = CONFIGURACION_GRILLA
+@export_group("Muestreo Poisson-disk")
+@export_range(6.0, 24.0, 0.5) var distancia_poisson_minima: float = 8.0
+@export_range(12.0, 48.0, 0.5) var distancia_poisson_maxima: float = 24.0
+@export_range(8, 48, 1) var intentos_poisson_por_punto: int = 24
+@export_group("Ecología Serranía")
+@export_range(60.0, 220.0, 1.0) var altura_maxima_ecologica: float = 140.0
+@export_range(0.0, 1.0, 0.01) var altura_limite_chaco: float = 0.30
+@export_range(0.1, 1.0, 0.01) var altura_limite_mixto: float = 0.68
+@export_range(15.0, 100.0, 1.0) var radio_muestreo_quebrada: float = 42.0
+@export_range(0.0, 3.0, 0.05) var influencia_relieve: float = 1.7
+@export_range(0.0, 1.0, 0.01) var intensidad_rodales: float = 0.82
+@export_range(0.0005, 0.02, 0.0001) var frecuencia_rodales: float = 0.0025
+@export_range(0.0, 0.8, 0.01) var aumento_densidad_cerca_agua: float = 0.35
+@export_range(20.0, 160.0, 1.0) var radio_influencia_agua: float = 110.0
+@export_range(10.0, 50.0, 1.0) var pendiente_maxima_arboles: float = 35.0
+@export_range(0.0, 0.3, 0.01) var variacion_escala_arbol: float = 0.12
+@export_range(0.0, 0.2, 0.01) var inclinacion_aleatoria_maxima: float = 0.07
+@export_group("Claros y servicios")
+@export_range(10.0, 120.0, 1.0) var radio_claro_isla_agua: float = 72.0
+@export_range(10.0, 100.0, 1.0) var radio_claro_helipad: float = 52.0
+@export_range(0.0, 200.0, 1.0) var radio_claro_incendio: float = 88.0
+@export_range(5.0, 60.0, 1.0) var radio_claro_ruta_dron: float = 24.0
+@export_range(5.0, 30.0, 1.0) var ancho_claro_caminos: float = 10.0
+@export_range(10.0, 80.0, 1.0) var radio_claro_vivienda: float = 46.0
 
 const FIRE_CENTER := Vector2(55.0, -120.0)
 const FIRE_RADIUS := 65.0
 const REFILL_CENTER := Vector2(-178.0, 40.0)
 const HELIPAD_CENTER := Vector2(-120.0, 40.0)
+const LIMITE_BOSQUE_MIN_X: float = -540.0
+const LIMITE_BOSQUE_MAX_X: float = 520.0
+const LIMITE_BOSQUE_MIN_Z: float = -540.0
+const LIMITE_BOSQUE_MAX_Z: float = 540.0
 
 var rng := RandomNumberGenerator.new()
 var forest_noise := FastNoiseLite.new()
@@ -50,7 +96,7 @@ func _ready() -> void:
 	rng.seed = semilla_mapa
 	forest_noise.seed = semilla_mapa
 	forest_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	forest_noise.frequency = 0.006
+	forest_noise.frequency = frecuencia_rodales
 	forest_noise.fractal_octaves = 3
 	hud = get_tree().root.find_child("TacticalHUD", true, false)
 	terrain_generator = get_tree().root.find_child("MountainTerrain", true, false)
@@ -62,14 +108,23 @@ func _ready() -> void:
 	_imprimir_resumen_multimeshes()
 
 func _exit_tree() -> void:
+	if GraphicsSettings.calidad_cambiada.is_connected(_aplicar_perfil_calidad):
+		GraphicsSettings.calidad_cambiada.disconnect(_aplicar_perfil_calidad)
 	if FireGridServer.viento_cambiado.is_connected(_al_cambiar_viento):
 		FireGridServer.viento_cambiado.disconnect(_al_cambiar_viento)
 	FireGridServer.detener()
+	_multimeshes_vegetacion.clear()
+	_materiales_vegetacion.clear()
+	arboles_en_llamas.clear()
+	hud = null
+	terrain_generator = null
 
 func _al_cambiar_viento(direccion: Vector2, velocidad: float) -> void:
 	var direccion_normalizada := direccion.normalized() if direccion.length_squared() > 0.0 else Vector2.RIGHT
 	var intensidad := clampf(velocidad / 8.3, 0.0, 2.0)
 	for material in _materiales_vegetacion:
+		if not is_instance_valid(material):
+			continue
 		material.set_shader_parameter("wind_direction", direccion_normalizada)
 		material.set_shader_parameter("wind_strength", intensidad)
 
@@ -77,32 +132,79 @@ func _aplicar_perfil_calidad(calidad: int) -> void:
 	calidad_vegetacion = calidad
 	var distancia := _distancia_maxima_vegetacion()
 	for instancia in _multimeshes_vegetacion:
-		if not is_instance_valid(instancia):
+		if not is_instance_valid(instancia) or instancia.is_queued_for_deletion():
 			continue
 		instancia.visibility_range_end = distancia
 		instancia.visibility_range_end_margin = distancia * 0.1
 
 func _generar_bosque_y_detalles() -> void:
-	for x in range(-540, 521, separacion_arboles):
-		for z in range(-540, 541, separacion_arboles):
-			var px := float(x) + rng.randf_range(-8.0, 8.0)
-			var pz := float(z) + rng.randf_range(-8.0, 8.0)
-			if _zona_protegida(Vector2(px, pz)):
-				continue
-			var density := (forest_noise.get_noise_2d(px, pz) + 1.0) * 0.5
-			if density > densidad_bosque and _pendiente_apta(px, pz) and _posicion_arbol_apta(px, pz):
-				_agregar_arbol_multimesh(px, pz)
-			if rng.randf() < 0.38:
-				_agregar_detalle_suelo(px, pz)
+	var distancia_minima := maxf(distancia_poisson_minima, 1.0)
+	var distancia_maxima := maxf(distancia_poisson_maxima, distancia_minima)
+	var sampler: RefCounted = POISSON_SAMPLER.new()
+	var muestras: Array = sampler.call(
+		"generar_muestras",
+		Rect2(
+			Vector2(LIMITE_BOSQUE_MIN_X, LIMITE_BOSQUE_MIN_Z),
+			Vector2(
+				LIMITE_BOSQUE_MAX_X - LIMITE_BOSQUE_MIN_X,
+				LIMITE_BOSQUE_MAX_Z - LIMITE_BOSQUE_MIN_Z
+			)
+		),
+		distancia_minima,
+		distancia_maxima,
+		intentos_poisson_por_punto,
+		Callable(self, "_datos_muestra_bosque"),
+		rng
+	)
+	if muestras.is_empty():
+		push_warning("No se encontró una ubicación válida para iniciar el muestreo del bosque.")
+		return
 
-func _agregar_arbol_multimesh(px: float, pz: float) -> void:
-	var ground_y := get_exact_ground_y(px, pz)
-	var tree_scale := rng.randf_range(1.8, 2.8)
+	for muestra_variant in muestras:
+		if not muestra_variant is Dictionary:
+			push_error("El muestreador del bosque devolvió una muestra inválida.")
+			return
+		var muestra: Dictionary = muestra_variant
+		var punto: Vector2 = muestra["posicion"]
+		var datos: Dictionary = muestra["datos"]
+		var altura := float(datos["altura"])
+		var ruido := float(datos["ruido"])
+		_agregar_arbol_multimesh(punto.x, punto.y, altura, ruido)
+		var probabilidad_detalle := clampf(0.62 + ruido * 0.12, 0.4, 0.78)
+		if rng.randf() < probabilidad_detalle:
+			var detalle := punto + Vector2(
+				rng.randf_range(-5.0, 5.0),
+				rng.randf_range(-5.0, 5.0)
+			)
+			if not _zona_protegida(detalle):
+				_agregar_detalle_suelo(detalle.x, detalle.y)
+
+func _agregar_arbol_multimesh(px: float, pz: float, ground_y: float, ruido_rodal: float) -> void:
+	var escala_rodal := 1.0 + ruido_rodal * variacion_escala_arbol
+	var tree_scale := rng.randf_range(1.8, 2.8) * escala_rodal
 	var yaw := rng.randf_range(0.0, TAU)
-	var kind := rng.randi_range(0, 5)
+	var kind := _seleccionar_kind_por_altura(ground_y)
 	var size_factor := 1.0 if kind == 0 or kind == 2 or kind == 3 else 0.82
-	var tilt_x := rng.randf_range(-0.035, 0.035)
-	var tilt_z := rng.randf_range(-0.035, 0.035)
+	var rise_x := (get_exact_ground_y(px + 1.0, pz) - get_exact_ground_y(px - 1.0, pz)) * 0.5
+	var rise_z := (get_exact_ground_y(px, pz + 1.0) - get_exact_ground_y(px, pz - 1.0)) * 0.5
+	var variacion_inclinacion_x := rng.randf_range(
+		-inclinacion_aleatoria_maxima,
+		inclinacion_aleatoria_maxima
+	)
+	var variacion_inclinacion_z := rng.randf_range(
+		-inclinacion_aleatoria_maxima,
+		inclinacion_aleatoria_maxima
+	)
+	var tilt_x := clampf(
+		atan(rise_z) * 0.22 + variacion_inclinacion_x,
+		-0.25,
+		0.25
+	)
+	var tilt_z := clampf(
+		-atan(rise_x) * 0.22 + variacion_inclinacion_z,
+		-0.25,
+		0.25
+	)
 	var tree_rotation := Basis.from_euler(Vector3(tilt_x, yaw, tilt_z))
 	var transform: Transform3D = Transform3D(
 		tree_rotation.scaled(Vector3.ONE * tree_scale * size_factor),
@@ -271,11 +373,12 @@ func _generar_arboles_en_llamas() -> void:
 		arboles_en_llamas.append(tree)
 
 func _iniciar_simulacion_grilla() -> void:
-	var vista := Node.new()
-	vista.name = "FireGridView"
-	vista.set_script(FIRE_GRID_VIEW_SCRIPT)
-	vista.call("configurar", arboles_en_llamas)
-	add_child(vista)
+	if not NetworkManager.es_servidor_headless():
+		var vista := Node.new()
+		vista.name = "FireGridView"
+		vista.set_script(FIRE_GRID_VIEW_SCRIPT)
+		vista.call("configurar", arboles_en_llamas)
+		add_child(vista)
 	FireGridServer.configurar_escenario(
 		self,
 		configuracion_grilla_incendio,
@@ -551,11 +654,11 @@ func _crear_sendero_tierra(waypoints: Array[Vector2]) -> void:
 
 func _zona_protegida(point: Vector2) -> bool:
 	return (
-		point.distance_to(REFILL_CENTER) < 72.0
-		or point.distance_to(HELIPAD_CENTER) < 52.0
-		or point.distance_to(FIRE_CENTER) < 88.0
+		point.distance_to(REFILL_CENTER) < radio_claro_isla_agua
+		or point.distance_to(HELIPAD_CENTER) < radio_claro_helipad
+		or point.distance_to(FIRE_CENTER) < radio_claro_incendio
 		or _en_ruta_dron(point)
-		or point.distance_to(Vector2(230.0, -235.0)) < 46.0
+		or point.distance_to(Vector2(230.0, -235.0)) < radio_claro_vivienda
 		or point.distance_to(Vector2(244.0, -224.0)) < 10.0
 		or point.distance_to(Vector2(185.0, 245.0)) < 16.0
 		or point.distance_to(Vector2(275.0, 175.0)) < 17.0
@@ -563,41 +666,140 @@ func _zona_protegida(point: Vector2) -> bool:
 	)
 
 func _en_sendero_visual(point: Vector2) -> bool:
-	var route: Array[Vector2] = [
-		Vector2(230.0, -235.0),
-		Vector2(320.0, -80.0),
-		Vector2(300.0, 60.0),
-		Vector2(170.0, 90.0),
-		Vector2(20.0, 65.0),
-		HELIPAD_CENTER,
-	]
-	for index in range(route.size() - 1):
-		var start := route[index]
-		var segment := route[index + 1] - start
+	for index in range(RUTA_SENDEROS.size() - 1):
+		var start: Vector2 = RUTA_SENDEROS[index]
+		var segment: Vector2 = RUTA_SENDEROS[index + 1] - start
 		var progress := clampf((point - start).dot(segment) / segment.length_squared(), 0.0, 1.0)
-		if point.distance_to(start + segment * progress) < 10.0:
+		if point.distance_to(start + segment * progress) < ancho_claro_caminos:
 			return true
 	return false
 
 func _en_ruta_dron(point: Vector2) -> bool:
-	for sample in range(11):
-		var route_point := HELIPAD_CENTER.lerp(FIRE_CENTER, float(sample) / 10.0)
-		if point.distance_to(route_point) < 24.0:
-			return true
-	return false
+	var segmento := FIRE_CENTER - HELIPAD_CENTER
+	var progreso := clampf(
+		(point - HELIPAD_CENTER).dot(segmento) / segmento.length_squared(),
+		0.0,
+		1.0
+	)
+	return point.distance_to(HELIPAD_CENTER + segmento * progreso) < radio_claro_ruta_dron
 
-func _posicion_arbol_apta(px: float, pz: float) -> bool:
-	var point := Vector2(px, pz)
-	for placed in tree_positions:
-		if point.distance_to(placed) < 12.0:
-			return false
-	return true
+func _datos_muestra_bosque(
+	point: Vector2,
+	distancia_minima: float,
+	distancia_maxima: float
+) -> Dictionary:
+	if (
+		point.x < LIMITE_BOSQUE_MIN_X
+		or point.x > LIMITE_BOSQUE_MAX_X
+		or point.y < LIMITE_BOSQUE_MIN_Z
+		or point.y > LIMITE_BOSQUE_MAX_Z
+		or _zona_protegida(point)
+	):
+		return {}
+	var ground_y := get_exact_ground_y(point.x, point.y)
+	var pendiente := _angulo_pendiente(point.x, point.y)
+	if pendiente > pendiente_maxima_arboles:
+		return {}
+	var ruido := forest_noise.get_noise_2d(point.x, point.y)
+	return {
+		"altura": ground_y,
+		"pendiente": pendiente,
+		"ruido": ruido,
+		"radio": _radio_poisson_local(
+			point, ground_y, pendiente, ruido, distancia_minima, distancia_maxima
+		),
+	}
 
-func _pendiente_apta(px: float, pz: float) -> bool:
+func _radio_poisson_local(
+	point: Vector2,
+	ground_y: float,
+	pendiente: float,
+	ruido: float,
+	distancia_minima: float,
+	distancia_maxima: float
+) -> float:
+	var altura_normalizada := clampf(
+		ground_y / maxf(altura_maxima_ecologica, 1.0),
+		0.0,
+		1.0
+	)
+	var factor_altura := lerpf(0.9, 1.2, altura_normalizada)
+	var pendiente_normalizada := clampf(
+		pendiente / maxf(pendiente_maxima_arboles, 1.0),
+		0.0,
+		1.0
+	)
+	var factor_pendiente := 1.0 - 0.75 * pow(pendiente_normalizada, 1.3)
+	var factor_rodal := lerpf(
+		1.0,
+		lerpf(0.4, 1.6, (ruido + 1.0) * 0.5),
+		clampf(intensidad_rodales, 0.0, 1.0)
+	)
+	var factor_densidad := maxf(densidad_bosque, 0.05) / 0.58
+	var densidad_local := (
+		factor_densidad
+		* factor_altura
+		* factor_pendiente
+		* _factor_quebrada(point, ground_y)
+		* _factor_cercania_agua(point)
+		* factor_rodal
+	)
+	var distancia := float(separacion_arboles) / sqrt(maxf(densidad_local, 0.1))
+	return clampf(distancia, distancia_minima, distancia_maxima)
+
+func _factor_quebrada(point: Vector2, ground_y: float) -> float:
+	var promedio_altura := 0.0
+	for direccion in DIRECCIONES_DRENAJE:
+		var posicion_muestra: Vector2 = point + direccion * radio_muestreo_quebrada
+		promedio_altura += get_exact_ground_y(posicion_muestra.x, posicion_muestra.y)
+	promedio_altura /= float(DIRECCIONES_DRENAJE.size())
+	var relieve_normalizado := (
+		(promedio_altura - ground_y) / maxf(altura_maxima_ecologica, 1.0)
+	)
+	return clampf(1.0 + relieve_normalizado * influencia_relieve * 4.0, 0.6, 1.4)
+
+func _factor_cercania_agua(point: Vector2) -> float:
+	var distancia_agua := point.distance_to(REFILL_CENTER)
+	var proximidad := 1.0 - clampf(
+		(distancia_agua - radio_claro_isla_agua) / maxf(radio_influencia_agua, 1.0),
+		0.0,
+		1.0
+	)
+	return 1.0 + aumento_densidad_cerca_agua * proximidad
+
+func _angulo_pendiente(px: float, pz: float) -> float:
 	var rise_x := get_exact_ground_y(px + 1.0, pz) - get_exact_ground_y(px - 1.0, pz)
 	var rise_z := get_exact_ground_y(px, pz + 1.0) - get_exact_ground_y(px, pz - 1.0)
-	var slope_angle := rad_to_deg(atan(sqrt(rise_x * rise_x + rise_z * rise_z) * 0.5))
-	return slope_angle <= 35.0
+	return rad_to_deg(atan(sqrt(rise_x * rise_x + rise_z * rise_z) * 0.5))
+
+func _pendiente_apta(px: float, pz: float) -> bool:
+	return _angulo_pendiente(px, pz) <= pendiente_maxima_arboles
+
+func _posicion_arbol_apta(px: float, pz: float) -> bool:
+	return _pendiente_apta(px, pz)
+
+func _seleccionar_kind_por_altura(ground_y: float) -> int:
+	var altura_normalizada := clampf(
+		ground_y / maxf(altura_maxima_ecologica, 1.0),
+		0.0,
+		1.0
+	)
+	var limite_chaco := clampf(altura_limite_chaco, 0.0, 1.0)
+	var limite_mixto := clampf(maxf(altura_limite_mixto, limite_chaco), 0.1, 1.0)
+	var pesos: Array
+	if altura_normalizada < limite_chaco:
+		pesos = PESOS_CHACO
+	elif altura_normalizada < limite_mixto:
+		pesos = PESOS_MIXTO
+	else:
+		pesos = PESOS_ALTURA
+	var sorteo := rng.randf()
+	var acumulado := 0.0
+	for kind in range(pesos.size()):
+		acumulado += float(pesos[kind])
+		if sorteo <= acumulado:
+			return kind
+	return 5
 
 func get_exact_ground_y(px: float, pz: float) -> float:
 	if is_instance_valid(terrain_generator) and terrain_generator.has_method("get_ground_height_at"):
@@ -757,9 +959,12 @@ func _add_box_visual(parent: Node3D, node_name: String, size: Vector3, at: Vecto
 	parent.add_child(instance)
 	return instance
 
-func _add_solid_box(parent: StaticBody3D, node_name: String, size: Vector3, at: Vector3, material: Material, collision: bool, rotation: Vector3 = Vector3.ZERO) -> void:
+func _add_solid_box(parent: Node3D, node_name: String, size: Vector3, at: Vector3, material: Material, collision: bool, rotation: Vector3 = Vector3.ZERO) -> void:
 	_add_box_visual(parent, node_name, size, at, material, rotation)
 	if not collision:
+		return
+	if not parent is StaticBody3D:
+		push_error("La colisión de %s requiere un StaticBody3D." % node_name)
 		return
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()

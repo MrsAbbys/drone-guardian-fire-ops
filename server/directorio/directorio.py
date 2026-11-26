@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import logging
 import os
 import secrets
 import shutil
+import signal
 import socket
 import subprocess
 import threading
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -23,6 +26,21 @@ ESCENARIOS = {"aguarague", "campo_pajoso", "interfase_urbana"}
 DIFICULTADES = {"baja", "media", "alta"}
 TIEMPO_VACIA_SEGUNDOS = 60.0
 MAXIMO_BODY_BYTES = 64 * 1024
+CAMPOS_METRICAS = [
+    "timestamp_utc",
+    "room_code",
+    "sample_id",
+    "sample_ms",
+    "tick_ms_promedio",
+    "tick_ms_p95",
+    "tick_ms_max",
+    "jugadores",
+    "celdas_ardiendo",
+    "bytes_s_enviados",
+    "bytes_s_por_jugador",
+    "ram_mb",
+    "cpu_pct",
+]
 
 
 class ErrorDirectorio(Exception):
@@ -34,6 +52,7 @@ class ErrorDirectorio(Exception):
 @dataclass
 class Sala:
     codigo: str
+    nombre: str
     escenario: str
     dificultad: str
     max_jugadores: int
@@ -49,6 +68,7 @@ class Sala:
     def resumen(self) -> dict[str, Any]:
         return {
             "codigo": self.codigo,
+            "nombre": self.nombre,
             "escenario": self.escenario,
             "jugadores": self.jugadores,
             "max_jugadores": self.max_jugadores,
@@ -77,15 +97,19 @@ class DirectorioSalas:
         carpeta_logs: Path | None = None,
         crear_proceso: Callable[..., subprocess.Popen[Any]] = subprocess.Popen,
         reloj: Callable[[], float] = time.monotonic,
+        binario_juego: str | None = None,
     ) -> None:
         inicio, fin = rango_puertos
         if inicio < 1 or fin > 65535 or inicio > fin:
             raise ValueError("El rango de puertos debe estar entre 1 y 65535.")
         if max_salas < 1:
             raise ValueError("max_salas debe ser mayor que cero.")
+        if max_salas > fin - inicio + 1:
+            raise ValueError("max_salas no puede superar la cantidad de puertos disponibles.")
         if transporte not in {"websocket", "enet"}:
             raise ValueError("El transporte debe ser websocket o enet.")
         self.godot = godot
+        self.binario_juego = binario_juego
         self.proyecto = proyecto.resolve()
         self.puerto_inicio = inicio
         self.puerto_fin = fin
@@ -93,27 +117,30 @@ class DirectorioSalas:
         self.url_interna = url_interna.rstrip("/")
         self.max_salas = max_salas
         self.transporte = transporte
-        self.carpeta_logs = carpeta_logs or Path(os.getenv("TEMP", "/tmp")) / "drone-guardian-directorio"
+        self.carpeta_logs = carpeta_logs or Path(os.environ.get("GAME_LOG_DIR", str(RAIZ_PROYECTO / "logs")))
+        self.carpeta_logs.mkdir(parents=True, exist_ok=True)
+        self.ruta_metricas_csv = self.carpeta_logs / "servidor_metricas.csv"
+        if not self.ruta_metricas_csv.exists() or self.ruta_metricas_csv.stat().st_size == 0:
+            with self.ruta_metricas_csv.open("w", newline="", encoding="utf-8") as archivo_csv:
+                csv.DictWriter(archivo_csv, fieldnames=CAMPOS_METRICAS).writeheader()
         self.crear_proceso = crear_proceso
         self.reloj = reloj
         self.salas: dict[str, Sala] = {}
         self._lock = threading.RLock()
+        self._metricas_emitidas: dict[str, int] = {}
+        self._cpu_antes: dict[int, tuple[int, float]] = {}
 
     def crear_sala(self, datos: dict[str, Any]) -> dict[str, Any]:
-        escenario, dificultad, max_jugadores = self._validar_configuracion(datos)
+        nombre, escenario, dificultad, max_jugadores = self._validar_configuracion(datos)
         self.limpiar_vencidas()
         with self._lock:
             if len(self.salas) >= self.max_salas:
                 raise ErrorDirectorio("El directorio alcanzó el límite de salas.", HTTPStatus.SERVICE_UNAVAILABLE)
             codigo = self._nuevo_codigo()
+            nombre_sala = nombre or f"Sala {codigo}"
             puerto = self._buscar_puerto_libre()
             token = secrets.token_urlsafe(24)
-            comando = [
-                self.godot,
-                "--headless",
-                "--path",
-                str(self.proyecto),
-                "--",
+            argumentos_juego = [
                 "--server",
                 f"--port={puerto}",
                 f"--room={codigo}",
@@ -123,7 +150,19 @@ class DirectorioSalas:
                 f"--transport={self.transporte}",
                 f"--directory={self.url_interna}",
                 f"--directory-token={token}",
+                f"--metrics-file={(self.carpeta_logs / f'metricas-sala-{codigo}.json').resolve()}",
             ]
+            if self.binario_juego:
+                comando = [self.binario_juego, "--headless", "--", *argumentos_juego]
+            else:
+                comando = [
+                    self.godot,
+                    "--headless",
+                    "--path",
+                    str(self.proyecto),
+                    "--",
+                    *argumentos_juego,
+                ]
             self.carpeta_logs.mkdir(parents=True, exist_ok=True)
             ruta_log = self.carpeta_logs / f"sala-{codigo}.log"
             try:
@@ -137,13 +176,14 @@ class DirectorioSalas:
                     )
             except OSError as error:
                 raise ErrorDirectorio(
-                    f"No se pudo iniciar Godot: {error}",
+                    f"No se pudo iniciar el servidor de partida: {error}",
                     HTTPStatus.SERVICE_UNAVAILABLE,
                 ) from error
 
             ahora = self.reloj()
             sala = Sala(
                 codigo=codigo,
+                nombre=nombre_sala,
                 escenario=escenario,
                 dificultad=dificultad,
                 max_jugadores=max_jugadores,
@@ -200,6 +240,7 @@ class DirectorioSalas:
             self._validar_token(sala, datos.get("token"))
             self.salas.pop(codigo, None)
         self._detener_proceso(sala.proceso)
+        self._limpiar_archivo_metricas(sala)
         logging.info("Sala %s terminada por el servidor de partida.", codigo)
 
     def limpiar_vencidas(self) -> None:
@@ -207,6 +248,98 @@ class DirectorioSalas:
             expiradas = self._limpiar_vencidas_bajo_lock()
         for sala in expiradas:
             self._detener_proceso(sala.proceso)
+            self._limpiar_archivo_metricas(sala)
+
+    def _limpiar_archivo_metricas(self, sala: Sala) -> None:
+        self._metricas_emitidas.pop(sala.codigo, None)
+        pid = getattr(sala.proceso, "pid", 0)
+        if isinstance(pid, int):
+            self._cpu_antes.pop(pid, None)
+        ruta_metricas = self.carpeta_logs / f"metricas-sala-{sala.codigo}.json"
+        try:
+            ruta_metricas.unlink(missing_ok=True)
+        except OSError as error:
+            logging.warning("No se pudo limpiar el archivo de métricas de sala %s: %s", sala.codigo, error)
+
+    def registrar_metricas_csv(self) -> None:
+        with self._lock:
+            salas = list(self.salas.values())
+        filas: list[dict[str, Any]] = []
+        for sala in salas:
+            ruta_metricas = self.carpeta_logs / f"metricas-sala-{sala.codigo}.json"
+            try:
+                with ruta_metricas.open(encoding="utf-8") as archivo_metricas:
+                    metricas = json.load(archivo_metricas)
+            except FileNotFoundError:
+                continue
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+                logging.warning("No se pudieron leer las métricas de sala %s: %s", sala.codigo, error)
+                continue
+            if not isinstance(metricas, dict):
+                logging.warning("Las métricas de sala %s no contienen un objeto JSON.", sala.codigo)
+                continue
+            sample_id = metricas.get("sample_id")
+            if isinstance(sample_id, bool) or not isinstance(sample_id, int):
+                logging.warning("La muestra de métricas de sala %s no tiene sample_id válido.", sala.codigo)
+                continue
+            if sample_id <= self._metricas_emitidas.get(sala.codigo, 0):
+                continue
+            pid = getattr(sala.proceso, "pid", 0)
+            cpu_pct, ram_mb = self._metricas_del_proceso(pid if isinstance(pid, int) else 0)
+            filas.append({
+                "_room_code": sala.codigo,
+                "_sample_id": sample_id,
+                "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "room_code": sala.codigo,
+                "sample_id": sample_id,
+                "sample_ms": metricas.get("sample_ms", ""),
+                "tick_ms_promedio": metricas.get("tick_ms_promedio", ""),
+                "tick_ms_p95": metricas.get("tick_ms_p95", ""),
+                "tick_ms_max": metricas.get("tick_ms_max", ""),
+                "jugadores": metricas.get("jugadores", ""),
+                "celdas_ardiendo": metricas.get("celdas_ardiendo", ""),
+                "bytes_s_enviados": metricas.get("bytes_s_enviados", ""),
+                "bytes_s_por_jugador": metricas.get("bytes_s_por_jugador", ""),
+                "ram_mb": ram_mb if ram_mb is not None else "",
+                "cpu_pct": cpu_pct if cpu_pct is not None else "",
+            })
+        if not filas:
+            return
+        with self.ruta_metricas_csv.open("a", newline="", encoding="utf-8") as archivo_csv:
+            escritor = csv.DictWriter(archivo_csv, fieldnames=CAMPOS_METRICAS)
+            escritor.writerows({campo: fila[campo] for campo in CAMPOS_METRICAS} for fila in filas)
+        for fila in filas:
+            self._metricas_emitidas[str(fila["_room_code"])] = int(fila["_sample_id"])
+
+    def _metricas_del_proceso(self, pid: int) -> tuple[float | None, float | None]:
+        if pid < 1:
+            return None, None
+        ruta_stat = Path("/proc") / str(pid) / "stat"
+        try:
+            contenido = ruta_stat.read_text(encoding="utf-8")
+            cierre_nombre = contenido.rfind(")")
+            if cierre_nombre < 0:
+                raise ValueError("campo comm de /proc no está cerrado")
+            campos = contenido[cierre_nombre + 2 :].split()
+            ticks_cpu = int(campos[11]) + int(campos[12])
+            paginas_residentes = int(campos[21])
+            ticks_por_segundo = int(os.sysconf("SC_CLK_TCK"))
+            bytes_por_pagina = int(os.sysconf("SC_PAGE_SIZE"))
+        except FileNotFoundError:
+            return None, None
+        except (IndexError, ValueError, OSError, AttributeError) as error:
+            logging.warning("No se pudieron leer las métricas del proceso %d: %s", pid, error)
+            return None, None
+        ahora = time.monotonic()
+        previo = self._cpu_antes.get(pid)
+        self._cpu_antes[pid] = (ticks_cpu, ahora)
+        cpu_pct: float | None = None
+        if previo is not None:
+            delta_segundos = ahora - previo[1]
+            if delta_segundos > 0.0:
+                cpu_pct = max(0.0, float(ticks_cpu - previo[0])) / ticks_por_segundo / delta_segundos * 100.0
+        ram_mb = paginas_residentes * bytes_por_pagina / (1024.0 * 1024.0)
+        return cpu_pct, ram_mb
 
     def cerrar(self) -> None:
         with self._lock:
@@ -214,6 +347,7 @@ class DirectorioSalas:
             self.salas.clear()
         for sala in salas:
             self._detener_proceso(sala.proceso)
+            self._limpiar_archivo_metricas(sala)
 
     def _limpiar_vencidas_bajo_lock(self) -> list[Sala]:
         ahora = self.reloj()
@@ -230,17 +364,23 @@ class DirectorioSalas:
                 self.salas.pop(codigo, None)
         return expiradas
 
-    def _validar_configuracion(self, datos: dict[str, Any]) -> tuple[str, str, int]:
+    def _validar_configuracion(self, datos: dict[str, Any]) -> tuple[str, str, str, int]:
+        nombre = datos.get("nombre", "")
         escenario = datos.get("escenario", "aguarague")
         dificultad = datos.get("dificultad", "media")
         max_jugadores = datos.get("max_jugadores", 6)
+        if not isinstance(nombre, str):
+            raise ErrorDirectorio("El nombre de sala debe ser texto.")
+        nombre = " ".join(nombre.split())
+        if len(nombre) > 40:
+            raise ErrorDirectorio("El nombre de sala no puede superar 40 caracteres.")
         if not isinstance(escenario, str) or escenario not in ESCENARIOS:
             raise ErrorDirectorio("Escenario inválido o todavía no disponible.")
         if not isinstance(dificultad, str) or dificultad.lower() not in DIFICULTADES:
             raise ErrorDirectorio("Dificultad inválida.")
         if isinstance(max_jugadores, bool) or not isinstance(max_jugadores, int) or not 2 <= max_jugadores <= 6:
             raise ErrorDirectorio("max_jugadores debe estar entre 2 y 6.")
-        return escenario, dificultad.lower(), max_jugadores
+        return nombre, escenario, dificultad.lower(), max_jugadores
 
     def _nuevo_codigo(self) -> str:
         for _intento in range(10000):
@@ -386,9 +526,18 @@ def _argumentos() -> argparse.Namespace:
     parser.add_argument("--game-port-end", type=int, default=9100)
     parser.add_argument("--max-rooms", type=int, default=12)
     parser.add_argument("--godot", default=os.environ.get("GODOT_BIN") or shutil.which("godot") or "godot")
+    parser.add_argument(
+        "--game-binary",
+        default=os.environ.get("GAME_SERVER_BIN"),
+        help="Binario Linux exportado; si se omite, ejecuta Godot con --project.",
+    )
     parser.add_argument("--project", type=Path, default=RAIZ_PROYECTO)
     parser.add_argument("--transport", choices=("websocket", "enet"), default="websocket")
-    parser.add_argument("--logs", type=Path, default=Path(os.getenv("TEMP", "/tmp")) / "drone-guardian-directorio")
+    parser.add_argument(
+        "--logs",
+        type=Path,
+        default=Path(os.environ.get("GAME_LOG_DIR", str(RAIZ_PROYECTO / "logs"))),
+    )
     return parser.parse_args()
 
 
@@ -401,6 +550,8 @@ def main() -> None:
         raise SystemExit("El rango de puertos de partida es inválido.")
     if args.max_rooms < 1:
         raise SystemExit("--max-rooms debe ser mayor que cero.")
+    if args.max_rooms > args.game_port_end - args.game_port_start + 1:
+        raise SystemExit("--max-rooms no puede superar la cantidad de puertos disponibles.")
 
     directorio = DirectorioSalas(
         godot=args.godot,
@@ -411,13 +562,20 @@ def main() -> None:
         max_salas=args.max_rooms,
         transporte=args.transport,
         carpeta_logs=args.logs,
+        binario_juego=args.game_binary,
     )
     servidor = ServidorDirectorio((args.host, args.port), directorio)
     detener_limpieza = threading.Event()
 
+    def detener_por_senal(_numero: int, _marco: Any) -> None:
+        raise KeyboardInterrupt
+
+    signal.signal(signal.SIGTERM, detener_por_senal)
+
     def limpiar_periodicamente() -> None:
         while not detener_limpieza.wait(2.0):
             directorio.limpiar_vencidas()
+            directorio.registrar_metricas_csv()
 
     hilo_limpieza = threading.Thread(target=limpiar_periodicamente, daemon=True)
     hilo_limpieza.start()

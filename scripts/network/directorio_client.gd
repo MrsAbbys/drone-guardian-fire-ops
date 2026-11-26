@@ -4,13 +4,33 @@ signal sala_creada(datos: Dictionary)
 signal salas_recibidas(salas: Array)
 signal sala_encontrada(datos: Dictionary)
 signal error_directorio(mensaje: String)
+signal error_creacion_sala(mensaje: String)
 
 enum Operacion { CREAR_SALA, LISTAR_SALAS, OBTENER_SALA }
 
 const TIEMPO_LIMITE_SEGUNDOS: float = 8.0
 
+var _solicitudes_activas: Array[HTTPRequest] = []
+
+
+func _exit_tree() -> void:
+	cancelar_solicitudes()
+
+
+func cancelar_solicitudes() -> void:
+	for solicitud in _solicitudes_activas.duplicate():
+		if not is_instance_valid(solicitud):
+			continue
+		if solicitud.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+			solicitud.cancel_request()
+		if not solicitud.is_queued_for_deletion():
+			solicitud.queue_free()
+	_solicitudes_activas.clear()
+
+
 func crear_sala(
 	url_base: String,
+	nombre_sala: String,
 	escenario: String,
 	dificultad: String,
 	max_jugadores: int
@@ -21,6 +41,7 @@ func crear_sala(
 		Operacion.CREAR_SALA,
 		HTTPClient.METHOD_POST,
 		{
+			"nombre": nombre_sala.strip_edges(),
 			"escenario": escenario,
 			"dificultad": dificultad,
 			"max_jugadores": max_jugadores,
@@ -48,12 +69,16 @@ func _solicitar(
 ) -> void:
 	var base_limpia := url_base.strip_edges().trim_suffix("/")
 	if not base_limpia.begins_with("http://") and not base_limpia.begins_with("https://"):
-		error_directorio.emit("La dirección del directorio debe comenzar con http:// o https://.")
+		_emitir_error_directorio(
+			"La dirección del directorio debe comenzar con http:// o https://.",
+			operacion
+		)
 		return
 	var solicitud := HTTPRequest.new()
 	solicitud.timeout = TIEMPO_LIMITE_SEGUNDOS
 	solicitud.request_completed.connect(_al_completar.bind(solicitud, operacion))
 	add_child(solicitud)
+	_solicitudes_activas.append(solicitud)
 
 	var cabeceras := PackedStringArray()
 	var cuerpo := ""
@@ -62,8 +87,11 @@ func _solicitar(
 		cuerpo = JSON.stringify(datos)
 	var resultado := solicitud.request(base_limpia + ruta, cabeceras, metodo, cuerpo)
 	if resultado != OK:
-		solicitud.queue_free()
-		error_directorio.emit("No se pudo enviar la solicitud al directorio (error %d)." % resultado)
+		_finalizar_solicitud(solicitud)
+		_emitir_error_directorio(
+			"No se pudo enviar la solicitud al directorio (error %d)." % resultado,
+			operacion
+		)
 
 func _al_completar(
 	resultado: int,
@@ -73,12 +101,17 @@ func _al_completar(
 	solicitud: HTTPRequest,
 	operacion: Operacion
 ) -> void:
+	if not is_instance_valid(solicitud):
+		return
 	if resultado != HTTPRequest.RESULT_SUCCESS:
 		if resultado == HTTPRequest.RESULT_TIMEOUT:
-			error_directorio.emit("El directorio no respondió a tiempo.")
+			_emitir_error_directorio("El directorio no respondió a tiempo.", operacion)
 		else:
-			error_directorio.emit("No se pudo conectar con el directorio (resultado %d)." % resultado)
-		solicitud.queue_free()
+			_emitir_error_directorio(
+				"No se pudo conectar con el directorio (resultado %d)." % resultado,
+				operacion
+			)
+		_finalizar_solicitud(solicitud)
 		return
 
 	var texto := cuerpo.get_string_from_utf8()
@@ -87,12 +120,12 @@ func _al_completar(
 		var mensaje := "El directorio respondió con HTTP %d." % codigo_http
 		if respuesta is Dictionary:
 			mensaje = str(respuesta.get("error", mensaje))
-		error_directorio.emit(mensaje)
-		solicitud.queue_free()
+		_emitir_error_directorio(mensaje, operacion)
+		_finalizar_solicitud(solicitud)
 		return
 	if not respuesta is Dictionary:
-		error_directorio.emit("El directorio devolvió una respuesta inválida.")
-		solicitud.queue_free()
+		_emitir_error_directorio("El directorio devolvió una respuesta inválida.", operacion)
+		_finalizar_solicitud(solicitud)
 		return
 
 	match operacion:
@@ -106,4 +139,18 @@ func _al_completar(
 				error_directorio.emit("La lista de salas recibida no es válida.")
 		Operacion.OBTENER_SALA:
 			sala_encontrada.emit(respuesta)
-	solicitud.queue_free()
+	_finalizar_solicitud(solicitud)
+
+
+func _emitir_error_directorio(mensaje: String, operacion: Operacion) -> void:
+	error_directorio.emit(mensaje)
+	if operacion == Operacion.CREAR_SALA:
+		error_creacion_sala.emit(mensaje)
+
+
+func _finalizar_solicitud(solicitud: HTTPRequest) -> void:
+	if not is_instance_valid(solicitud):
+		return
+	_solicitudes_activas.erase(solicitud)
+	if not solicitud.is_queued_for_deletion():
+		solicitud.queue_free()

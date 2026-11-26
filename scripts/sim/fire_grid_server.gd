@@ -18,6 +18,8 @@ const INTERVALO_SIMULACION: float = 0.3
 const CELDA_METROS: float = 2.0
 const INTERVALO_DEBUG_FRENTE: float = 10.0
 const MAX_CELDAS_FOCO_INICIAL: int = 30
+const RADIO_CONTAGIO_CHISPA: float = 7.0
+const PROBABILIDAD_CONTAGIO_CHISPA: float = 0.3
 const ESTADO_QUEMADO: int = 2
 const ESTADO_ARDIENDO: int = 1
 const TIPO_BOSQUE_SECO: int = 0
@@ -76,16 +78,34 @@ func configurar_escenario(
 	if not generador_vegetacion.has_method("get_exact_ground_y"):
 		push_error("FireGridServer requiere get_exact_ground_y() en el spawner.")
 		return
-	if not is_instance_valid(configuracion):
-		push_error("FireGridServer requiere un Resource de configuración de escenario.")
+	if not is_instance_valid(configuracion) or not configuracion is ConfiguracionGrillaIncendio:
+		push_error("FireGridServer requiere una ConfiguracionGrillaIncendio válida.")
 		return
+	var opciones_lanzamiento := get_node_or_null("/root/MissionLaunchOptions")
+	if (
+		not is_instance_valid(opciones_lanzamiento)
+		or not opciones_lanzamiento.has_method("apply_to_configuration")
+	):
+		push_error("FireGridServer no encuentra el autoload MissionLaunchOptions.")
+		return
+	var configuracion_efectiva: Variant = opciones_lanzamiento.call(
+		"apply_to_configuration",
+		configuracion
+	)
+	if (
+		not is_instance_valid(configuracion_efectiva)
+		or not configuracion_efectiva is ConfiguracionGrillaIncendio
+	):
+		push_error("FireGridServer no pudo preparar la configuración de misión.")
+		return
+	var configuracion_tipada := configuracion_efectiva as ConfiguracionGrillaIncendio
 	detener()
-	var origen_nuevo: Variant = configuracion.get("origen")
-	var tamano_nuevo: Variant = configuracion.get("tamano_celdas")
+	var origen_nuevo: Variant = configuracion_efectiva.get("origen")
+	var tamano_nuevo: Variant = configuracion_efectiva.get("tamano_celdas")
 	if not origen_nuevo is Vector2 or not tamano_nuevo is Vector2i:
 		push_error("La configuración de FireGrid tiene origen o dimensiones inválidas.")
 		return
-	var configuracion_viento: Variant = configuracion.get("configuracion_viento")
+	var configuracion_viento: Variant = configuracion_efectiva.get("configuracion_viento")
 	if not configuracion_viento is Resource:
 		push_error("La configuración de FireGrid requiere un Resource de viento.")
 		return
@@ -94,34 +114,37 @@ func configurar_escenario(
 
 	grilla = SCRIPT_FIRE_GRID.new(origen_nuevo, tamano_nuevo, semilla)
 	grilla.call("configurar_terreno_sin_combustible")
-	porcentaje_derrota = clampf(float(configuracion.get("porcentaje_derrota")), 1.0, 100.0)
-	tipo_objetivo_derrota = int(configuracion.get("tipo_objetivo_derrota"))
-	_bono_cero_perdidas = maxi(int(configuracion.get("bono_cero_perdidas", 0)), 0)
-	_retardo_propagacion_restante = maxf(float(configuracion.get("retardo_propagacion")), 0.0)
+	grilla.set("velocidad_propagacion", configuracion_tipada.velocidad_propagacion)
+	porcentaje_derrota = clampf(float(configuracion_efectiva.get("porcentaje_derrota")), 1.0, 100.0)
+	tipo_objetivo_derrota = int(configuracion_efectiva.get("tipo_objetivo_derrota"))
+	_bono_cero_perdidas = maxi(configuracion_tipada.bono_cero_perdidas, 0)
+	_retardo_propagacion_restante = 0.0
 	_mision_fallida = false
-	_aplicar_perfiles(configuracion)
-	var zona_viento_erratico: Variant = configuracion.get("zona_viento_erratico", Vector3.ZERO)
-	if zona_viento_erratico is Vector3 and zona_viento_erratico.z > 0.0:
+	_aplicar_perfiles(configuracion_efectiva)
+	var zona_viento_erratico: Vector3 = configuracion_tipada.zona_viento_erratico
+	if zona_viento_erratico.z > 0.0:
 		grilla.call(
 			"configurar_viento_erratico",
 			Vector2(zona_viento_erratico.x, zona_viento_erratico.y),
 			zona_viento_erratico.z,
-			deg_to_rad(float(configuracion.get("amplitud_viento_erratico_grados", 0.0)))
+			deg_to_rad(configuracion_tipada.amplitud_viento_erratico_grados)
 		)
 	_rellenar_alturas(generador_vegetacion, origen_nuevo, tamano_nuevo)
-	_inicializar_combustible(posiciones_arboles, origen_nuevo, tamano_nuevo, configuracion)
+	_inicializar_combustible(
+		posiciones_arboles, origen_nuevo, tamano_nuevo, configuracion_efectiva
+	)
 	grilla.set("altura", _altura_temporal)
 	grilla.set("tipo_combustible", _tipos_temporales)
 	grilla.set("combustible", _combustible_temporal)
 	_registrar_objetivos_criticos(
-		configuracion.get("objetivos_criticos", []),
+		configuracion_tipada.objetivos_criticos,
 		origen_nuevo,
 		tamano_nuevo,
-		float(configuracion.get("combustible_bosque")),
-		float(configuracion.get("combustible_vivienda"))
+		float(configuracion_efectiva.get("combustible_bosque")),
+		float(configuracion_efectiva.get("combustible_vivienda"))
 	)
 	grilla.call("reconstruir_contadores")
-	_encender_foco_inicial(arboles_iniciales, configuracion)
+	_encender_foco_inicial(arboles_iniciales, configuracion_efectiva)
 	_actualizar_objetivos_criticos(0.0)
 	grilla.call("obtener_deltas")
 	_distancia_frente_anterior = _medir_distancia_frente()
@@ -203,6 +226,20 @@ func aplicar_retardante(pos_mundo: Vector3, radio: float) -> bool:
 	_emitir_deltas_pendientes()
 	return true
 
+func propagar_chispa(posicion: Vector3, direccion_viento: Vector2) -> int:
+	if not activa or not is_instance_valid(grilla) or _es_cliente_multijugador():
+		return 0
+	var cantidad: int = int(grilla.call(
+		"propagar_por_chispa",
+		Vector2(posicion.x, posicion.z),
+		direccion_viento,
+		RADIO_CONTAGIO_CHISPA,
+		PROBABILIDAD_CONTAGIO_CHISPA
+	))
+	if cantidad > 0:
+		_emitir_deltas_pendientes()
+	return cantidad
+
 func serializar_comprimido() -> PackedByteArray:
 	if not activa or not is_instance_valid(grilla):
 		return PackedByteArray()
@@ -236,6 +273,11 @@ func obtener_celdas_ardiendo() -> PackedInt32Array:
 	if not activa:
 		return PackedInt32Array()
 	return grilla.call("obtener_celdas_ardiendo")
+
+func obtener_intensidad_fuego(indice: int) -> float:
+	if not activa or not is_instance_valid(grilla):
+		return 0.0
+	return float(grilla.call("obtener_intensidad_fuego", indice))
 
 func obtener_estado_celdas() -> PackedByteArray:
 	if not activa:
@@ -698,8 +740,8 @@ func _encender_foco_inicial(arboles_iniciales: Array[Node3D], configuracion: Res
 	var candidatas: Array[Dictionary] = []
 	var celdas_vistas: Dictionary = {}
 	var cantidad_inicial := clampi(
-		int(configuracion.get("cantidad_celdas_foco_inicial")),
-		0,
+		maxi(int(configuracion.get("cantidad_celdas_foco_inicial")), 3),
+		3,
 		MAX_CELDAS_FOCO_INICIAL
 	)
 	for arbol in arboles_iniciales:
@@ -725,26 +767,37 @@ func _encender_foco_inicial(arboles_iniciales: Array[Node3D], configuracion: Res
 				"distancia": posicion.distance_to(centro),
 			})
 	if candidatas.size() < cantidad_inicial:
-		for y in range(tamano.y):
-			for x in range(tamano.x):
-				var posicion := origen + Vector2(
-					(float(x) + 0.5) * CELDA_METROS,
-					(float(y) + 0.5) * CELDA_METROS
-				)
-				if posicion.distance_to(centro) > radio:
-					continue
-				var indice: int = y * tamano.x + x
-				if _combustible_temporal[indice] <= 0.0 or celdas_vistas.has(indice):
-					continue
-				celdas_vistas[indice] = true
-				candidatas.append({
-					"celda": Vector2i(x, y),
-					"indice": indice,
-					"distancia": posicion.distance_to(centro),
-				})
+		var celda_centro: Vector2i = grilla.call("mundo_a_celda", centro)
+		for radio_busqueda in range(maxi(tamano.x, tamano.y)):
+			for y in range(maxi(0, celda_centro.y - radio_busqueda), mini(
+				tamano.y, celda_centro.y + radio_busqueda + 1
+			)):
+				for x in range(maxi(0, celda_centro.x - radio_busqueda), mini(
+					tamano.x, celda_centro.x + radio_busqueda + 1
+				)):
+					if maxi(absi(x - celda_centro.x), absi(y - celda_centro.y)) != radio_busqueda:
+						continue
+					var indice: int = y * tamano.x + x
+					if _combustible_temporal[indice] <= 0.0 or celdas_vistas.has(indice):
+						continue
+					var posicion := origen + Vector2(
+						(float(x) + 0.5) * CELDA_METROS,
+						(float(y) + 0.5) * CELDA_METROS
+					)
+					celdas_vistas[indice] = true
+					candidatas.append({
+						"celda": Vector2i(x, y),
+						"indice": indice,
+						"distancia": posicion.distance_to(centro),
+					})
+			if candidatas.size() >= cantidad_inicial:
+				break
 	candidatas.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return float(a["distancia"]) < float(b["distancia"])
 	)
+	if candidatas.size() < cantidad_inicial:
+		push_error("FireGridServer no encontró tres celdas combustibles para iniciar el fuego.")
+		return
 	var estados_grilla: PackedByteArray = grilla.get("estado")
 	for indice_candidata in range(mini(cantidad_inicial, candidatas.size())):
 		var candidata: Dictionary = candidatas[indice_candidata]
@@ -759,13 +812,7 @@ func _avanzar_simulacion() -> void:
 		return
 	if _es_cliente_multijugador():
 		return
-	if _retardo_propagacion_restante > 0.0:
-		_retardo_propagacion_restante = maxf(
-			_retardo_propagacion_restante - INTERVALO_SIMULACION,
-			0.0
-		)
-	else:
-		grilla.call("paso", INTERVALO_SIMULACION, _viento)
+	grilla.call("paso", INTERVALO_SIMULACION, _viento)
 	_actualizar_objetivos_criticos(INTERVALO_SIMULACION)
 	_comprobar_derrota()
 	_emitir_deltas_pendientes()

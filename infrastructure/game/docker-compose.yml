@@ -1,0 +1,75 @@
+services:
+  directorio:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      servidor-partidas:
+        condition: service_healthy
+    ports:
+      - "8080:8080/tcp"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+  servidor-partidas:
+    build:
+      context: ../..
+      dockerfile: infrastructure/game/Dockerfile
+    image: drone-guardian-game-server:local
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    entrypoint: ["python3"]
+    command:
+      - /opt/game/server/directorio/directorio.py
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --game-host
+      - ${PUBLIC_GAME_HOST:-127.0.0.1}
+      - --game-port-start
+      - ${GAME_PORT_START:-9000}
+      - --game-port-end
+      - ${GAME_PORT_END:-9007}
+      - --max-rooms
+      - ${MAX_ROOMS:-8}
+      - --game-binary
+      - /opt/game/drone-server.x86_64
+      - --transport
+      - ${GAME_TRANSPORT:-websocket}
+      - --logs
+      - /var/log/drone-game
+    environment:
+      GAME_SERVER_BIN: /opt/game/drone-server.x86_64
+    expose:
+      - "8080"
+    ports:
+      - "${GAME_PORT_START:-9000}-${GAME_PORT_END:-9007}:${GAME_PORT_START:-9000}-${GAME_PORT_END:-9007}/tcp"
+      - "${GAME_PORT_START:-9000}-${GAME_PORT_END:-9007}:${GAME_PORT_START:-9000}-${GAME_PORT_END:-9007}/udp"
+    volumes:
+      - game-logs:/var/log/drone-game
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/salas', timeout=2).read()"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    cpus: ${SERVER_CPU_LIMIT:-2.0}
+    mem_limit: ${SERVER_MEMORY_LIMIT:-2g}
+    deploy:
+      resources:
+        limits:
+          cpus: "${SERVER_CPU_LIMIT:-2.0}"
+          memory: ${SERVER_MEMORY_LIMIT:-2g}
+
+volumes:
+  game-logs:

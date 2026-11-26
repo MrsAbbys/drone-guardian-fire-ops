@@ -6,6 +6,7 @@ El directorio usa `http.server` de la biblioteca estándar de Python para no añ
 
 - Python 3.10 o posterior.
 - Godot 4.x disponible como `godot` en `PATH`, o una ruta configurada en `GODOT_BIN`.
+- Para lanzar binarios empaquetados, exporta el preset Linux Server y pasa su ruta a `--game-binary` o `GAME_SERVER_BIN`.
 
 Desde la raíz del proyecto:
 
@@ -15,17 +16,22 @@ python server\directorio\directorio.py --host 0.0.0.0 --port 8080 --game-host 12
 
 En una red local o en un servidor público, cambia `--game-host` por una dirección que los clientes puedan alcanzar. Abre el puerto HTTP del directorio y el rango de puertos de juego en el firewall. WebSocket es el transporte predeterminado; se puede seleccionar ENet con `--transport enet` si los clientes también están configurados para ENet. ENet requiere permitir tráfico UDP en el rango de puertos.
 
+Con `--game-binary`, el directorio inicia una sala como proceso headless exportado, pasando `--server` y el resto de argumentos de juego después del separador `--` de Godot. `--max-rooms` no puede ser mayor que la cantidad de puertos disponibles.
+
+El directorio agrega cada cinco segundos las métricas de los procesos de sala en `servidor_metricas.csv` dentro de `--logs` (por defecto `logs/`). Cada proceso publica una instantánea JSON privada para que el directorio mida también su CPU y RAM sin que varios servidores escriban concurrentemente el CSV.
+
 Argumentos configurables:
 
 - `--host`, `--port`: interfaz y puerto HTTP del directorio.
 - `--game-host`, `--game-port-start`, `--game-port-end`: dirección anunciada y rango de puertos de partidas.
 - `--max-rooms`: máximo de partidas simultáneas.
+- `--game-binary`: ejecutable Linux exportado por sala; si se omite, se usa Godot con el proyecto.
 - `--godot`, `--project`, `--logs`: ejecutable, proyecto Godot y ubicación de logs.
 - `--transport websocket|enet`: transporte de las partidas lanzadas.
 
 ## API
 
-- `POST /salas` con `{"escenario":"interfase_urbana","dificultad":"media","max_jugadores":6}` crea una sala y responde con código, host, puerto y transporte. Los escenarios disponibles son `aguarague`, `campo_pajoso` e `interfase_urbana`.
+- `POST /salas` con `{"nombre":"Operación","escenario":"interfase_urbana","dificultad":"media","max_jugadores":4}` crea una sala y responde con nombre, código, host, puerto y transporte. El nombre es opcional y admite hasta 40 caracteres. Los escenarios disponibles son `aguarague`, `campo_pajoso` e `interfase_urbana`.
 - `GET /salas` lista las salas abiertas.
 - `GET /salas/{codigo}` resuelve el código a host y puerto.
 - `GET /health` comprueba que el servicio está activo.

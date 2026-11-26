@@ -7,6 +7,8 @@ const INTERVALO_GUIA_PUNTERIA: float = 0.5
 const RETRASO_INTERPOLACION_MS: int = 100
 const UMBRAL_CORRECCION_METROS: float = 3.0
 const INTERVALO_INTENCION_AGUA: float = 0.1
+const FACTOR_INTENSIDAD_AGUA: float = 0.6
+const INTENSIDAD_MAXIMA_HABILIDAD_AGUA: float = 30.0
 const RUTAS_ROLES: Dictionary = {
 	"cisterna": "res://data/roles/cisterna.tres",
 	"explorador": "res://data/roles/explorador.tres",
@@ -42,6 +44,34 @@ const RUTAS_ROLES: Dictionary = {
 @export var radio_chorro_base: float = 1.6
 @export var ensanche_chorro: float = 0.06
 @export var max_health: float = 100.0
+
+const ALTURA_MINIMA_LLUVIAS: float = 5.0
+const ALTURA_OPTIMA_LLUVIAS: float = 16.0
+const ALTURA_MAXIMA_LLUVIAS: float = 24.0
+const RADIO_MINIMO_LLUVIAS: float = 3.0
+
+@export_group("Efectos de recarga")
+@export_range(128, 1200, 32) var cantidad_gotas_sifon: int = 480
+@export_range(0.4, 2.5, 0.1) var vida_gotas_sifon: float = 1.2
+@export_range(0.04, 0.2, 0.01) var radio_gotas_sifon: float = 0.09
+@export_range(2.0, 20.0, 0.5) var velocidad_gotas_sifon: float = 8.5
+@export_range(64, 800, 16) var cantidad_spray_superficie: int = 240
+@export_range(0.3, 1.5, 0.1) var vida_spray_superficie: float = 0.8
+@export_range(0.03, 0.16, 0.01) var radio_spray_superficie: float = 0.07
+@export_range(1.0, 12.0, 0.5) var velocidad_spray_superficie: float = 4.0
+@export_range(5.0, 50.0, 1.0) var velocidad_emision_referencia: float = 25.0
+@export_range(0.1, 1.0, 0.05) var emision_minima_recarga: float = 0.3
+@export_range(0.2, 2.0, 0.05) var radio_superficie_agua_local: float = 1.2
+@export_range(0.2, 1.5, 0.01) var altura_superficie_agua_local: float = 0.61
+@export_range(0.1, 4.0, 0.1) var altura_inicio_rayo_agua: float = 1.0
+@export_range(0.2, 4.0, 0.1) var profundidad_rayo_agua: float = 1.5
+@export_flags_3d_physics var mascara_raycast_agua: int = 1
+@export_range(0.1, 3.0, 0.1) var duracion_onda_recarga: float = 1.2
+@export_range(0.2, 3.0, 0.1) var escala_maxima_onda_recarga: float = 1.6
+@export var color_onda_recarga: Color = Color(0.28, 0.76, 1.0, 0.7)
+@export_range(1.0, 12.0, 0.5) var frecuencia_parpadeo_led_recarga: float = 4.0
+@export_range(0.5, 8.0, 0.1) var energia_led_recarga: float = 4.5
+@export_range(0.0, 2.0, 0.1) var energia_led_reposo: float = 0.2
 
 var current_water: float:
 	get:
@@ -87,6 +117,9 @@ var fire_manager: Node
 var rotors: Array[Node3D] = []
 var tank_fills: Array[MeshInstance3D] = []
 var refill_particles: GPUParticles3D
+var surface_spray_particles: GPUParticles3D
+var refill_waves: Array[MeshInstance3D] = []
+var refill_wave_materials: Array[StandardMaterial3D] = []
 var water_stream: GPUParticles3D
 var water_jet_core: MeshInstance3D
 var apuntando_fuego_fuera_de_alcance: bool = false
@@ -149,20 +182,70 @@ func _ready() -> void:
 		_apuntamiento_predicho = pivot.rotation.x
 	else:
 		cam.current = false
-		cam.get_parent().queue_free()
-		$TacticalCrosshair.queue_free()
+		if is_instance_valid(cam) and is_instance_valid(cam.get_parent()):
+			cam.get_parent().queue_free()
+		var crosshair := get_node_or_null("TacticalCrosshair")
+		if is_instance_valid(crosshair):
+			crosshair.queue_free()
 	wildfire_node = get_tree().get_first_node_in_group("wildfire_zone") as Node3D
 	helipad_node = get_tree().get_first_node_in_group("base_helipad") as Node3D
 	fire_manager = get_tree().get_first_node_in_group("fire_manager")
 	if es_autoridad_local:
 		hud_node = get_tree().get_first_node_in_group("tactical_hud") as CanvasLayer
-		if fire_manager and fire_manager.has_signal("arbol_apagado"):
+		if is_instance_valid(fire_manager) and fire_manager.has_signal("arbol_apagado"):
 			fire_manager.connect("arbol_apagado", _on_tree_extinguished)
-		if hud_node and hud_node.has_method("registrar_dron_local"):
+		if _hud_vigente() and hud_node.has_method("registrar_dron_local"):
 			hud_node.call_deferred("registrar_dron_local", self)
-		if hud_node and hud_node.has_method("configurar_rol_dron") and is_instance_valid(rol_actual):
+		if (
+			_hud_vigente()
+			and hud_node.has_method("configurar_rol_dron")
+			and is_instance_valid(rol_actual)
+		):
 			hud_node.call_deferred("configurar_rol_dron", rol_actual.identificador)
 	_actualizar_nivel_tanques()
+
+
+func _exit_tree() -> void:
+	if GraphicsSettings.sensibilidad_mouse_cambiada.is_connected(_al_cambiar_sensibilidad_mouse):
+		GraphicsSettings.sensibilidad_mouse_cambiada.disconnect(_al_cambiar_sensibilidad_mouse)
+	if (
+		is_instance_valid(fire_manager)
+		and fire_manager.has_signal("arbol_apagado")
+		and fire_manager.is_connected("arbol_apagado", _on_tree_extinguished)
+	):
+		fire_manager.disconnect("arbol_apagado", _on_tree_extinguished)
+	if is_instance_valid(fov_tween) and fov_tween.is_running():
+		fov_tween.kill()
+	if _hud_vigente() and hud_node.has_method("desregistrar_dron_local"):
+		hud_node.call("desregistrar_dron_local", self)
+	hud_node = null
+	fire_manager = null
+	wildfire_node = null
+	helipad_node = null
+	objetivo_alcanzable_cache = null
+	cache_info_punteria.clear()
+	rotors.clear()
+	tank_fills.clear()
+	refill_waves.clear()
+	refill_wave_materials.clear()
+
+
+func _hud_vigente() -> bool:
+	if not is_instance_valid(hud_node) or hud_node.is_queued_for_deletion():
+		hud_node = null
+		return false
+	return true
+
+
+func _notification(what: int) -> void:
+	if (
+		what == NOTIFICATION_APPLICATION_FOCUS_IN
+		and is_multiplayer_authority()
+		and not _menu_pausa_abierto
+	):
+		is_mouse_captured = true
+		mouse_input = Vector2.ZERO
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 func _cargar_rol_inicial() -> void:
 	var rol_id := str(get_meta("rol_dron", "explorador"))
@@ -258,11 +341,11 @@ func _configurar_colision() -> void:
 	body_shape.size = Vector3(0.8, 0.3, 0.8) * maxf(escala_dron, 0.1)
 	collision_shape.shape = body_shape
 
-func _unhandled_input(event: InputEvent) -> void:
-	if not is_multiplayer_authority():
+func _input(event: InputEvent) -> void:
+	if not is_multiplayer_authority() or not is_mouse_captured or _menu_pausa_abierto:
 		return
-	if is_mouse_captured and event is InputEventMouseMotion:
-		mouse_input = event.relative
+	if event is InputEventMouseMotion:
+		mouse_input += event.relative
 
 func _physics_process(delta: float) -> void:
 	var hay_red := multiplayer.has_multiplayer_peer()
@@ -357,7 +440,7 @@ func _simular_vuelo(
 		obtener_info_puntería()
 		if input_vector == Vector2.ZERO and vertical_input == 0.0:
 			idle_timer += delta
-			if idle_timer > 10.0 and idle_timer < 10.2 and hud_node:
+			if idle_timer > 10.0 and idle_timer < 10.2 and _hud_vigente():
 				hud_node.trigger_hartman_warning("idle")
 		else:
 			idle_timer = 0.0
@@ -366,7 +449,7 @@ func _simular_vuelo(
 		if get_slide_collision_count() > 0 and collision_cooldown <= 0.0 and velocity.length() > 6.0:
 			current_health = maxf(0.0, current_health - clampf(velocity.length() * 1.5, 5.0, 30.0))
 			collision_cooldown = 1.0
-			if hud_node:
+			if _hud_vigente():
 				hud_node.trigger_hartman_warning("collision_damage")
 
 func _actualizar_animaciones(delta: float, movement: Vector2, vertical_input: float) -> void:
@@ -390,24 +473,29 @@ func _actualizar_animaciones(delta: float, movement: Vector2, vertical_input: fl
 		var recoil_vibration := sin(flight_time * 38.0) * 0.025 if is_discharging else 0.0
 		nozzle.rotation.x = atan2(aim_direction.y, Vector2(aim_direction.x, aim_direction.z).length()) + recoil_vibration
 		nozzle.rotation.y = atan2(-aim_direction.x, -aim_direction.z)
-	if water_stream:
+	if is_instance_valid(water_stream):
+		if is_instance_valid(model):
+			water_stream.global_position = model.to_global(Vector3(0.0, -0.4, 0.0))
 		water_stream.emitting = is_discharging
-	if water_jet_core:
+	if is_instance_valid(water_jet_core):
 		water_jet_core.visible = is_discharging
 		var pulse := 1.0 + sin(flight_time * 24.0) * 0.12
 		water_jet_core.scale.x = pulse
 		water_jet_core.scale.z = pulse
-	if refill_particles:
-		refill_particles.emitting = is_refilling and recarga_solicitada
 
 	if blue_led:
-		var blue_blink := is_refilling and int(flight_time * 8.0) % 2 == 0
+		var tiempo_led := float(Time.get_ticks_msec()) / 1000.0
+		var blue_blink := is_refilling and int(
+			tiempo_led * frecuencia_parpadeo_led_recarga * 2.0
+		) % 2 == 0
 		if speed_flash_timer > 0.0:
 			speed_flash_timer = maxf(0.0, speed_flash_timer - delta)
 			blue_led.light_energy = 4.0 if int(flight_time * 18.0) % 2 == 0 else 0.6
 			blue_led_lens.visible = int(flight_time * 18.0) % 2 == 0
 		else:
-			blue_led.light_energy = 2.5 if blue_blink else 0.8
+			blue_led.light_energy = (
+				energia_led_recarga if blue_blink else energia_led_reposo
+			) if is_refilling else 0.8
 			blue_led_lens.visible = not is_refilling or blue_blink
 	if red_led:
 		var red_blink := is_discharging and agua_actual <= 0.0
@@ -415,6 +503,7 @@ func _actualizar_animaciones(delta: float, movement: Vector2, vertical_input: fl
 			3.0 if red_blink and int(flight_time * 8.0) % 2 == 0 else 0.0
 		)
 		red_led_lens.visible = not red_blink or int(flight_time * 8.0) % 2 == 0
+	_actualizar_efecto_recarga()
 
 func _actualizar_fov_velocidad() -> void:
 	var fast_now := Vector2(velocity.x, velocity.z).length() > velocidad_sin_carga * 0.65
@@ -441,7 +530,7 @@ func _actualizar_recarga(delta: float, hay_red: bool, es_servidor: bool) -> void
 		agua_actual = clampf(agua_actual + recarga_por_segundo * delta, 0.0, agua_maxima)
 		agua_cambiada.emit(agua_actual)
 		_actualizar_nivel_tanques()
-		if hud_node and hud_node.has_method("notify_refilling"):
+		if _hud_vigente() and hud_node.has_method("notify_refilling"):
 			hud_node.notify_refilling(agua_actual, agua_maxima)
 
 func _actualizar_disparo_solitario(delta: float) -> void:
@@ -452,7 +541,7 @@ func _actualizar_disparo_solitario(delta: float) -> void:
 	if rociado_solicitado and agua_actual <= 0.0:
 		is_discharging = false
 		_notificar_alcance_chorro(false)
-		if not empty_water_warning_sent and hud_node:
+		if not empty_water_warning_sent and _hud_vigente():
 			hud_node.trigger_hartman_warning("empty_tank")
 			empty_water_warning_sent = true
 		return
@@ -466,7 +555,7 @@ func _actualizar_disparo_solitario(delta: float) -> void:
 		and Input.is_action_just_pressed("drone_spray")
 		and apuntando_fuego_fuera_de_alcance
 	):
-		if AjustesAyuda.nivel_ayuda == AjustesAyuda.AYUDA_ALTA and hud_node:
+		if AjustesAyuda.nivel_ayuda == AjustesAyuda.AYUDA_ALTA and _hud_vigente():
 			hud_node.trigger_hartman_warning("spray_out_of_range")
 
 	var used_water := minf(agua_actual, gasto_por_segundo * delta)
@@ -482,39 +571,59 @@ func _actualizar_disparo_solitario(delta: float) -> void:
 		if FireGridServer.activa:
 			var informacion := obtener_info_puntería()
 			var distancia_al_fuego := float(informacion.get("distancia", 0.0))
-			var radio_impacto := radio_chorro_base + distancia_al_fuego * ensanche_chorro
+			var radio_impacto := maxf(
+				radio_chorro_base + distancia_al_fuego * ensanche_chorro,
+				RADIO_MINIMO_LLUVIAS
+			)
 			extinguished = FireGridServer.aplicar_agua_atribuida(
 				get_multiplayer_authority(),
 				target.global_position,
 				radio_impacto,
-				used_water * potencia_chorro
+				used_water * potencia_chorro * FACTOR_INTENSIDAD_AGUA
 			) > 0
 		elif target.has_method("apagar"):
 			var result: Variant = target.call("apagar", delta)
 			if result is bool:
 				extinguished = result
 		elif target.has_method("apply_water_damage"):
-			extinguished = bool(target.call("apply_water_damage", used_water * potencia_chorro))
-		if hud_node and hud_node.has_method("register_fire_stream_hit"):
+			extinguished = bool(
+				target.call(
+					"apply_water_damage",
+					used_water * potencia_chorro * FACTOR_INTENSIDAD_AGUA
+				)
+			)
+		if _hud_vigente() and hud_node.has_method("register_fire_stream_hit"):
 			hud_node.register_fire_stream_hit(used_water, extinguished)
 	elif FireGridServer.activa:
-		var impacto: Variant = _obtener_punto_impacto_chorro((-nozzle.global_basis.z).normalized())
+		var impacto: Variant = _buscar_celda_en_chorro(Vector3.DOWN)
+		var impacto_en_fuego := impacto is Vector3
+		if not impacto_en_fuego:
+			impacto = _obtener_punto_impacto_chorro(Vector3.DOWN)
 		if impacto is Vector3:
-			var distancia := nozzle.global_position.distance_to(impacto)
-			var radio := radio_chorro_base + distancia * ensanche_chorro
-			FireGridServer.aplicar_agua_atribuida(
+			var distancia := global_position.distance_to(impacto)
+			var radio := maxf(
+				radio_chorro_base + distancia * ensanche_chorro,
+				RADIO_MINIMO_LLUVIAS
+			)
+			var apagadas := FireGridServer.aplicar_agua_atribuida(
 				get_multiplayer_authority(),
 				impacto,
 				radio,
-				used_water * potencia_chorro
+				used_water * potencia_chorro * FACTOR_INTENSIDAD_AGUA
 			)
+			if (
+				impacto_en_fuego
+				and _hud_vigente()
+				and hud_node.has_method("register_fire_stream_hit")
+			):
+				hud_node.call("register_fire_stream_hit", used_water, apagadas > 0)
 			_tiempo_desperdicio_continuo = 0.0
 	else:
 		wasted_water_time += delta
 		_tiempo_desperdicio_continuo += delta
 		if _tiempo_desperdicio_continuo >= 0.35:
 			_tiempo_desperdicio_continuo = 0.0
-			if hud_node:
+			if _hud_vigente():
 				var info := obtener_info_puntería()
 				var causa := str(info.get("causa_desperdicio", "pasto_limpio"))
 				if AjustesAyuda.nivel_ayuda == AjustesAyuda.AYUDA_NINGUNA:
@@ -530,7 +639,10 @@ func _actualizar_disparo_multijugador(delta: float, es_servidor: bool) -> void:
 	)
 	if es_servidor:
 		if is_multiplayer_authority():
-			_actualizar_intencion_rociado_local(activo, (-nozzle.global_basis.z).normalized())
+			_actualizar_intencion_rociado_local(
+				activo,
+				(-nozzle.global_basis.z).normalized()
+			)
 		_procesar_rociado_servidor(delta)
 		return
 
@@ -614,29 +726,44 @@ func _procesar_rociado_servidor(delta: float) -> void:
 	_tiempo_aplicar_agua += delta
 	if _tiempo_aplicar_agua < INTERVALO_INTENCION_AGUA:
 		return
-	var direccion_actual := (-nozzle.global_basis.z).normalized()
-	var impacto: Variant = _buscar_celda_en_chorro(direccion_actual)
+	var impacto: Variant = _buscar_celda_en_chorro(Vector3.DOWN)
+	var impacto_en_fuego := impacto is Vector3
+	if not impacto_en_fuego:
+		impacto = _obtener_punto_impacto_chorro(Vector3.DOWN)
 	if impacto is Vector3:
 		_tiempo_desperdicio_continuo = 0.0
-		var distancia := nozzle.global_position.distance_to(impacto)
-		var radio := radio_chorro_base + distancia * ensanche_chorro
-		FireGridServer.aplicar_agua_atribuida(
+		var distancia := global_position.distance_to(impacto)
+		var radio := maxf(
+			radio_chorro_base + distancia * ensanche_chorro,
+			RADIO_MINIMO_LLUVIAS
+		)
+		var apagadas := FireGridServer.aplicar_agua_atribuida(
 			get_multiplayer_authority(),
 			impacto,
 			radio,
-			_agua_pendiente_rociado * potencia_chorro
+			_agua_pendiente_rociado * potencia_chorro * FACTOR_INTENSIDAD_AGUA
 		)
+		if (
+			impacto_en_fuego
+			and _hud_vigente()
+			and hud_node.has_method("register_fire_stream_hit")
+		):
+			hud_node.call(
+				"register_fire_stream_hit",
+				_agua_pendiente_rociado,
+				apagadas > 0
+			)
 	else:
 		wasted_water_time += _tiempo_aplicar_agua
 		_tiempo_desperdicio_continuo += _tiempo_aplicar_agua
 		if _tiempo_desperdicio_continuo >= 0.35:
 			_tiempo_desperdicio_continuo = 0.0
-			if hud_node:
+			if _hud_vigente():
 				hud_node.trigger_hartman_warning("wasted_water")
 	_agua_pendiente_rociado = 0.0
 	_tiempo_aplicar_agua = 0.0
 
-func _buscar_celda_en_chorro(direccion: Vector3) -> Variant:
+func _buscar_celda_en_chorro(_direccion: Vector3) -> Variant:
 	var celdas := FireGridServer.obtener_celdas_ardiendo()
 	var alturas := FireGridServer.obtener_alturas()
 	var origen := FireGridServer.obtener_origen()
@@ -653,28 +780,37 @@ func _buscar_celda_en_chorro(direccion: Vector3) -> Variant:
 			alturas[indice],
 			origen.y + (float(celda_y) + 0.5) * 2.0
 		)
-		var hacia := posicion - nozzle.global_position
-		var avance := hacia.dot(direccion)
-		if avance < 0.0 or avance > alcance_chorro:
+		var altura_caida := global_position.y - posicion.y
+		if altura_caida < 0.0 or altura_caida > alcance_chorro:
 			continue
-		var error_eje := (hacia - direccion * avance).length()
-		var radio := radio_chorro_base + avance * ensanche_chorro
-		if error_eje <= radio and avance < mejor_distancia:
-			mejor_distancia = avance
+		var distancia_horizontal := Vector2(
+			posicion.x - global_position.x,
+			posicion.z - global_position.z
+		).length()
+		var radio := maxf(
+			radio_chorro_base + altura_caida * ensanche_chorro,
+			RADIO_MINIMO_LLUVIAS
+		)
+		if distancia_horizontal <= radio and altura_caida < mejor_distancia:
+			mejor_distancia = altura_caida
 			mejor_posicion = posicion
 	if mejor_posicion is Vector3:
 		return mejor_posicion
-	return _obtener_punto_impacto_chorro(direccion)
+	return null
 
 func _obtener_punto_impacto_chorro(direccion: Vector3) -> Variant:
 	var direccion_normalizada := direccion.normalized()
 	if direccion_normalizada.length_squared() <= 0.000001:
 		return null
+	var origen_rayo := nozzle.global_position
+	if direccion_normalizada.dot(Vector3.DOWN) > 0.95:
+		origen_rayo = global_position + Vector3.DOWN * 0.25
 	var consulta := PhysicsRayQueryParameters3D.create(
-		nozzle.global_position,
-		nozzle.global_position + direccion_normalizada * alcance_chorro
+		origen_rayo,
+		origen_rayo + direccion_normalizada * alcance_chorro
 	)
 	consulta.exclude = [get_rid()]
+	consulta.collision_mask = mascara_raycast_agua
 	var impacto := get_world_3d().direct_space_state.intersect_ray(consulta)
 	if impacto.is_empty():
 		return null
@@ -729,7 +865,12 @@ func _ejecutar_habilidad_especial(peer_id: int, posicion: Vector3) -> void:
 				peer_id,
 				impacto,
 				rol_actual.radio_especial,
-				rol_actual.costo_especial_agua * rol_actual.potencia_especial
+				minf(
+					rol_actual.costo_especial_agua
+					* rol_actual.potencia_especial
+					* FACTOR_INTENSIDAD_AGUA,
+					INTENSIDAD_MAXIMA_HABILIDAD_AGUA
+				)
 			)
 			exito = true
 		"explorador":
@@ -758,7 +899,7 @@ func _ejecutar_habilidad_especial(peer_id: int, posicion: Vector3) -> void:
 					nombre_piloto,
 					rol_actual.duracion_marca_objetivo
 				)
-			elif hud_node and hud_node.has_method("mostrar_marca_objetivo"):
+			elif _hud_vigente() and hud_node.has_method("mostrar_marca_objetivo"):
 				hud_node.call(
 					"mostrar_marca_objetivo",
 					posicion,
@@ -770,11 +911,19 @@ func _ejecutar_habilidad_especial(peer_id: int, posicion: Vector3) -> void:
 		_proxima_habilidad_ms = ahora_ms + int(rol_actual.enfriamiento_especial * 1000.0)
 
 func activar_vision_termica_local(alcance: float, duracion: float) -> void:
-	if is_multiplayer_authority() and hud_node and hud_node.has_method("activar_vision_termica"):
+	if (
+		is_multiplayer_authority()
+		and _hud_vigente()
+		and hud_node.has_method("activar_vision_termica")
+	):
 		hud_node.call("activar_vision_termica", alcance, duracion)
 
 func mostrar_marca_objetivo_local(posicion: Vector3, nombre_piloto: String, duracion: float) -> void:
-	if is_multiplayer_authority() and hud_node and hud_node.has_method("mostrar_marca_objetivo"):
+	if (
+		is_multiplayer_authority()
+		and _hud_vigente()
+		and hud_node.has_method("mostrar_marca_objetivo")
+	):
 		hud_node.call("mostrar_marca_objetivo", posicion, nombre_piloto, duracion)
 
 func _solicitar_retardante(hay_red: bool, es_servidor: bool) -> void:
@@ -924,6 +1073,8 @@ func _interpolar_snapshot_remoto() -> void:
 func _actualizar_hud_local(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
+	if _hud_vigente() and hud_node.has_method("actualizar_estado_recarga"):
+		hud_node.call("actualizar_estado_recarga", is_refilling)
 	_actualizar_hud()
 	_actualizar_guia_punteria(delta)
 
@@ -936,19 +1087,33 @@ func obtener_info_puntería() -> Dictionary:
 	if ahora_ms - ultima_actualizacion_punteria_ms >= INTERVALO_CACHE_PUNTERIA_MS:
 		ultima_actualizacion_punteria_ms = ahora_ms
 		cache_info_punteria = _calcular_info_punteria()
-		var objetivo: Variant = cache_info_punteria.get("objetivo")
 		objetivo_alcanzable_cache = cache_info_punteria.get("objetivo_alcanzable") as Node3D
-		apuntando_fuego_fuera_de_alcance = (
-			cache_info_punteria.get("estado") == "FUERA_DE_ALCANCE"
-			and objetivo_alcanzable_cache == null
-			and is_instance_valid(objetivo)
-		)
-		if hud_node and hud_node.has_method("actualizar_punteria"):
+		apuntando_fuego_fuera_de_alcance = cache_info_punteria.get("estado") == "FUERA_DE_ALCANCE"
+		if _hud_vigente() and hud_node.has_method("actualizar_punteria"):
 			hud_node.call("actualizar_punteria", cache_info_punteria, cam, AjustesAyuda.nivel_ayuda)
+		if _hud_vigente() and hud_node.has_method("notificar_buena_posicion_tiro"):
+			hud_node.call("notificar_buena_posicion_tiro", cache_info_punteria)
 		_notificar_alcance_chorro(apuntando_fuego_fuera_de_alcance)
+	_limpiar_objetivo_cache()
 	return cache_info_punteria
 
+
+func _limpiar_objetivo_cache() -> void:
+	if bool(cache_info_punteria.get("usa_grilla", false)):
+		return
+	var objetivo: Variant = cache_info_punteria.get("objetivo")
+	if not is_instance_valid(objetivo):
+		cache_info_punteria["objetivo"] = null
+		cache_info_punteria["objetivo_alcanzable"] = null
+		cache_info_punteria["estado"] = "SIN_OBJETIVO"
+		objetivo_alcanzable_cache = null
+		return
+	if not is_instance_valid(objetivo_alcanzable_cache):
+		cache_info_punteria["objetivo_alcanzable"] = null
+
 func _calcular_info_punteria() -> Dictionary:
+	if is_instance_valid(FireGridServer) and FireGridServer.activa:
+		return _calcular_info_punteria_lluvia()
 	var origen := nozzle.global_position
 	var direccion := (-nozzle.global_basis.z).normalized()
 	var info: Dictionary = {
@@ -1058,6 +1223,102 @@ func _calcular_info_punteria() -> Dictionary:
 	info["causa_desperdicio"] = mejor_causa
 	return info
 
+func _calcular_info_punteria_lluvia() -> Dictionary:
+	var info: Dictionary = {
+		"estado": "SIN_OBJETIVO",
+		"distancia": 0.0,
+		"alcance_chorro": alcance_chorro,
+		"error_horizontal": 0.0,
+		"error_vertical": 0.0,
+		"objetivo": null,
+		"objetivo_alcanzable": null,
+		"posicion_objetivo": Vector3.ZERO,
+		"punto_impacto": global_position + Vector3.DOWN * alcance_chorro,
+		"dentro_del_chorro": false,
+		"disparando": (
+			not _menu_pausa_abierto
+			and Input.is_action_pressed("drone_spray")
+			and agua_actual > 0.0
+		),
+		"agua_actual": agua_actual,
+		"causa_desperdicio": "pasto_limpio",
+		"usa_grilla": true,
+	}
+	var celdas := FireGridServer.obtener_celdas_ardiendo()
+	var alturas := FireGridServer.obtener_alturas()
+	var origen := FireGridServer.obtener_origen()
+	var tamano := FireGridServer.obtener_tamano_celdas()
+	var mejor_distancia := INF
+	var mejor_altura := 0.0
+	var mejor_distancia_horizontal := 0.0
+	var mejor_posicion := Vector3.ZERO
+	for indice in celdas:
+		if indice < 0 or indice >= alturas.size() or tamano.x <= 0:
+			continue
+		var celda_x := indice % tamano.x
+		var celda_y := floori(float(indice) / float(tamano.x))
+		var posicion := Vector3(
+			origen.x + (float(celda_x) + 0.5) * 2.0,
+			alturas[indice],
+			origen.y + (float(celda_y) + 0.5) * 2.0
+		)
+		var diferencia := posicion - global_position
+		var distancia := diferencia.length()
+		if distancia >= mejor_distancia:
+			continue
+		mejor_distancia = distancia
+		mejor_altura = -diferencia.y
+		mejor_distancia_horizontal = Vector2(diferencia.x, diferencia.z).length()
+		mejor_posicion = posicion
+	if not is_finite(mejor_distancia):
+		return info
+
+	var radio_lluvia := maxf(
+		radio_chorro_base + maxf(mejor_altura, 0.0) * ensanche_chorro,
+		RADIO_MINIMO_LLUVIAS
+	)
+	var dentro_de_altura := (
+		mejor_altura >= ALTURA_MINIMA_LLUVIAS
+		and mejor_altura <= minf(ALTURA_MAXIMA_LLUVIAS, alcance_chorro)
+	)
+	var dentro_del_chorro := (
+		mejor_altura >= 0.0
+		and mejor_altura <= alcance_chorro
+		and mejor_distancia_horizontal <= radio_lluvia
+	)
+	var error_relativo := global_basis.inverse() * Vector3(
+		mejor_posicion.x - global_position.x,
+		0.0,
+		mejor_posicion.z - global_position.z
+	)
+	info["distancia"] = mejor_distancia
+	info["error_horizontal"] = rad_to_deg(atan2(error_relativo.x, -error_relativo.z))
+	info["error_vertical"] = ALTURA_OPTIMA_LLUVIAS - mejor_altura
+	info["posicion_objetivo"] = mejor_posicion
+	info["punto_impacto"] = Vector3(global_position.x, mejor_posicion.y, global_position.z)
+	info["dentro_del_chorro"] = dentro_del_chorro
+	if mejor_distancia > alcance_chorro or mejor_altura < 0.0:
+		info["estado"] = "FUERA_DE_ALCANCE"
+		info["causa_desperdicio"] = "fuera_de_alcance"
+	elif (
+		dentro_del_chorro
+		and dentro_de_altura
+		and agua_actual > 0.0
+	):
+		info["estado"] = "EN_BLANCO"
+	elif mejor_distancia_horizontal > radio_lluvia:
+		info["estado"] = "CERCA"
+		info["causa_desperdicio"] = "desviado_lateral"
+	elif mejor_altura < ALTURA_MINIMA_LLUVIAS:
+		info["estado"] = "CERCA"
+		info["causa_desperdicio"] = "punto_muy_bajo"
+	elif mejor_altura > minf(ALTURA_MAXIMA_LLUVIAS, alcance_chorro):
+		info["estado"] = "CERCA"
+		info["causa_desperdicio"] = "punto_muy_alto"
+	else:
+		info["estado"] = "CERCA"
+	return info
+
 func _actualizar_guia_punteria(delta: float) -> void:
 	if AjustesAyuda.nivel_ayuda != AjustesAyuda.AYUDA_ALTA:
 		tiempo_guia_punteria = 0.0
@@ -1066,11 +1327,11 @@ func _actualizar_guia_punteria(delta: float) -> void:
 	if tiempo_guia_punteria < INTERVALO_GUIA_PUNTERIA:
 		return
 	tiempo_guia_punteria = 0.0
-	if hud_node and hud_node.has_method("guia_puntería"):
+	if _hud_vigente() and hud_node.has_method("guia_puntería"):
 		hud_node.call("guia_puntería", obtener_info_puntería())
 
 func _notificar_alcance_chorro(fuera_de_alcance: bool) -> void:
-	if hud_node and hud_node.has_method("notificar_alcance_chorro"):
+	if _hud_vigente() and hud_node.has_method("notificar_alcance_chorro"):
 		hud_node.call("notificar_alcance_chorro", fuera_de_alcance)
 
 func _aplicar_dano_termico(delta: float) -> void:
@@ -1079,13 +1340,13 @@ func _aplicar_dano_termico(delta: float) -> void:
 	if wildfire_node and wildfire_node.visible:
 		if global_position.distance_to(wildfire_node.global_position) < 20.0:
 			current_health = maxf(0.0, current_health - 18.0 * delta)
-			if hud_node:
+			if _hud_vigente():
 				hud_node.trigger_hartman_warning("fire_damage")
 
 func _comprobar_aterrizaje() -> void:
 	if not is_instance_valid(helipad_node):
 		return
-	if not is_instance_valid(hud_node) or not hud_node.is_fire_defeated:
+	if not _hud_vigente() or not hud_node.is_fire_defeated:
 		return
 	var distance := Vector2(
 		global_position.x - helipad_node.global_position.x,
@@ -1095,7 +1356,7 @@ func _comprobar_aterrizaje() -> void:
 		hud_node.notify_successful_landing()
 
 func _actualizar_hud() -> void:
-	if hud_node and hud_node.has_method("update_telemetry"):
+	if _hud_vigente() and hud_node.has_method("update_telemetry"):
 		var altitude := 75.0 + global_position.y
 		var speed := Vector2(velocity.x, velocity.z).length()
 		var distance := global_position.distance_to(Vector3.ZERO) + 420.0
@@ -1108,7 +1369,7 @@ func _actualizar_hud() -> void:
 func _on_tree_extinguished(total_apagados: int) -> void:
 	arboles_apagados = total_apagados
 	speed_flash_timer = 0.9
-	if hud_node and hud_node.has_method("notify_speed_boost"):
+	if _hud_vigente() and hud_node.has_method("notify_speed_boost"):
 		hud_node.call("notify_speed_boost", velocidad)
 
 func recibir_agua(cantidad: float) -> void:
@@ -1119,7 +1380,7 @@ func recibir_agua(cantidad: float) -> void:
 	agua_actual = clampf(agua_actual + cantidad, 0.0, agua_maxima)
 	agua_cambiada.emit(agua_actual)
 	_actualizar_nivel_tanques()
-	if hud_node and hud_node.has_method("notify_refilling"):
+	if _hud_vigente() and hud_node.has_method("notify_refilling"):
 		hud_node.notify_refilling(agua_actual, agua_maxima)
 
 func tanque_lleno() -> bool:
@@ -1127,7 +1388,12 @@ func tanque_lleno() -> bool:
 
 func set_fuente_agua_cercana(esta_cerca: bool, presionando_recarga: bool = false) -> void:
 	is_near_water_source = esta_cerca
-	is_refilling = esta_cerca and presionando_recarga and not tanque_lleno()
+	if (
+		not multiplayer.has_multiplayer_peer()
+		or multiplayer.is_server()
+		or is_multiplayer_authority()
+	):
+		is_refilling = esta_cerca and presionando_recarga and not tanque_lleno()
 
 func crear_modelo() -> void:
 	var body_material := _material(Color8(37, 43, 52), 0.3)
@@ -1217,53 +1483,209 @@ func crear_modelo() -> void:
 	red_led_lens = _add_led_lens(body_group, "LenteRoja", Color8(255, 40, 35), Vector3(0.0, 0.05, 0.18))
 
 func crear_efectos() -> void:
+	if NetworkManager.es_servidor_headless():
+		return
 	water_stream = _crear_particulas(
-		"ChorroAgua", nozzle, Vector3(0.0, 0.0, -0.20), 280, 1.8,
-		Vector3(0.0, 0.0, -1.0), 23.0, 1.8, Color(0.55, 0.82, 1.0, 0.82)
+		"ChorroAgua", self, Vector3(0.0, -0.25, 0.0), 360, 1.8,
+		Vector3.DOWN, 18.0, 5.0, Color(0.55, 0.82, 1.0, 0.82)
 	)
+	if not is_instance_valid(water_stream):
+		push_error("No se pudo crear el emisor de lluvia de agua.")
+		return
+	water_stream.top_level = true
+	water_stream.local_coords = false
+	water_stream.global_rotation = Vector3.ZERO
+	water_stream.global_position = model.to_global(Vector3(0.0, -0.4, 0.0))
 	var stream_material := water_stream.process_material as ParticleProcessMaterial
+	if not is_instance_valid(stream_material):
+		push_error("El emisor de lluvia no tiene un material de proceso válido.")
+		return
 	stream_material.gravity = Vector3(0.0, -5.0, 0.0)
 	stream_material.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
-	stream_material.emission_box_extents = Vector3(0.09, 0.09, 0.08)
-	stream_material.scale_min = 0.8
-	stream_material.scale_max = 2.2
-	var core_mesh := CylinderMesh.new()
-	core_mesh.top_radius = 0.11
-	core_mesh.bottom_radius = 0.16
-	core_mesh.height = 1.0
-	water_jet_core = MeshInstance3D.new()
-	water_jet_core.name = "NucleoChorro"
-	water_jet_core.mesh = core_mesh
-	var core_material := _material(Color(0.55, 0.82, 1.0, 0.48), 0.0, 0.2)
-	core_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	core_material.emission_enabled = true
-	core_material.emission = Color(0.12, 0.38, 0.72, 1.0)
-	core_material.emission_energy_multiplier = 0.55
-	water_jet_core.material_override = core_material
-	water_jet_core.rotation.x = PI * 0.5
-	water_jet_core.position = Vector3(0.0, 0.0, -7.0)
-	water_jet_core.scale = Vector3(1.0, 14.0, 1.0)
-	water_jet_core.visible = false
-	nozzle.add_child(water_jet_core)
+	stream_material.emission_box_extents = Vector3(2.6, 0.08, 2.6)
+	stream_material.direction = Vector3.DOWN
+	stream_material.spread = 5.0
+	stream_material.scale_min = 0.55
+	stream_material.scale_max = 1.0
+	water_stream.visibility_aabb = AABB(
+		Vector3(-4.0, -30.0, -4.0),
+		Vector3(8.0, 32.0, 8.0)
+	)
 
 	refill_particles = _crear_particulas(
-		"ParticulasRecarga", model, Vector3(0.0, -0.45, 0.0), 28, 0.8,
-		Vector3(0.0, 1.0, 0.0), 1.2, 0.5, Color(0.2, 0.65, 1.0, 0.7)
+		"ParticulasRecarga", self, Vector3.ZERO, cantidad_gotas_sifon,
+		vida_gotas_sifon, Vector3.UP, velocidad_gotas_sifon, 9.0,
+		Color(0.35, 0.78, 1.0, 0.9)
 	)
+	refill_particles.top_level = true
+	refill_particles.local_coords = false
 	var refill_material := refill_particles.process_material as ParticleProcessMaterial
-	refill_material.gravity = Vector3(0.0, 0.35, 0.0)
+	refill_material.gravity = Vector3(0.0, -1.1, 0.0)
 	refill_material.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
-	refill_material.emission_box_extents = Vector3(0.55, 0.35, 0.55)
+	refill_material.emission_box_extents = Vector3(0.32, 0.035, 0.32)
+	refill_material.scale_min = 0.75
+	refill_material.scale_max = 1.45
+	var gotas_mesh := refill_particles.draw_pass_1 as SphereMesh
+	gotas_mesh.radius = radio_gotas_sifon
+	gotas_mesh.height = radio_gotas_sifon * 2.0
+
+	surface_spray_particles = _crear_particulas(
+		"SpraySuperficie", self, Vector3.ZERO, cantidad_spray_superficie,
+		vida_spray_superficie, Vector3.UP, velocidad_spray_superficie, 72.0,
+		Color(0.5, 0.84, 1.0, 0.82)
+	)
+	surface_spray_particles.top_level = true
+	surface_spray_particles.local_coords = false
+	var spray_material := surface_spray_particles.process_material as ParticleProcessMaterial
+	spray_material.gravity = Vector3(0.0, -5.0, 0.0)
+	spray_material.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	spray_material.emission_sphere_radius = 0.16
+	spray_material.scale_min = 0.55
+	spray_material.scale_max = 1.2
+	var spray_mesh := surface_spray_particles.draw_pass_1 as SphereMesh
+	spray_mesh.radius = radio_spray_superficie
+	spray_mesh.height = radio_spray_superficie * 2.0
+	_crear_ondas_recarga()
+
+func _crear_ondas_recarga() -> void:
+	for indice in range(2):
+		var onda := MeshInstance3D.new()
+		onda.name = "OndaRecarga%d" % indice
+		var torus := TorusMesh.new()
+		torus.inner_radius = 0.82
+		torus.outer_radius = 1.0
+		onda.mesh = torus
+		var material_onda := StandardMaterial3D.new()
+		material_onda.albedo_color = color_onda_recarga
+		material_onda.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		material_onda.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material_onda.emission_enabled = true
+		material_onda.emission = color_onda_recarga
+		material_onda.emission_energy_multiplier = 0.65
+		onda.material_override = material_onda
+		onda.top_level = true
+		onda.visible = false
+		add_child(onda)
+		refill_waves.append(onda)
+		refill_wave_materials.append(material_onda)
+
+func _actualizar_efecto_recarga() -> void:
+	if not is_instance_valid(refill_particles) or not is_instance_valid(surface_spray_particles):
+		return
+	if not is_refilling:
+		refill_particles.emitting = false
+		surface_spray_particles.emitting = false
+		for onda in refill_waves:
+			if is_instance_valid(onda):
+				onda.visible = false
+		return
+
+	var posicion_agua := _obtener_posicion_superficie_agua()
+	if posicion_agua.is_empty():
+		refill_particles.emitting = false
+		surface_spray_particles.emitting = false
+		for onda in refill_waves:
+			if is_instance_valid(onda):
+				onda.visible = false
+		return
+
+	var posicion_superficie: Vector3 = posicion_agua["posicion"]
+	refill_particles.global_position = posicion_superficie
+	surface_spray_particles.global_position = posicion_superficie
+	var factor_emision := clampf(
+		recarga_por_segundo / maxf(velocidad_emision_referencia, 1.0),
+		emision_minima_recarga,
+		1.0
+	)
+	refill_particles.amount_ratio = factor_emision
+	surface_spray_particles.amount_ratio = factor_emision
+	var material_gotas := refill_particles.process_material as ParticleProcessMaterial
+	var material_spray := surface_spray_particles.process_material as ParticleProcessMaterial
+	if not is_instance_valid(material_gotas) or not is_instance_valid(material_spray):
+		push_error("Las partículas de recarga no tienen materiales de proceso válidos.")
+		return
+	var velocidad_gotas := velocidad_gotas_sifon * factor_emision
+	material_gotas.initial_velocity_min = velocidad_gotas * 0.78
+	material_gotas.initial_velocity_max = velocidad_gotas
+	var velocidad_spray := velocidad_spray_superficie * factor_emision
+	material_spray.initial_velocity_min = velocidad_spray * 0.55
+	material_spray.initial_velocity_max = velocidad_spray
+	refill_particles.emitting = true
+	surface_spray_particles.emitting = true
+
+	var tiempo := float(Time.get_ticks_msec()) / 1000.0
+	for indice in range(refill_waves.size()):
+		var onda := refill_waves[indice]
+		if not is_instance_valid(onda):
+			continue
+		if indice >= refill_wave_materials.size():
+			continue
+		var material_onda := refill_wave_materials[indice]
+		if not is_instance_valid(material_onda):
+			continue
+		onda.global_position = posicion_superficie + Vector3.UP * 0.035
+		var fase := fposmod(
+			tiempo / maxf(duracion_onda_recarga, 0.1) + float(indice) * 0.5,
+			1.0
+		)
+		onda.scale = Vector3.ONE * lerpf(0.18, escala_maxima_onda_recarga, fase)
+		var color_onda := color_onda_recarga
+		color_onda.a *= 1.0 - fase
+		material_onda.albedo_color = color_onda
+		onda.visible = true
+
+func _obtener_posicion_superficie_agua() -> Dictionary:
+	for fuente_variant in get_tree().get_nodes_in_group("fuente_agua"):
+		if not fuente_variant is Node3D:
+			continue
+		var fuente := fuente_variant as Node3D
+		var centro_agua := fuente.to_global(Vector3(0.0, altura_superficie_agua_local, 0.0))
+		var posicion_local := fuente.to_local(
+			Vector3(global_position.x, centro_agua.y, global_position.z)
+		)
+		if Vector2(posicion_local.x, posicion_local.z).length() > radio_superficie_agua_local:
+			continue
+		var origen := Vector3(
+			global_position.x,
+			centro_agua.y + altura_inicio_rayo_agua,
+			global_position.z
+		)
+		var destino := Vector3(
+			global_position.x,
+			centro_agua.y - profundidad_rayo_agua,
+			global_position.z
+		)
+		var consulta := PhysicsRayQueryParameters3D.create(origen, destino)
+		consulta.collision_mask = mascara_raycast_agua
+		consulta.exclude = [get_rid()]
+		var impacto := get_world_3d().direct_space_state.intersect_ray(consulta)
+		if impacto.is_empty():
+			continue
+		var collider: Variant = impacto.get("collider")
+		if not collider is Node or collider.get_parent() != fuente:
+			continue
+		var punto_local: Vector3 = fuente.to_local(impacto["position"])
+		if Vector2(punto_local.x, punto_local.z).length() > radio_superficie_agua_local:
+			continue
+		var superficie := fuente.to_global(
+			Vector3(punto_local.x, altura_superficie_agua_local, punto_local.z)
+		)
+		return {"posicion": superficie}
+	return {}
 
 func _actualizar_visual_chorro() -> void:
 	if is_instance_valid(water_jet_core):
 		water_jet_core.scale.y = alcance_chorro
 		water_jet_core.position.z = -alcance_chorro * 0.5
 	if is_instance_valid(water_stream):
-		var velocidad_particulas := maxf(alcance_chorro * 0.92, 1.0)
-		water_stream.lifetime = alcance_chorro / velocidad_particulas
+		var velocidad_particulas := maxf(alcance_chorro * 0.72, 12.0)
+		water_stream.lifetime = alcance_chorro / maxf(velocidad_particulas * 0.65, 1.0)
 		var stream_material := water_stream.process_material as ParticleProcessMaterial
-		if stream_material:
+		if is_instance_valid(stream_material):
+			stream_material.direction = Vector3.DOWN
+			stream_material.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+			stream_material.emission_box_extents = Vector3(2.6, 0.08, 2.6)
+			stream_material.gravity = Vector3(0.0, -5.0, 0.0)
 			stream_material.initial_velocity_min = velocidad_particulas * 0.75
 			stream_material.initial_velocity_max = velocidad_particulas
 

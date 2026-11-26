@@ -61,18 +61,73 @@ Una corrida por configuración sobre una grilla de $600 \times 600$ y 150 pasos 
 | **OpenMPI** | 4 procesos | 0.063326 | 1.857x | 46.4% |
 | **OpenMPI** | 6 procesos | 0.062795 | 1.873x | 31.2% |
 
-*Análisis de resultados:* En esta tanda, OpenMP con cuatro hilos obtuvo el menor tiempo. El tiempo con ocho hilos fue ligeramente mayor y OpenMP con un hilo quedó ligeramente por debajo de la referencia secuencial; estos resultados deben interpretarse con cautela porque cada configuración se midió una sola vez. La eficiencia superior al 100% en OpenMP-1 refleja variación de medición, no escalabilidad superlineal. MPI se ejecutó en contenedores sobre un único host, por lo que estas mediciones no representan nodos físicos independientes. Repetir las mediciones y reportar promedios o medianas permitiría conclusiones de rendimiento más sólidas. Todas las ejecuciones reportadas produjeron 10 440 celdas consumidas y 1 036 focos activos.
+*Análisis de resultados:* En esta tanda, OpenMP con cuatro hilos obtuvo el menor tiempo. El tiempo con ocho hilos fue ligeramente mayor y OpenMP con un hilo quedó ligeramente por debajo de la referencia secuencial; estos resultados deben interpretarse con cautela porque cada configuración se midió una sola vez. La eficiencia superior al 100% en OpenMP-1 refleja variación de medición, no escalabilidad superlineal. MPI se ejecutó en contenedores sobre un único host, por lo que estas mediciones no representan nodos físicos independientes. Repetir las mediciones y reportar promedios o medianas permitiría conclusiones de rendimiento más sólidas. Los 10 440 consumos y 1 036 focos activos son resultados del modelo anterior y no deben atribuirse al código C actualizado.
 
 ---
 
-## 7. CONCLUSIONES E IMPACTO SOCIAL
+Las gráficas se regeneran desde `data/benchmark_results.csv` con
+`python docs/graficas.py`. El tiempo incluye los datos originales de una sola corrida;
+por tanto, speedup, eficiencia y estimación de Amdahl son descriptivos y no
+mediciones estadísticas.
+
+![Tiempo por hilos y procesos](./graficas/tiempo_vs_hilos.png)
+
+![Speedup](./graficas/speedup.png)
+
+![Eficiencia](./graficas/eficiencia.png)
+
+![Fracción serial estimada](./graficas/fraccion_serial_amdahl.png)
+
+---
+
+## 7. INTEGRACIÓN CON EL MOTOR DE JUEGO
+
+El juego ejecuta una grilla `FireGrid` autoritativa por sala headless. El tick
+actualiza la lista del frente de fuego y aplica probabilidad de ignición
+dependiente de viento y pendiente; no recorre toda la grilla para propagar cada
+tick. Las versiones secuencial y OpenMP C se ajustaron a los mismos factores
+de propagación y parámetros de bosque seco, con un generador pseudoaleatorio
+determinista por transición para que ambas versiones C sean reproducibles e
+idénticas entre sí. El flujo aleatorio no es el mismo que usa FireGrid.
+
+El script `scripts/tools/benchmark_fire_grid.gd` mide 150 ticks con semilla
+20260117, viento `(0.5, 0.5)`, grilla plana y tamaños 100, 200, 400 y 600.
+Reporta milisegundos por tick y la cantidad total de celdas que ardieron
+(incluye las que siguen ardiendo al terminar). También escribe
+`benchmark_fire_grid.csv` en el directorio de datos de usuario de Godot. El
+panel de ajustes ejecuta este mismo runner para mostrar los resultados.
+
+Godot no está instalado en el entorno de edición usado para preparar esta
+actualización, por lo que no se obtuvieron valores de tiempo del juego y no se
+inventan cifras. La tabla queda pendiente de completar al ejecutar el script
+con Godot 4.7:
+
+| N | Pasos | ms/tick | Celdas que ardieron |
+| :---: | :---: | :---: | :---: |
+| 100 | 150 | Pendiente de ejecución | Pendiente de ejecución |
+| 200 | 150 | Pendiente de ejecución | Pendiente de ejecución |
+| 400 | 150 | Pendiente de ejecución | Pendiente de ejecución |
+| 600 | 150 | Pendiente de ejecución | Pendiente de ejecución |
+
+El CSV C existente registra para `N=600` y 150 pasos 0.117626 s secuencial,
+0.046586 s con cuatro hilos OpenMP y 0.062795 s con seis procesos MPI. Es una
+medición del modelo anterior (antes de esta alineación), así que sirve como
+referencia histórica, no como comparación directa del mismo algoritmo.
+El script imprime las filas del CSV histórico frente al tiempo total FireGrid
+(`ms/tick × 150`). Para una comparación del código actual, primero hay que
+volver a medir C con los mismos parámetros; el CSV existente no representa la
+versión C alineada en esta actualización.
+
+---
+
+## 8. CONCLUSIONES E IMPACTO SOCIAL
 - Se demostró empíricamente la viabilidad de contenedores ligeros para simular infraestructuras de supercómputo en entornos académicos.
 - El modelo numérico proporciona una base reproducible capaz de integrarse a herramientas de alerta temprana y planificación táctica de drones para combatir incendios en el Chaco.
 - Las instrucciones de compilación y ejecución permiten reproducir las pruebas; los tiempos documentados corresponden a una corrida por configuración y pueden variar entre ejecuciones.
 
 ---
 
-## 8. REFERENCIAS BIBLIOGRÁFICAS (FORMATO IEEE)
+## 9. REFERENCIAS BIBLIOGRÁFICAS (FORMATO IEEE)
 1. G. Coulouris, J. Dollimore, T. Kindberg, and G. Blair, *Distributed Systems: Concepts and Design*, 5th ed. Boston: Addison-Wesley, 2011.
 2. B. Chapman, G. Jost, and R. van der Pas, *Using OpenMP: Portable Shared Memory Parallel Programming*. Cambridge, MA: MIT Press, 2008.
 3. W. Gropp, E. Lusk, and A. Skjellum, *Using MPI: Portable Parallel Programming with the Message-Passing Interface*, 3rd ed. Cambridge, MA: MIT Press, 2014.

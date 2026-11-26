@@ -98,7 +98,9 @@ func _generar_arboles_chaco() -> void:
 		var posicion := Vector2(px, pz)
 		if _zona_protegida_campo(posicion) or not _posicion_arbol_apta(px, pz):
 			continue
-		_agregar_arbol_multimesh(px, pz)
+		var altura := get_exact_ground_y(px, pz)
+		var ruido_rodal := (_ruido_terreno.get_noise_2d(px, pz) + 1.0) * 0.5
+		_agregar_arbol_multimesh(px, pz, altura, ruido_rodal)
 
 func _generar_pastizal() -> void:
 	var transformaciones: Array[Transform3D] = []

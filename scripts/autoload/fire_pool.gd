@@ -1,10 +1,11 @@
 extends Node
 
 const TAMANO_MAX := 250
-const ESCENA_FUEGO: PackedScene = preload("res://scenes/actors/fire_source.tscn")
+const RUTA_ESCENA_FUEGO := "res://scenes/actors/fire_source.tscn"
 
 var tamano_max_actual: int = TAMANO_MAX
 var max_particulas_por_fuego: int = 120
+var _escena_fuego: PackedScene
 var _libres: Array[Node3D] = []
 var _activos: Array[Node3D] = []
 var _precalentado: bool = false
@@ -15,31 +16,40 @@ func _ready() -> void:
 
 func set_tamano_max(cantidad: int) -> void:
 	tamano_max_actual = clampi(cantidad, 1, TAMANO_MAX)
+	_eliminar_referencias_invalidas()
 	_recortar_pool()
 	if _precalentado:
 		precalentar()
 
 func precalentar() -> void:
+	if NetworkManager.es_servidor_headless():
+		return
+	_eliminar_referencias_invalidas()
 	_recortar_pool()
 	while _libres.size() + _activos.size() < tamano_max_actual:
 		var fuego := _crear_fuego_inactivo()
-		if not fuego:
+		if not is_instance_valid(fuego):
 			return
 		_libres.append(fuego)
 	_precalentado = true
 
 func _aplicar_perfil_calidad(calidad: int) -> void:
+	_eliminar_referencias_invalidas()
 	var perfil := GraphicsSettings.obtener_perfil(calidad)
 	if perfil.is_empty():
 		return
 	max_particulas_por_fuego = int(perfil["max_particles_per_fire"])
 	set_tamano_max(int(perfil["max_fire_effects"]))
 	for fuego in _libres:
-		_actualizar_particulas_fuego(fuego)
+		if is_instance_valid(fuego):
+			_actualizar_particulas_fuego(fuego)
 	for fuego in _activos:
-		_actualizar_particulas_fuego(fuego)
+		if is_instance_valid(fuego):
+			_actualizar_particulas_fuego(fuego)
 
 func _actualizar_particulas_fuego(fuego: Node3D) -> void:
+	if not is_instance_valid(fuego):
+		return
 	fuego.set("max_particulas_humo", max_particulas_por_fuego)
 	if fuego.has_method("configurar_max_particulas_humo"):
 		fuego.call("configurar_max_particulas_humo", max_particulas_por_fuego)
@@ -50,11 +60,17 @@ func adquirir(
 	objetivo_extinguible: bool = true,
 	propietario: Node = null
 ) -> Node3D:
+	if NetworkManager.es_servidor_headless():
+		return null
+	_eliminar_referencias_invalidas()
 	if _libres.is_empty():
 		if _activos.is_empty():
 			push_error("FirePool no tiene efectos disponibles; llama a precalentar() al cargar el mapa.")
 			return null
 		var fuego_mas_lejano := _buscar_fuego_mas_lejano()
+		if not is_instance_valid(fuego_mas_lejano):
+			push_error("FirePool no encontró una instancia activa válida para reutilizar.")
+			return null
 		push_warning("FirePool agotado; se reutiliza el efecto activo más lejano.")
 		liberar(fuego_mas_lejano)
 	if _libres.is_empty():
@@ -62,6 +78,9 @@ func adquirir(
 		return null
 
 	var fuego: Node3D = _libres.pop_back()
+	if not is_instance_valid(fuego):
+		push_error("FirePool encontró una instancia libre que ya no existe.")
+		return null
 	_activos.append(fuego)
 	fuego.set("objetivo_extinguible", objetivo_extinguible)
 	fuego.set("propietario_pool", propietario)
@@ -83,6 +102,8 @@ func liberar(fuego: Node3D) -> void:
 	if indice < 0:
 		return
 	_activos.remove_at(indice)
+	if fuego.is_queued_for_deletion():
+		return
 
 	var propietario: Variant = fuego.get("propietario_pool")
 	if is_instance_valid(propietario) and propietario.has_method("olvidar_visual_fuego"):
@@ -101,8 +122,15 @@ func liberar(fuego: Node3D) -> void:
 	_libres.append(fuego)
 
 func _crear_fuego_inactivo() -> Node3D:
-	var fuego := ESCENA_FUEGO.instantiate() as Node3D
-	if not fuego:
+	if NetworkManager.es_servidor_headless():
+		return null
+	if not is_instance_valid(_escena_fuego):
+		_escena_fuego = load(RUTA_ESCENA_FUEGO) as PackedScene
+	if not is_instance_valid(_escena_fuego):
+		push_error("FirePool no pudo cargar fire_source.tscn.")
+		return null
+	var fuego := _escena_fuego.instantiate() as Node3D
+	if not is_instance_valid(fuego):
 		push_error("FirePool no pudo instanciar fire_source.tscn.")
 		return null
 	if not fuego.has_method("preparar_para_pool"):
@@ -117,14 +145,16 @@ func _crear_fuego_inactivo() -> Node3D:
 	return fuego
 
 func _buscar_fuego_mas_lejano() -> Node3D:
+	if _activos.is_empty():
+		return null
 	var camara := get_viewport().get_camera_3d()
-	var mas_lejano: Node3D = _activos[0]
-	if not camara:
-		return mas_lejano
+	var mas_lejano: Node3D
 	var distancia_maxima := -1.0
 	for fuego in _activos:
-		if not is_instance_valid(fuego):
+		if not is_instance_valid(fuego) or fuego.is_queued_for_deletion():
 			continue
+		if not is_instance_valid(camara):
+			return fuego
 		var distancia := camara.global_position.distance_squared_to(fuego.global_position)
 		if distancia > distancia_maxima:
 			distancia_maxima = distancia
@@ -132,7 +162,21 @@ func _buscar_fuego_mas_lejano() -> Node3D:
 	return mas_lejano
 
 func _recortar_pool() -> void:
+	_eliminar_referencias_invalidas()
 	while _libres.size() + _activos.size() > tamano_max_actual and not _libres.is_empty():
 		var fuego: Node3D = _libres.pop_back()
-		remove_child(fuego)
+		if not is_instance_valid(fuego):
+			continue
+		if fuego.get_parent() == self:
+			remove_child(fuego)
 		fuego.queue_free()
+
+func _eliminar_referencias_invalidas() -> void:
+	for indice in range(_libres.size() - 1, -1, -1):
+		var fuego: Variant = _libres[indice]
+		if not is_instance_valid(fuego) or fuego.is_queued_for_deletion():
+			_libres.remove_at(indice)
+	for indice in range(_activos.size() - 1, -1, -1):
+		var fuego: Variant = _activos[indice]
+		if not is_instance_valid(fuego) or fuego.is_queued_for_deletion():
+			_activos.remove_at(indice)

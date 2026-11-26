@@ -8,6 +8,14 @@ const SCRIPT_PERFIL_COMBUSTIBLE: Script = preload("res://scripts/sim/perfil_comb
 const CELDA_METROS: float = 2.0
 const INTERVALO_TICK: float = 0.3
 const AGUA_POR_CELDA: float = 100.0
+const TEMPERATURA_AMBIENTE: float = 20.0
+const TASA_CALENTAMIENTO: float = 100.0
+const TASA_ENFRIAMIENTO: float = 12.0
+const DURACION_ETAPA_CALENTAMIENTO: float = 5.0
+const DURACION_ENFRIAMIENTO_AGUA: float = 18.0
+const DISTANCIA_MINIMA_CHISPA: float = 4.0
+const FACTOR_VIENTO_MINIMO: float = 0.05
+const FACTOR_VIENTO_MAXIMO: float = 2.0
 
 const SANO: int = 0
 const ARDIENDO: int = 1
@@ -32,11 +40,14 @@ var critico: PackedByteArray = PackedByteArray()
 var tipo_objetivo_critico: PackedByteArray = PackedByteArray()
 var temperatura: PackedFloat32Array = PackedFloat32Array()
 var celdas_que_ardieron: PackedByteArray = PackedByteArray()
+var _tiempo_ardiendo: PackedFloat32Array = PackedFloat32Array()
+var velocidad_propagacion: float = 1.5
 
 var _tiempo_mojado: PackedFloat32Array = PackedFloat32Array()
 var _agua_recibida: PackedFloat32Array = PackedFloat32Array()
 var _frente: PackedInt32Array = PackedInt32Array()
 var _frente_mojado: PackedInt32Array = PackedInt32Array()
+var _frente_calentado: PackedInt32Array = PackedInt32Array()
 var _frente_siguiente: PackedInt32Array = PackedInt32Array()
 var _conteo_estados: PackedInt32Array = PackedInt32Array()
 var _conteo_combustible_por_tipo: PackedInt32Array = PackedInt32Array()
@@ -72,12 +83,81 @@ func encender(celda: Vector2i) -> void:
 	var indice := _indice(celda)
 	if estado[indice] != SANO or combustible[indice] <= 0.0:
 		return
+	_agua_recibida[indice] = 0.0
 	var perfil := _perfil(tipo_combustible[indice])
 	if float(perfil.get("tasa_ignicion")) <= 0.0:
 		return
 	_temperatura_ignicion(indice, perfil)
 	_cambiar_estado(indice, ARDIENDO)
 	_frente.append(indice)
+
+func propagar_por_chispa(
+	posicion: Vector2,
+	direccion_viento: Vector2,
+	radio: float,
+	probabilidad_base: float
+) -> int:
+	if radio <= 0.0 or probabilidad_base <= 0.0:
+		return 0
+	var centro: Vector2i = mundo_a_celda(posicion)
+	var radio_celdas: int = ceili(radio / CELDA_METROS)
+	var viento_normalizado: Vector2 = direccion_viento.normalized()
+	var probabilidad: float = clampf(probabilidad_base, 0.0, 1.0)
+	var celda_vecina_mas_cercana: Vector2i = Vector2i(-1, -1)
+	var indice_vecino_mas_cercano: int = -1
+	var distancia_mas_cercana: float = INF
+	for y in range(
+		maxi(0, centro.y - radio_celdas),
+		mini(tamano_celdas.y, centro.y + radio_celdas + 1)
+	):
+		for x in range(
+			maxi(0, centro.x - radio_celdas),
+			mini(tamano_celdas.x, centro.x + radio_celdas + 1)
+		):
+			var celda: Vector2i = Vector2i(x, y)
+			var indice: int = _indice(celda)
+			if (
+				estado[indice] != SANO
+				or combustible[indice] <= 0.0
+				or tipo_combustible[indice] == SIN_COMBUSTIBLE
+			):
+				continue
+			var desplazamiento: Vector2 = celda_a_mundo(celda) - posicion
+			var distancia: float = desplazamiento.length()
+			if (
+				distancia < DISTANCIA_MINIMA_CHISPA
+				or distancia > radio
+				or distancia >= distancia_mas_cercana
+			):
+				continue
+			celda_vecina_mas_cercana = celda
+			indice_vecino_mas_cercano = indice
+			distancia_mas_cercana = distancia
+	if indice_vecino_mas_cercano < 0:
+		return 0
+	var posicion_vecina: Vector2 = celda_a_mundo(celda_vecina_mas_cercana)
+	var direccion_vecina: Vector2 = (posicion_vecina - posicion).normalized()
+	var factor_viento: float = 1.0
+	if viento_normalizado.length_squared() > 0.0:
+		factor_viento = clampf(
+			1.0 + 0.65 * direccion_vecina.dot(viento_normalizado),
+			0.2,
+			1.65
+		)
+	var factor_humedad: float = 1.0 - clampf(
+		humedad[indice_vecino_mas_cercano],
+		0.0,
+		1.0
+	)
+	var probabilidad_final: float = clampf(
+		probabilidad * factor_viento * factor_humedad,
+		0.0,
+		1.0
+	)
+	if _rng.randf() >= probabilidad_final:
+		return 0
+	encender(celda_vecina_mas_cercana)
+	return 1 if estado[indice_vecino_mas_cercano] == ARDIENDO else 0
 
 func configurar_terreno_sin_combustible() -> void:
 	estado.fill(SANO)
@@ -89,7 +169,7 @@ func configurar_terreno_sin_combustible() -> void:
 	critico.fill(0)
 	tipo_objetivo_critico.resize(estado.size())
 	tipo_objetivo_critico.fill(0)
-	temperatura.fill(20.0)
+	temperatura.fill(TEMPERATURA_AMBIENTE)
 	celdas_que_ardieron.resize(estado.size())
 	celdas_que_ardieron.fill(0)
 	_tiempo_mojado.fill(0.0)
@@ -97,6 +177,7 @@ func configurar_terreno_sin_combustible() -> void:
 	_agua_recibida.fill(0.0)
 	_frente = PackedInt32Array()
 	_frente_mojado = PackedInt32Array()
+	_frente_calentado = PackedInt32Array()
 	_frente_siguiente = PackedInt32Array()
 	_deltas.clear()
 	_acumulador = 0.0
@@ -178,6 +259,11 @@ func obtener_celdas_ardiendo() -> PackedInt32Array:
 			activas.append(indice)
 	return activas
 
+func obtener_intensidad_fuego(indice: int) -> float:
+	if indice < 0 or indice >= estado.size() or estado[indice] != ARDIENDO:
+		return 0.0
+	return clampf(100.0 - _agua_recibida[indice], 0.0, 100.0)
+
 func contar_celdas_que_ardieron() -> int:
 	return _igniciones_unicas
 
@@ -235,10 +321,17 @@ func aplicar_agua(pos_mundo: Vector2, radio: float, cantidad: float) -> int:
 					incendios_procesados[indice] = true
 				var requerido := maxf(AGUA_POR_CELDA - _agua_recibida[indice], 0.0)
 				var aplicado := minf(presupuesto, requerido)
+				var agua_anterior: float = _agua_recibida[indice]
 				_agua_recibida[indice] += aplicado
 				presupuesto -= aplicado
 				if aplicado > 0.0:
 					_ultimas_celdas_con_agua.append(indice)
+					if era_ardiendo:
+						var pasos_intensidad: int = (
+							floori(_agua_recibida[indice]) - floori(agua_anterior)
+						)
+						for _paso in range(pasos_intensidad):
+							_deltas.append([indice, ARDIENDO])
 				if _agua_recibida[indice] >= AGUA_POR_CELDA:
 					_agua_recibida[indice] = 0.0
 					_mojar_indice(indice)
@@ -284,13 +377,18 @@ func aplicar_deltas_remotos(deltas: PackedInt32Array) -> bool:
 	for indice_par in range(0, deltas.size(), 2):
 		var indice := deltas[indice_par]
 		var nuevo_estado := deltas[indice_par + 1]
-		_cambiar_estado(indice, nuevo_estado)
+		if nuevo_estado == ARDIENDO and estado[indice] == ARDIENDO:
+			# Repeated burning-state pairs carry integer water-progress steps to clients.
+			_agua_recibida[indice] = minf(_agua_recibida[indice] + 1.0, AGUA_POR_CELDA)
+			_deltas.append([indice, ARDIENDO])
+		else:
+			_cambiar_estado(indice, nuevo_estado)
 	_reconstruir_frentes()
 	return true
 
 func serializar_completo() -> PackedByteArray:
 	var datos: Dictionary = {
-		"version": 3,
+		"version": 4,
 		"origen": origen,
 		"tamano_celdas": tamano_celdas,
 		"semilla": semilla,
@@ -302,6 +400,8 @@ func serializar_completo() -> PackedByteArray:
 		"critico": critico,
 		"tipo_objetivo_critico": tipo_objetivo_critico,
 		"temperatura": temperatura,
+		"tiempo_ardiendo": _tiempo_ardiendo,
+		"velocidad_propagacion": velocidad_propagacion,
 		"celdas_que_ardieron": celdas_que_ardieron,
 		"tiempo_mojado": _tiempo_mojado,
 		"agua_recibida": _agua_recibida,
@@ -314,12 +414,13 @@ func serializar_completo() -> PackedByteArray:
 	return var_to_bytes(datos)
 
 func cargar_completo(datos: PackedByteArray) -> bool:
-	var contenido: Variant = bytes_to_var(datos)
-	if not contenido is Dictionary:
+	var valor_contenido: Variant = bytes_to_var(datos)
+	if not valor_contenido is Dictionary:
 		push_error("FireGrid no pudo cargar el estado serializado: formato inválido.")
 		return false
+	var contenido: Dictionary = valor_contenido
 	var version: int = int(contenido.get("version", -1))
-	if version < 2 or version > 3:
+	if version < 2 or version > 4:
 		push_error("FireGrid no reconoce la versión del estado serializado.")
 		return false
 	if not contenido.get("origen") is Vector2 or not contenido.get("tamano_celdas") is Vector2i:
@@ -340,6 +441,7 @@ func cargar_completo(datos: PackedByteArray) -> bool:
 	var criticos_nuevos: Variant = contenido.get("critico", PackedByteArray())
 	var tipos_criticos_nuevos: Variant = contenido.get("tipo_objetivo_critico", PackedByteArray())
 	var temperatura_nueva: Variant = contenido.get("temperatura")
+	var tiempo_ardiendo_nuevo: Variant = contenido.get("tiempo_ardiendo")
 	var historial_nuevo: Variant = contenido.get("celdas_que_ardieron")
 	var mojado_nuevo: Variant = contenido.get("tiempo_mojado")
 	var agua_nueva: Variant = contenido.get("agua_recibida")
@@ -355,6 +457,7 @@ func cargar_completo(datos: PackedByteArray) -> bool:
 		or (version >= 3 and not criticos_nuevos is PackedByteArray)
 		or (version >= 3 and not tipos_criticos_nuevos is PackedByteArray)
 		or not temperatura_nueva is PackedFloat32Array
+		or (version >= 4 and not tiempo_ardiendo_nuevo is PackedFloat32Array)
 		or not historial_nuevo is PackedByteArray
 		or not mojado_nuevo is PackedFloat32Array
 		or not agua_nueva is PackedFloat32Array
@@ -371,6 +474,7 @@ func cargar_completo(datos: PackedByteArray) -> bool:
 		or altura_nueva.size() != cantidad_celdas
 		or tipos_nuevos.size() != cantidad_celdas
 		or temperatura_nueva.size() != cantidad_celdas
+		or (version >= 4 and tiempo_ardiendo_nuevo.size() != cantidad_celdas)
 		or historial_nuevo.size() != cantidad_celdas
 		or mojado_nuevo.size() != cantidad_celdas
 		or agua_nueva.size() != cantidad_celdas
@@ -406,6 +510,7 @@ func cargar_completo(datos: PackedByteArray) -> bool:
 			return false
 	var acumulador_nuevo: Variant = contenido.get("acumulador", 0.0)
 	var estado_rng: Variant = contenido.get("rng_state")
+	var velocidad_propagacion_nueva: Variant = contenido.get("velocidad_propagacion", 1.5)
 	if (
 		(not acumulador_nuevo is int and not acumulador_nuevo is float)
 		or float(acumulador_nuevo) < 0.0
@@ -413,6 +518,14 @@ func cargar_completo(datos: PackedByteArray) -> bool:
 		or not estado_rng is int
 	):
 		push_error("FireGrid no pudo cargar el temporizador o estado aleatorio.")
+		return false
+	if (
+		(not velocidad_propagacion_nueva is int and not velocidad_propagacion_nueva is float)
+		or not is_finite(float(velocidad_propagacion_nueva))
+		or float(velocidad_propagacion_nueva) < 0.1
+		or float(velocidad_propagacion_nueva) > 3.0
+	):
+		push_error("FireGrid no pudo cargar una velocidad de propagación inválida.")
 		return false
 
 	var cantidad_ardiendo_anterior := _cantidad_ardiendo
@@ -424,6 +537,7 @@ func cargar_completo(datos: PackedByteArray) -> bool:
 	humedad = humedad_nueva
 	altura = altura_nueva
 	tipo_combustible = tipos_nuevos
+	velocidad_propagacion = float(velocidad_propagacion_nueva)
 	if version >= 3:
 		critico = criticos_nuevos
 		tipo_objetivo_critico = tipos_criticos_nuevos
@@ -433,6 +547,11 @@ func cargar_completo(datos: PackedByteArray) -> bool:
 		tipo_objetivo_critico.resize(cantidad_celdas)
 		tipo_objetivo_critico.fill(0)
 	temperatura = temperatura_nueva
+	if version >= 4:
+		_tiempo_ardiendo = tiempo_ardiendo_nuevo
+	else:
+		_tiempo_ardiendo.resize(cantidad_celdas)
+		_tiempo_ardiendo.fill(0.0)
 	celdas_que_ardieron = historial_nuevo
 	_tiempo_mojado = mojado_nuevo
 	_agua_recibida = agua_nueva
@@ -468,8 +587,8 @@ func contar_estados() -> Dictionary:
 	}
 
 func _crear_perfiles() -> void:
-	_perfiles[BOSQUE_SECO] = _nuevo_perfil(0.0575, 2.5, 300.0, 12.0, 0.25, 0.1)
-	_perfiles[PASTIZAL] = _nuevo_perfil(0.135, 4.0, 150.0, 7.0, 0.25, 0.1)
+	_perfiles[BOSQUE_SECO] = _nuevo_perfil(0.03, 1.5, 300.0, 12.0, 0.25, 0.1)
+	_perfiles[PASTIZAL] = _nuevo_perfil(0.08, 2.0, 150.0, 7.0, 0.25, 0.1)
 	_perfiles[VIVIENDA] = _nuevo_perfil(0.04, 1.8, 500.0, 20.0, 0.25, 0.1)
 	_perfiles[SIN_COMBUSTIBLE] = _nuevo_perfil(0.0, 0.0, 2000.0, 0.0, 0.25, 0.1)
 
@@ -506,7 +625,9 @@ func _inicializar_celdas() -> void:
 	tipo_objetivo_critico.resize(cantidad)
 	tipo_objetivo_critico.fill(0)
 	temperatura.resize(cantidad)
-	temperatura.fill(20.0)
+	temperatura.fill(TEMPERATURA_AMBIENTE)
+	_tiempo_ardiendo.resize(cantidad)
+	_tiempo_ardiendo.fill(0.0)
 	_tiempo_mojado.resize(cantidad)
 	_tiempo_mojado.fill(0.0)
 	_agua_recibida.resize(cantidad)
@@ -521,6 +642,7 @@ func _inicializar_celdas() -> void:
 	_conteo_combustible_por_tipo[BOSQUE_SECO] = cantidad
 	_conteo_quemadas_por_tipo.resize(4)
 	_conteo_quemadas_por_tipo.fill(0)
+	_frente_calentado = PackedInt32Array()
 	_cantidad_combustible = cantidad
 	for indice in range(cantidad):
 		combustible[indice] = _combustible_inicial(BOSQUE_SECO)
@@ -539,9 +661,22 @@ func _paso_tick(viento: Vector2) -> void:
 			mojadas_siguientes.append(indice)
 	_frente_mojado = mojadas_siguientes
 
+	var calentadas_siguientes := PackedInt32Array()
+	for indice in _frente_calentado:
+		if estado[indice] != SANO:
+			continue
+		temperatura[indice] = maxf(
+			temperatura[indice] - TASA_ENFRIAMIENTO * INTERVALO_TICK,
+			TEMPERATURA_AMBIENTE
+		)
+		if temperatura[indice] > TEMPERATURA_AMBIENTE:
+			calentadas_siguientes.append(indice)
+	_frente_calentado = calentadas_siguientes
+
 	for indice_origen in _frente:
 		if estado[indice_origen] != ARDIENDO:
 			continue
+		_tiempo_ardiendo[indice_origen] += INTERVALO_TICK
 		var celda_origen := _celda_desde_indice(indice_origen)
 		var viento_local := _viento_en_celda(celda_origen, viento)
 		var direccion_viento := viento_local.normalized() if viento_local.length_squared() > 0.0 else Vector2.ZERO
@@ -559,6 +694,20 @@ func _paso_tick(viento: Vector2) -> void:
 				var perfil_vecino := _perfil(tipo_combustible[indice_vecino])
 				var umbral := float(perfil_vecino.get("calor_umbral"))
 				if temperatura[indice_origen] < umbral:
+					continue
+				var desplazamiento := Vector2(celda_vecina - celda_origen)
+				var distancia := desplazamiento.length() * CELDA_METROS
+				_calentar_celda(
+					indice_vecino,
+					umbral,
+					desplazamiento.normalized(),
+					distancia,
+					direccion_viento,
+					velocidad_viento
+				)
+				if temperatura[indice_vecino] < umbral:
+					continue
+				if _tiempo_ardiendo[indice_origen] < DURACION_ETAPA_CALENTAMIENTO:
 					continue
 				var probabilidad := _probabilidad_ignicion(
 					celda_origen,
@@ -600,19 +749,61 @@ func _probabilidad_ignicion(
 	var direccion_vecino := desplazamiento.normalized()
 	var k_viento := float(perfil_vecino.get("k_viento"))
 	var k_pendiente := float(perfil_vecino.get("k_pendiente"))
-	var factor_viento := clampf(
-		1.0 + k_viento * maxf(0.0, direccion_vecino.dot(direccion_viento)) * velocidad_viento,
-		0.0,
-		3.0
-	)
+	var factor_viento := _factor_viento(direccion_vecino, direccion_viento, velocidad_viento, k_viento)
 	var factor_pendiente := clampf(
 		exp(k_pendiente * (altura[indice_vecino] - altura[indice_origen]) / distancia),
 		0.0,
 		3.0
 	)
 	var factor_humedad := 1.0 - clampf(humedad[indice_vecino], 0.0, 1.0)
-	var tasa := float(perfil_vecino.get("tasa_ignicion")) * factor_viento * factor_pendiente * factor_humedad
-	return clampf(1.0 - exp(-tasa * delta_tick), 0.0, 1.0)
+	var tasa := (
+		float(perfil_vecino.get("tasa_ignicion"))
+		* velocidad_propagacion
+		* factor_viento
+		* factor_pendiente
+		* factor_humedad
+	)
+	var factor_distancia := CELDA_METROS / distancia
+	return clampf((1.0 - exp(-tasa * delta_tick)) * factor_distancia, 0.0, 1.0)
+
+func _calentar_celda(
+	indice: int,
+	umbral: float,
+	direccion_vecino: Vector2,
+	distancia: float,
+	direccion_viento: Vector2,
+	velocidad_viento: float
+) -> void:
+	if temperatura[indice] <= TEMPERATURA_AMBIENTE:
+		_frente_calentado.append(indice)
+	var perfil := _perfil(tipo_combustible[indice])
+	var factor_viento := _factor_viento(
+		direccion_vecino,
+		direccion_viento,
+		velocidad_viento,
+		float(perfil.get("k_viento"))
+	)
+	var factor_distancia := CELDA_METROS / distancia
+	var incremento := (
+		TASA_CALENTAMIENTO
+		* velocidad_propagacion
+		* factor_viento
+		* factor_distancia
+		* INTERVALO_TICK
+	)
+	temperatura[indice] = minf(temperatura[indice] + incremento, umbral)
+
+func _factor_viento(
+	direccion_vecino: Vector2,
+	direccion_viento: Vector2,
+	velocidad_viento: float,
+	k_viento: float
+) -> float:
+	return clampf(
+		1.0 + k_viento * direccion_vecino.dot(direccion_viento) * velocidad_viento,
+		FACTOR_VIENTO_MINIMO,
+		FACTOR_VIENTO_MAXIMO
+	)
 
 func _viento_en_celda(celda: Vector2i, viento: Vector2) -> Vector2:
 	if _radio_viento_erratico <= 0.0 or viento.length_squared() <= 0.0:
@@ -629,7 +820,10 @@ func _viento_en_celda(celda: Vector2i, viento: Vector2) -> Vector2:
 func _mojar_indice(indice: int) -> void:
 	if estado[indice] == QUEMADO or tipo_combustible[indice] == SIN_COMBUSTIBLE:
 		return
-	var duracion := float(_perfil(tipo_combustible[indice]).get("duracion_mojado"))
+	var duracion: float = maxf(
+		float(_perfil(tipo_combustible[indice]).get("duracion_mojado")),
+		DURACION_ENFRIAMIENTO_AGUA
+	)
 	if duracion <= 0.0:
 		if estado[indice] == ARDIENDO:
 			_cambiar_estado(indice, SANO)
@@ -637,6 +831,7 @@ func _mojar_indice(indice: int) -> void:
 	if estado[indice] != MOJADO:
 		_cambiar_estado(indice, MOJADO)
 		_frente_mojado.append(indice)
+	temperatura[indice] = TEMPERATURA_AMBIENTE
 	_tiempo_mojado[indice] = maxf(_tiempo_mojado[indice], duracion)
 
 func _temperatura_ignicion(indice: int, perfil: Resource) -> void:
@@ -645,11 +840,14 @@ func _temperatura_ignicion(indice: int, perfil: Resource) -> void:
 func _reconstruir_frentes() -> void:
 	_frente = PackedInt32Array()
 	_frente_mojado = PackedInt32Array()
+	_frente_calentado = PackedInt32Array()
 	for indice in range(estado.size()):
 		if estado[indice] == ARDIENDO:
 			_frente.append(indice)
 		elif estado[indice] == MOJADO:
 			_frente_mojado.append(indice)
+		elif estado[indice] == SANO and temperatura[indice] > TEMPERATURA_AMBIENTE:
+			_frente_calentado.append(indice)
 
 func _cambiar_estado(indice: int, nuevo_estado: int) -> void:
 	var anterior := int(estado[indice])
@@ -659,8 +857,11 @@ func _cambiar_estado(indice: int, nuevo_estado: int) -> void:
 	_conteo_estados[nuevo_estado] += 1
 	if anterior == ARDIENDO:
 		_cantidad_ardiendo -= 1
+		_tiempo_ardiendo[indice] = 0.0
 	if nuevo_estado == ARDIENDO:
 		_cantidad_ardiendo += 1
+		_tiempo_ardiendo[indice] = 0.0
+		_agua_recibida[indice] = 0.0
 		if celdas_que_ardieron[indice] == 0:
 			celdas_que_ardieron[indice] = 1
 			_igniciones_unicas += 1
@@ -670,6 +871,8 @@ func _cambiar_estado(indice: int, nuevo_estado: int) -> void:
 	if nuevo_estado == QUEMADO:
 		_cantidad_quemadas += 1
 		_conteo_quemadas_por_tipo[tipo_combustible[indice]] += 1
+	if nuevo_estado == MOJADO:
+		_agua_recibida[indice] = 0.0
 	estado[indice] = nuevo_estado
 	_deltas.append([indice, nuevo_estado])
 	celda_cambiada.emit(indice, nuevo_estado)

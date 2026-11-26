@@ -77,8 +77,14 @@ var _acumulador_metricas: float = 0.0
 var _acumulador_estimacion_drones: float = 0.0
 var _acumulador_snapshot_drones: float = 0.0
 var _acumulador_transform_sync: float = 0.0
+var _acumulador_metricas_servidor: float = 0.0
+var _muestras_tick_ms: Array[float] = []
+var _ruta_metricas_servidor: String = ""
+var _secuencia_metricas_servidor: int = 0
 
 func _ready() -> void:
+	if es_servidor_headless() and AudioServer.get_bus_count() > 0:
+		AudioServer.set_bus_mute(0, true)
 	multiplayer.connected_to_server.connect(_al_conectar_servidor)
 	multiplayer.connection_failed.connect(_al_fallar_conexion)
 	multiplayer.server_disconnected.connect(_al_desconectar_servidor)
@@ -126,9 +132,14 @@ func _ready() -> void:
 
 	_procesar_argumentos_usuario(OS.get_cmdline_user_args())
 
+func es_servidor_headless() -> bool:
+	return OS.has_feature("dedicated_server") or DisplayServer.get_name() == "headless"
+
 func _process(delta: float) -> void:
 	if not multiplayer.is_server() or not multiplayer.has_multiplayer_peer():
 		return
+	if not _ruta_metricas_servidor.is_empty():
+		_muestras_tick_ms.append(delta * 1000.0)
 	_acumulador_estimacion_drones += delta
 	while _acumulador_estimacion_drones >= INTERVALO_METRICAS_DRON:
 		_acumulador_estimacion_drones -= INTERVALO_METRICAS_DRON
@@ -147,6 +158,60 @@ func _process(delta: float) -> void:
 	var intervalo := _acumulador_metricas
 	_acumulador_metricas = 0.0
 	_actualizar_bytes_por_segundo(intervalo)
+	if not _ruta_metricas_servidor.is_empty():
+		_acumulador_metricas_servidor += intervalo
+		if _acumulador_metricas_servidor >= 5.0:
+			_acumulador_metricas_servidor = fmod(_acumulador_metricas_servidor, 5.0)
+			_escribir_metricas_servidor()
+
+func _escribir_metricas_servidor() -> void:
+	if _ruta_metricas_servidor.is_empty() or _muestras_tick_ms.is_empty():
+		return
+	var muestras_ordenadas := _muestras_tick_ms.duplicate()
+	muestras_ordenadas.sort()
+	var suma_tick_ms: float = 0.0
+	for tick_ms in _muestras_tick_ms:
+		suma_tick_ms += tick_ms
+	var p95_indice := clampi(
+		ceili(float(muestras_ordenadas.size()) * 0.95) - 1,
+		0,
+		muestras_ordenadas.size() - 1
+	)
+	var bytes_s_enviados: float = 0.0
+	for bytes_s in _bytes_por_jugador.values():
+		bytes_s_enviados += float(bytes_s)
+	_secuencia_metricas_servidor += 1
+	var metricas := {
+		"sample_id": _secuencia_metricas_servidor,
+		"sample_ms": Time.get_ticks_msec(),
+		"tick_ms_promedio": suma_tick_ms / float(_muestras_tick_ms.size()),
+		"tick_ms_p95": muestras_ordenadas[p95_indice],
+		"tick_ms_max": muestras_ordenadas[-1],
+		"jugadores": jugadores.size(),
+		"celdas_ardiendo": FireGridServer.obtener_celdas_ardiendo().size(),
+		"bytes_s_enviados": bytes_s_enviados,
+		"bytes_s_por_jugador": bytes_s_enviados / maxf(float(jugadores.size()), 1.0),
+	}
+	var ruta_temporal := _ruta_metricas_servidor + ".tmp"
+	var directorio_metricas := _ruta_metricas_servidor.get_base_dir()
+	var error_directorio := DirAccess.make_dir_recursive_absolute(directorio_metricas)
+	if error_directorio != OK:
+		push_error(
+			"NetworkManager no pudo crear el directorio de métricas (error %d)." % error_directorio
+		)
+		return
+	var archivo := FileAccess.open(ruta_temporal, FileAccess.WRITE)
+	if not is_instance_valid(archivo):
+		push_error("NetworkManager no pudo abrir el archivo temporal de métricas.")
+		return
+	archivo.store_string(JSON.stringify(metricas))
+	archivo.flush()
+	archivo.close()
+	var error_renombrado := DirAccess.rename_absolute(ruta_temporal, _ruta_metricas_servidor)
+	if error_renombrado != OK:
+		push_error("NetworkManager no pudo publicar las métricas (error %d)." % error_renombrado)
+		return
+	_muestras_tick_ms.clear()
 
 func crear_sala(config: Dictionary) -> bool:
 	if not _validar_configuracion_sala(config):
@@ -194,8 +259,10 @@ func crear_sala(config: Dictionary) -> bool:
 	_nombres_reservados.clear()
 	_clientes_listos.clear()
 	multiplayer.multiplayer_peer = peer_servidor
-	_temporizador_ping.start()
-	_temporizador_snapshot_fuego.start()
+	if is_instance_valid(_temporizador_ping):
+		_temporizador_ping.start()
+	if is_instance_valid(_temporizador_snapshot_fuego):
+		_temporizador_snapshot_fuego.start()
 	_estadisticas_jugadores.clear()
 	_colaboradores_por_celda.clear()
 	_marcador_final_enviado = false
@@ -213,7 +280,8 @@ func crear_sala(config: Dictionary) -> bool:
 		_nombre_anfitrion = nombre_local
 		jugador_conectado.emit(1, datos_locales.duplicate(true))
 	if _servidor_dedicado and not _url_directorio.is_empty() and not _token_directorio.is_empty():
-		_temporizador_directorio.start()
+		if is_instance_valid(_temporizador_directorio):
+			_temporizador_directorio.start()
 		_enviar_latido_directorio()
 	_publicar_sala()
 	print("NetworkManager: sala %s abierta en puerto %d (%s)." % [codigo_sala, _puerto_sala, transporte])
@@ -258,7 +326,8 @@ func unirse_a_sala(direccion: String, puerto: int, codigo: String) -> bool:
 		peer_cliente = peer_websocket
 
 	multiplayer.multiplayer_peer = peer_cliente
-	_temporizador_conexion.start()
+	if is_instance_valid(_temporizador_conexion):
+		_temporizador_conexion.start()
 	print("NetworkManager: conectando a %s:%d (sala %s)." % [direccion_limpia, puerto, codigo_limpio])
 	return true
 
@@ -394,16 +463,29 @@ func _al_expirar_conexion() -> void:
 		salir()
 
 func salir() -> void:
-	_temporizador_ping.stop()
-	_temporizador_conexion.stop()
-	_temporizador_directorio.stop()
-	_temporizador_snapshot_fuego.stop()
+	_detener_temporizador(_temporizador_ping)
+	_detener_temporizador(_temporizador_conexion)
+	_detener_temporizador(_temporizador_directorio)
+	_detener_temporizador(_temporizador_snapshot_fuego)
+	if (
+		is_instance_valid(_http_directorio)
+		and _http_directorio.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED
+	):
+		_http_directorio.cancel_request()
 	var ids: Array = jugadores.keys()
 	for id in ids:
 		if int(id) != 1:
 			jugador_desconectado.emit(int(id))
-	if multiplayer.multiplayer_peer != null:
-		multiplayer.multiplayer_peer.close()
+	for dron_variant in _drones_por_id.values():
+		if is_instance_valid(dron_variant) and not dron_variant.is_queued_for_deletion():
+			dron_variant.queue_free()
+	_drones_por_id.clear()
+	if is_instance_valid(_spawner):
+		_spawner.queue_free()
+	_spawner = null
+	var peer: Variant = multiplayer.multiplayer_peer
+	if is_instance_valid(peer):
+		peer.close()
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	codigo_sala = ""
 	_codigo_esperado = ""
@@ -413,7 +495,6 @@ func salir() -> void:
 	_marcas_ping.clear()
 	_marcas_chat.clear()
 	_clientes_listos.clear()
-	_drones_por_id.clear()
 	_bytes_en_ventana.clear()
 	_bytes_por_jugador.clear()
 	_ultimo_estado_sync_drones.clear()
@@ -431,6 +512,10 @@ func salir() -> void:
 	_servidor_dedicado = false
 	sala_actualizada.emit(codigo_sala, jugadores)
 	metricas_red_actualizadas.emit(_bytes_por_jugador)
+
+func _detener_temporizador(temporizador: Timer) -> void:
+	if is_instance_valid(temporizador):
+		temporizador.stop()
 
 func reiniciar_estadisticas_mision() -> void:
 	_estadisticas_jugadores.clear()
@@ -514,7 +599,8 @@ func _validar_configuracion_sala(config: Dictionary) -> bool:
 	return true
 
 func _al_conectar_servidor() -> void:
-	_temporizador_conexion.start()
+	if is_instance_valid(_temporizador_conexion):
+		_temporizador_conexion.start()
 	var nombre := _normalizar_nombre(nombre_local)
 	if nombre.is_empty():
 		nombre = "Piloto"
@@ -523,12 +609,12 @@ func _al_conectar_servidor() -> void:
 	rpc_id(1, "_rpc_solicitar_ingreso", _codigo_esperado, nombre, rol_dron_local)
 
 func _al_fallar_conexion() -> void:
-	_temporizador_conexion.stop()
+	_detener_temporizador(_temporizador_conexion)
 	conexion_fallida.emit("No se pudo establecer conexión con la sala.")
 	salir()
 
 func _al_desconectar_servidor() -> void:
-	_temporizador_conexion.stop()
+	_detener_temporizador(_temporizador_conexion)
 	conexion_fallida.emit("Se perdió la conexión con el servidor.")
 	salir()
 
@@ -648,7 +734,7 @@ func _rpc_actualizar_sala(
 	partida_iniciada = partida_activa
 	anfitrion_id = anfitrion_recibido
 	if not multiplayer.is_server():
-		_temporizador_conexion.stop()
+		_detener_temporizador(_temporizador_conexion)
 	for id_variant in jugadores.keys():
 		var id := int(id_variant)
 		var datos: Dictionary = jugadores[id]
@@ -823,12 +909,20 @@ func obtener_bytes_por_segundo() -> Dictionary:
 
 func obtener_dron(peer_id: int) -> Node3D:
 	var dron: Variant = _drones_por_id.get(peer_id)
-	if is_instance_valid(dron) and dron is Node3D:
+	if is_instance_valid(dron) and not dron.is_queued_for_deletion() and dron is Node3D:
 		return dron as Node3D
+	_drones_por_id.erase(peer_id)
 	return null
 
 func obtener_drones_por_id() -> Dictionary:
+	_eliminar_drones_invalidos()
 	return _drones_por_id.duplicate()
+
+func _eliminar_drones_invalidos() -> void:
+	for id_variant in _drones_por_id.keys():
+		var dron: Variant = _drones_por_id[id_variant]
+		if not is_instance_valid(dron) or dron.is_queued_for_deletion():
+			_drones_por_id.erase(id_variant)
 
 func registrar_agua_usada(peer_id: int, cantidad: float) -> void:
 	if (
@@ -1061,6 +1155,7 @@ func _estimar_bytes_sincronizacion_drones() -> void:
 			dron.get("agua_actual"),
 			dron.get("current_health"),
 			dron.get("is_discharging"),
+			dron.get("is_refilling"),
 		]
 		if _ultimo_estado_sync_drones.get(id, []) == estado:
 			continue
@@ -1145,7 +1240,14 @@ func _rechazar_cliente(peer_id: int, motivo: String) -> void:
 	_desconectar_rechazado_despues(peer_id)
 
 func _desconectar_rechazado_despues(peer_id: int) -> void:
+	var peer: MultiplayerPeer = multiplayer.multiplayer_peer
 	await get_tree().create_timer(0.25).timeout
+	if (
+		not is_instance_valid(self)
+		or not is_instance_valid(peer)
+		or multiplayer.multiplayer_peer != peer
+	):
+		return
 	if multiplayer.is_server() and multiplayer.get_peers().has(peer_id):
 		multiplayer.multiplayer_peer.disconnect_peer(peer_id)
 
@@ -1192,6 +1294,8 @@ func _publicar_chat(nombre: String, texto: String) -> void:
 func _enviar_latido_directorio() -> void:
 	if not _servidor_dedicado or _url_directorio.is_empty() or _token_directorio.is_empty():
 		return
+	if not is_instance_valid(_http_directorio):
+		return
 	if _http_directorio.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
 		return
 	var cuerpo := JSON.stringify({
@@ -1228,7 +1332,11 @@ func _terminar_sala_en_directorio() -> void:
 	var solicitud := HTTPRequest.new()
 	solicitud.timeout = 4.0
 	add_child(solicitud)
-	solicitud.request_completed.connect(func(_r: int, _c: int, _h: PackedStringArray, _b: PackedByteArray) -> void: solicitud.queue_free())
+	solicitud.request_completed.connect(
+		func(_r: int, _c: int, _h: PackedStringArray, _b: PackedByteArray) -> void:
+			if is_instance_valid(solicitud):
+				solicitud.queue_free()
+	)
 	var resultado := solicitud.request(
 		"%s/salas/%s/terminar" % [_url_directorio, codigo_sala.uri_encode()],
 		PackedStringArray(["Content-Type: application/json"]),
@@ -1320,6 +1428,8 @@ func _cargar_escenario_local(escenario_recibido: String) -> void:
 		conexion_fallida.emit("No se pudo cargar el escenario solicitado (error %d)." % error_cambio)
 
 func _al_cambiar_escena() -> void:
+	if not is_instance_valid(_spawner):
+		_spawner = null
 	_conectar_fin_mision()
 	if not partida_iniciada or not multiplayer.has_multiplayer_peer():
 		return
@@ -1419,6 +1529,7 @@ func _agregar_sincronizador_dron(dron: CharacterBody3D, peer_id: int) -> void:
 		NodePath(".:agua_actual"),
 		NodePath(".:current_health"),
 		NodePath(".:is_discharging"),
+		NodePath(".:is_refilling"),
 	]
 	for propiedad in propiedades_confiables:
 		configuracion.add_property(propiedad)
@@ -1455,6 +1566,9 @@ func _despawnear_dron(peer_id: int) -> void:
 		dron.queue_free()
 
 func _procesar_argumentos_usuario(argumentos: PackedStringArray) -> void:
+	if argumentos.has("--bot"):
+		call_deferred("_iniciar_cliente_bot", argumentos)
+		return
 	var valores: Dictionary = {}
 	var es_servidor := false
 	for argumento in argumentos:
@@ -1472,6 +1586,7 @@ func _procesar_argumentos_usuario(argumentos: PackedStringArray) -> void:
 		transporte = "ENet" if transporte_recibido == "enet" else "WebSocket"
 	_puerto_sala = int(valores.get("port", PUERTO_PREDETERMINADO))
 	if es_servidor:
+		_ruta_metricas_servidor = str(valores.get("metrics-file", ""))
 		var config := {
 			"escenario": str(valores.get("scenario", "aguarague")),
 			"dificultad": str(valores.get("difficulty", "media")),
@@ -1491,4 +1606,19 @@ func _procesar_argumentos_usuario(argumentos: PackedStringArray) -> void:
 			_puerto_sala,
 			str(valores["room"])
 		)
+
+func _iniciar_cliente_bot(argumentos: PackedStringArray) -> void:
+	var script_bot := load("res://scripts/tools/bot_client.gd") as Script
+	if not is_instance_valid(script_bot):
+		push_error("NetworkManager no pudo cargar scripts/tools/bot_client.gd.")
+		get_tree().quit(1)
+		return
+	var bot := script_bot.new() as Node
+	if not is_instance_valid(bot):
+		push_error("NetworkManager no pudo instanciar el cliente bot.")
+		get_tree().quit(1)
+		return
+	bot.name = "ClienteBot"
+	add_child(bot)
+	bot.call_deferred("configurar", argumentos)
 

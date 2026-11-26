@@ -10,6 +10,12 @@ const STREAM_ALERTA: AudioStreamWAV = preload("res://assets/audio/alert.wav")
 const STREAM_CLIC: AudioStreamWAV = preload("res://assets/audio/ui_click.wav")
 const BUSES: Array[String] = ["Maestro", "Efectos", "Musica", "UI"]
 
+@export_group("Audio de recarga")
+@export_range(-30.0, -4.0, 0.5) var volumen_recarga_db: float = -10.0
+@export_range(0.05, 1.0, 0.05) var duracion_entrada_recarga: float = 0.3
+@export_range(0.1, 2.0, 0.05) var duracion_salida_recarga: float = 0.55
+@export_range(10.0, 100.0, 1.0) var distancia_maxima_audio_recarga: float = 40.0
+
 var _volumenes: Dictionary = {
 	"Maestro": 1.0,
 	"Efectos": 1.0,
@@ -47,6 +53,21 @@ func _ready() -> void:
 	FireGridServer.objetivo_critico_amenazado.connect(_al_amenazar_objetivo)
 	NetworkManager.objetivo_critico_recibido.connect(_al_recibir_objetivo_por_red)
 	_aplicar_volumenes()
+
+
+func _exit_tree() -> void:
+	if get_tree().node_added.is_connected(_al_agregar_nodo):
+		get_tree().node_added.disconnect(_al_agregar_nodo)
+	if FireGridServer.viento_proximo.is_connected(_al_anunciar_viento):
+		FireGridServer.viento_proximo.disconnect(_al_anunciar_viento)
+	if FireGridServer.objetivo_critico_amenazado.is_connected(_al_amenazar_objetivo):
+		FireGridServer.objetivo_critico_amenazado.disconnect(_al_amenazar_objetivo)
+	if NetworkManager.objetivo_critico_recibido.is_connected(_al_recibir_objetivo_por_red):
+		NetworkManager.objetivo_critico_recibido.disconnect(_al_recibir_objetivo_por_red)
+	for canales_variant in _audio_drones.values():
+		if canales_variant is Dictionary:
+			_liberar_canales_audio(canales_variant)
+	_audio_drones.clear()
 
 
 func _process(delta: float) -> void:
@@ -204,37 +225,96 @@ func _al_recibir_objetivo_por_red(datos: Dictionary) -> void:
 func _actualizar_audio_drones() -> void:
 	var vistos: Dictionary = {}
 	for candidato in get_tree().get_nodes_in_group("jugador"):
-		if not candidato is CharacterBody3D:
+		if not is_instance_valid(candidato) or not candidato is CharacterBody3D:
 			continue
 		var dron := candidato as CharacterBody3D
+		if dron.is_queued_for_deletion():
+			continue
 		var id := dron.get_instance_id()
 		vistos[id] = true
 		var canales: Dictionary = _audio_drones.get(id, {})
-		if canales.is_empty():
+		if canales.is_empty() or not _canales_audio_validos(canales):
+			_liberar_canales_audio(canales)
 			canales = _crear_audio_dron(dron)
+			if canales.is_empty():
+				continue
 			_audio_drones[id] = canales
 		var velocidad := dron.velocity.length()
 		var rotor := canales["rotor"] as AudioStreamPlayer3D
+		if not is_instance_valid(rotor):
+			continue
 		rotor.pitch_scale = clampf(0.78 + velocidad / 42.0, 0.78, 1.5)
 		var rociador := canales["agua"] as AudioStreamPlayer3D
+		if not is_instance_valid(rociador):
+			continue
 		var rociando := bool(dron.get("is_discharging"))
 		if rociando and not rociador.playing:
 			rociador.play()
 		elif not rociando and rociador.playing:
 			rociador.stop()
+		var recargando := bool(dron.get("is_refilling"))
+		if recargando != bool(canales.get("recargando", false)):
+			_transicionar_audio_recarga(canales, recargando)
+			canales["recargando"] = recargando
 	for id_variant in _audio_drones.keys():
 		var id := int(id_variant)
 		if vistos.has(id):
 			continue
-		var canales: Dictionary = _audio_drones[id]
-		for nombre in ["rotor", "agua"]:
-			var reproductor: AudioStreamPlayer3D = canales[nombre]
-			reproductor.stop()
-			reproductor.queue_free()
+		var canales_variant: Variant = _audio_drones[id]
 		_audio_drones.erase(id)
+		if canales_variant is Dictionary:
+			_liberar_canales_audio(canales_variant)
+
+
+func _canales_audio_validos(canales: Dictionary) -> bool:
+	for nombre in ["rotor", "agua", "recarga"]:
+		if not is_instance_valid(canales.get(nombre)):
+			return false
+	return true
+
+
+func _liberar_canales_audio(canales: Dictionary) -> void:
+	var tween: Variant = canales.get("tween_recarga")
+	if tween is Tween and is_instance_valid(tween) and tween.is_running():
+		tween.kill()
+	for nombre in ["rotor", "agua", "recarga"]:
+		var reproductor: Variant = canales.get(nombre)
+		if not is_instance_valid(reproductor):
+			continue
+		reproductor.stop()
+		reproductor.queue_free()
+
+
+func _transicionar_audio_recarga(canales: Dictionary, activo: bool) -> void:
+	var reproductor := canales.get("recarga") as AudioStreamPlayer3D
+	if not is_instance_valid(reproductor):
+		return
+	var tween_anterior: Variant = canales.get("tween_recarga")
+	if (
+		tween_anterior is Tween
+		and is_instance_valid(tween_anterior)
+		and tween_anterior.is_running()
+	):
+		tween_anterior.kill()
+	if activo and not reproductor.playing:
+		reproductor.volume_db = -42.0
+		reproductor.play()
+	var tween := reproductor.create_tween()
+	canales["tween_recarga"] = tween
+	if activo:
+		tween.tween_property(
+			reproductor, "volume_db", volumen_recarga_db, duracion_entrada_recarga
+		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	else:
+		tween.tween_property(
+			reproductor, "volume_db", -60.0, duracion_salida_recarga
+		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		tween.tween_callback(Callable(reproductor, "stop"))
 
 
 func _crear_audio_dron(dron: CharacterBody3D) -> Dictionary:
+	if not is_instance_valid(dron) or dron.is_queued_for_deletion():
+		return {}
 	var rotor := AudioStreamPlayer3D.new()
 	rotor.name = "AudioRotor"
 	rotor.stream = _stream_rotor
@@ -253,18 +333,37 @@ func _crear_audio_dron(dron: CharacterBody3D) -> Dictionary:
 	agua.max_distance = 35.0
 	agua.unit_size = 7.0
 	dron.add_child(agua)
-	return {"rotor": rotor, "agua": agua}
+
+	var recarga := AudioStreamPlayer3D.new()
+	recarga.name = "AudioRecarga"
+	recarga.stream = _stream_agua
+	recarga.bus = "Efectos"
+	recarga.volume_db = -42.0
+	recarga.max_distance = distancia_maxima_audio_recarga
+	recarga.unit_size = 8.0
+	dron.add_child(recarga)
+	return {
+		"rotor": rotor,
+		"agua": agua,
+		"recarga": recarga,
+		"recargando": false,
+	}
 
 
 func _actualizar_audio_fuegos() -> void:
 	var camara := get_viewport().get_camera_3d()
 	if not is_instance_valid(camara):
 		for reproductor in _reproductores_fuego:
-			reproductor.stop()
+			if is_instance_valid(reproductor):
+				reproductor.stop()
 		return
 	var candidatos: Array[Dictionary] = []
 	for elemento in get_tree().get_nodes_in_group("fuego"):
-		if not elemento is Node3D or not elemento.is_visible_in_tree():
+		if (
+			not is_instance_valid(elemento)
+			or not elemento is Node3D
+			or not elemento.is_visible_in_tree()
+		):
 			continue
 		var fuego := elemento as Node3D
 		var distancia := camara.global_position.distance_squared_to(fuego.global_position)
@@ -278,10 +377,16 @@ func _actualizar_audio_fuegos() -> void:
 
 	for indice in range(_reproductores_fuego.size()):
 		var reproductor := _reproductores_fuego[indice]
+		if not is_instance_valid(reproductor):
+			continue
 		if indice >= candidatos.size():
 			reproductor.stop()
 			continue
-		var fuego := candidatos[indice]["nodo"] as Node3D
+		var fuego: Variant = candidatos[indice]["nodo"]
+		if not is_instance_valid(fuego):
+			reproductor.stop()
+			continue
+		fuego = fuego as Node3D
 		var distancia := sqrt(float(candidatos[indice]["distancia"]))
 		reproductor.global_position = fuego.global_position
 		reproductor.volume_db = _volumen_a_db(clampf(1.0 - distancia / 120.0, 0.01, 0.65))

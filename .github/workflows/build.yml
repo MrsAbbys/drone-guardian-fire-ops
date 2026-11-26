@@ -1,0 +1,54 @@
+name: Build game exports
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    env:
+      GODOT_VERSION: 4.7-stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot and export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}"
+          curl -fsSL "$base/Godot_v${GODOT_VERSION}_linux.x86_64.zip" -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}_linux.x86_64"
+          ln -sf "$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}_linux.x86_64" "$RUNNER_TEMP/godot/godot"
+          echo "$RUNNER_TEMP/godot" >> "$GITHUB_PATH"
+          curl -fsSL "$base/Godot_v${GODOT_VERSION}_export_templates.tpz" -o "$RUNNER_TEMP/templates.tpz"
+          unzip -q "$RUNNER_TEMP/templates.tpz" -d "$RUNNER_TEMP/templates"
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.7.stable"
+          cp -R "$RUNNER_TEMP/templates/templates/." "$HOME/.local/share/godot/export_templates/4.7.stable/"
+
+      - name: Test room directory
+        run: python3 -m unittest discover -s server/directorio -p "test_*.py" -v
+
+      - name: Export Linux client and server
+        env:
+          GODOT_BIN: godot
+        run: bash scripts/tools/exportar.sh
+
+      - name: Export Windows client
+        run: |
+          mkdir -p exports/windows-client
+          godot --headless --path . \
+            --export-release "Windows Desktop" exports/windows-client/drone-client.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drone-guardian-exports-${{ github.sha }}
+          path: exports/
+          if-no-files-found: error
+          retention-days: 14

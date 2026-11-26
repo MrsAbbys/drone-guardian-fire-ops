@@ -12,6 +12,8 @@ const SCRIPT_MINIMAPA := preload("res://scripts/ui/tactical_minimap.gd")
 const SHADER_VISION_TERMICA := preload("res://drone-guardian-fire-ops-main/assets/shaders/thermal_vision.gdshader")
 const BLOQUEO_GUIA_ALARMA_MS: int = 4000
 const INTERVALO_MENSAJES_GUIA_MS: int = 2000
+const INTERVALO_ANIMO_POSICION_MS: int = 5000
+const INTERVALO_ANIMO_EXITO_MS: int = 4000
 const TIPOS_PING: Array[String] = ["fuego", "agua", "peligro"]
 const TEXTOS_ESCENA: Dictionary = {
 	"TopBar/TitleBox/GameTitle": "HUD_GAME_TITLE",
@@ -19,36 +21,43 @@ const TEXTOS_ESCENA: Dictionary = {
 	"TopBar/GridData/DroneModel": "HUD_DRONE_MODEL",
 	"TopBar/GridData/Signal": "HUD_TELEMETRY_STATUS",
 	"TopBar/GridData/GPS": "HUD_GPS_STATUS",
-	"WeatherPanel/Title": "HUD_WEATHER_TITLE",
-	"FireStatePanel/Title": "HUD_FIRE_TITLE",
-	"TacticalRadar/RadarTitle": "HUD_MAP_TITLE",
-	"TacticalRadar/Legend": "HUD_MAP_LEGEND",
-	"BottomBar/CamerasBox/CamHeader": "HUD_CAMERA_TITLE",
-	"BottomBar/CamerasBox/BtnRow/BtnRGB": "HUD_CAMERA_RGB",
-	"BottomBar/CamerasBox/BtnRow/BtnThermal": "HUD_CAMERA_THERMAL",
-	"BottomBar/CamerasBox/BtnRow/BtnRecon": "HUD_CAMERA_RECON",
-	"BottomBar/CamerasBox/CamInfo": "HUD_CAMERA_INFO",
-	"BottomBar/HartmanBox/PixelArtPortrait/PortraitLabel": "HUD_HARTMAN_PORTRAIT",
-	"BottomBar/HartmanBox/NameTag": "HUD_HARTMAN_NAME",
-	"BottomBar/MissionObjectives/ObjTitle": "HUD_OBJECTIVES_TITLE",
-	"BottomBar/AlertsBox/AlertTitle": "HUD_ALERTS_TITLE",
-	"BottomBar/TimerBox/TimerTitle": "HUD_TIMER_TITLE",
-	"BottomBar/TimerBox/BtnRTL": "HUD_RETURN_TO_BASE",
+	"LeftColumn/LeftStack/WeatherPanel/Title": "HUD_WEATHER_TITLE",
+	"RightColumn/RightStack/FireStatePanel/Title": "HUD_FIRE_TITLE",
+	"RightColumn/RightStack/TacticalRadar/RadarTitle": "HUD_MAP_TITLE",
+	"RightColumn/RightStack/TacticalRadar/Legend": "HUD_MAP_LEGEND",
+	"RightColumn/RightStack/EventsPanel/EventsContent/Title": "HUD_EVENT_LOG_TITLE",
+	"BottomBar/BottomContent/BottomBlocks/CamerasBox/Content/CamHeader": "HUD_CAMERA_TITLE",
+	"BottomBar/BottomContent/BottomBlocks/CamerasBox/Content/BtnRow/BtnRGB": "HUD_CAMERA_RGB",
+	"BottomBar/BottomContent/BottomBlocks/CamerasBox/Content/BtnRow/BtnThermal": "HUD_CAMERA_THERMAL",
+	"BottomBar/BottomContent/BottomBlocks/CamerasBox/Content/BtnRow/BtnRecon": "HUD_CAMERA_RECON",
+	"BottomBar/BottomContent/BottomBlocks/CamerasBox/Content/CamInfo": "HUD_CAMERA_INFO",
+	"BottomBar/BottomContent/BottomBlocks/HartmanBox/PixelArtPortrait/PortraitLabel": "HUD_HARTMAN_PORTRAIT",
+	"BottomBar/BottomContent/BottomBlocks/HartmanBox/NameTag": "HUD_HARTMAN_NAME",
+	"BottomBar/BottomContent/BottomBlocks/MissionObjectives/ObjTitle": "HUD_OBJECTIVES_TITLE",
+	"BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/AlertsBox/AlertTitle": "HUD_ALERTS_TITLE",
+	"BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/TimerBox/TimerTitle": "HUD_TIMER_TITLE",
+	"BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/TimerBox/BtnRTL": "HUD_RETURN_TO_BASE",
 }
+
+@export_group("Feedback de recarga")
+@export_range(0.1, 1.5, 0.05) var duracion_pulso_barra_agua: float = 0.45
+@export var color_pulso_barra_agua: Color = Color(0.35, 0.8, 1.0, 1.0)
+@export_range(12, 24, 1) var tamano_texto_recarga: int = 16
+@export var texto_estado_recarga: String = "RECARGANDO…"
 
 var textos_hartman = TextosHartman.new()
 @onready var lbl_alt: Label = $TopBar/GridData/AltVal
 @onready var lbl_speed: Label = $TopBar/GridData/SpeedVal
 @onready var lbl_dist: Label = $TopBar/GridData/DistVal
 @onready var lbl_time: Label = $TopBar/GridData/TimeVal
-@onready var lbl_timer_bottom: Label = $BottomBar/TimerBox/TimeLeftVal
-@onready var dialogue_text: Label = $BottomBar/HartmanBox/DialogueText
-@onready var fire_ext_label: Label = $FireStatePanel/FireData
-@onready var obj_checklist: Label = $BottomBar/MissionObjectives/ObjList
-@onready var alert_label: Label = $BottomBar/AlertsBox/AlertList
-@onready var water_bar: ProgressBar = $BottomBar/AlertsBox/WaterBar
-@onready var hartman_portrait: TextureRect = $BottomBar/HartmanBox/PixelArtPortrait
-@onready var detalles_meteorologia: Label = $WeatherPanel/Details
+@onready var lbl_timer_bottom: Label = $BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/TimerBox/TimeLeftVal
+@onready var dialogue_text: Label = $BottomBar/BottomContent/BottomBlocks/HartmanBox/DialogueText
+@onready var fire_ext_label: Label = $RightColumn/RightStack/FireStatePanel/FireData
+@onready var obj_checklist: Label = $BottomBar/BottomContent/BottomBlocks/MissionObjectives/ObjList
+@onready var alert_label: Label = $BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/AlertsBox/AlertList
+@onready var water_bar: ProgressBar = $BottomBar/BottomContent/BottomBlocks/AlertsTimeBlock/AlertsBox/WaterBar
+@onready var hartman_portrait: TextureRect = $BottomBar/BottomContent/BottomBlocks/HartmanBox/PixelArtPortrait
+@onready var detalles_meteorologia: Label = $LeftColumn/LeftStack/WeatherPanel/Details
 
 var flight_seconds: float = 192.0
 var mission_seconds_left: float = 932.0
@@ -109,8 +118,13 @@ var _pings_tacticos: Array[Dictionary] = []
 var _indice_tipo_ping: int = 0
 var _indicador_ping: Label
 var _panel_eventos: PanelContainer
+var _scroll_eventos: ScrollContainer
 var _texto_eventos: Label
 var _eventos: Array[String] = []
+var _ultima_reaccion_posicion_ms: int = -10000
+var _ultima_reaccion_descarga_ms: int = -10000
+var _ultima_reaccion_exito_ms: int = -10000
+var _buena_posicion_previa: bool = false
 var _panel_marcador_final: PanelContainer
 var _texto_marcador_final: Label
 var _menu_pausa: Control
@@ -119,9 +133,22 @@ var _pauso_simulacion: bool = false
 var _temporizador_interfaz_cooperativa: Timer
 var _viento_inicializado: bool = false
 var _ultimo_evento_viento_ms: int = 0
+var _recarga_activa: bool = false
+var _pulso_barra_agua: Tween
+var _color_barra_agua_original: Color = Color.WHITE
 
 func _ready() -> void:
 	_traducir_textos_escena()
+	_panel_eventos = $RightColumn/RightStack/EventsPanel
+	_scroll_eventos = $RightColumn/RightStack/EventsPanel/EventsContent/EventsScroll
+	_texto_eventos = $RightColumn/RightStack/EventsPanel/EventsContent/EventsScroll/Events
+	if is_instance_valid(_scroll_eventos):
+		_scroll_eventos.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_scroll_eventos.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	if is_instance_valid(_texto_eventos):
+		_texto_eventos.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if is_instance_valid(water_bar):
+		_color_barra_agua_original = water_bar.modulate
 	_decir_hartman("bienvenida", "near")
 	FireGridServer.viento_cambiado.connect(_al_cambiar_viento)
 	FireGridServer.viento_proximo.connect(_al_anunciar_viento)
@@ -134,20 +161,34 @@ func _ready() -> void:
 	NetworkManager.evento_tactico_recibido.connect(_al_recibir_evento_tactico)
 	NetworkManager.marcador_final_recibido.connect(_mostrar_marcador_final)
 	fire_manager = get_tree().root.find_child("FireManager", true, false)
-	if fire_manager:
-		fire_manager.connect("fuegos_actualizados", _on_fuegos_actualizados)
-		fire_manager.connect("incendio_controlado", _on_manager_incendio_controlado)
-		fire_manager.connect("incendio_descontrolado", _on_manager_incendio_descontrolado)
+	if is_instance_valid(fire_manager):
+		_conectar_senal_fire_manager("fuegos_actualizados", _on_fuegos_actualizados)
+		_conectar_senal_fire_manager("incendio_controlado", _on_manager_incendio_controlado)
+		_conectar_senal_fire_manager(
+			"incendio_descontrolado", _on_manager_incendio_descontrolado
+		)
 	_crear_vision_termica()
 	speed_feedback_label = Label.new()
-	speed_feedback_label.position = Vector2(520.0, 62.0)
+	speed_feedback_label.anchor_left = 0.5
+	speed_feedback_label.anchor_right = 0.5
+	speed_feedback_label.offset_left = -200.0
+	speed_feedback_label.offset_top = 122.0
+	speed_feedback_label.offset_right = 200.0
+	speed_feedback_label.offset_bottom = 148.0
+	speed_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	speed_feedback_label.add_theme_font_size_override("font_size", 22)
 	speed_feedback_label.add_theme_color_override("font_color", Color("#d5e7a5"))
 	speed_feedback_label.visible = false
 	add_child(speed_feedback_label)
 	alcance_chorro_label = Label.new()
 	alcance_chorro_label.text = tr("HUD_OUT_OF_RANGE")
-	alcance_chorro_label.position = Vector2(520.0, 91.0)
+	alcance_chorro_label.anchor_left = 0.5
+	alcance_chorro_label.anchor_right = 0.5
+	alcance_chorro_label.offset_left = -130.0
+	alcance_chorro_label.offset_top = 64.0
+	alcance_chorro_label.offset_right = 130.0
+	alcance_chorro_label.offset_bottom = 88.0
+	alcance_chorro_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	alcance_chorro_label.add_theme_font_size_override("font_size", 14)
 	alcance_chorro_label.add_theme_color_override("font_color", Color("#ff684f"))
 	alcance_chorro_label.visible = false
@@ -163,6 +204,32 @@ func _ready() -> void:
 		FireGridServer.obtener_direccion_viento(),
 		viento_actual.length()
 	)
+	_configurar_filtros_mouse(self)
+
+func _conectar_senal_fire_manager(nombre: String, callback: Callable) -> void:
+	if not is_instance_valid(fire_manager):
+		return
+	if not fire_manager.has_signal(nombre):
+		push_error("FireManager no tiene la señal %s." % nombre)
+		return
+	if not fire_manager.is_connected(nombre, callback):
+		fire_manager.connect(nombre, callback)
+
+func _configurar_filtros_mouse(nodo: Node) -> void:
+	if nodo is Control:
+		var control := nodo as Control
+		control.mouse_filter = (
+			Control.MOUSE_FILTER_STOP
+			if control is BaseButton or control == _menu_pausa
+			else Control.MOUSE_FILTER_IGNORE
+		)
+	if not nodo.child_entered_tree.is_connected(_al_agregar_control_hud):
+		nodo.child_entered_tree.connect(_al_agregar_control_hud)
+	for hijo in nodo.get_children():
+		_configurar_filtros_mouse(hijo)
+
+func _al_agregar_control_hud(nodo: Node) -> void:
+	_configurar_filtros_mouse(nodo)
 
 func _traducir_textos_escena() -> void:
 	for ruta in TEXTOS_ESCENA:
@@ -232,8 +299,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _menu_pausa_abierto:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_G:
-		_indice_tipo_ping = (_indice_tipo_ping + 1) % TIPOS_PING.size()
 		_colocar_ping_tactico()
+		_indice_tipo_ping = (_indice_tipo_ping + 1) % TIPOS_PING.size()
+		_actualizar_indicador_ping()
 	elif (
 		event is InputEventMouseButton
 		and event.pressed
@@ -252,8 +320,12 @@ func update_telemetry(alt: float, spd: float, dist: float, water: float, max_wat
 	var water_pct = int((water / max_water) * 100.0) if max_water > 0 else 0
 	update_water_level(water, max_water)
 	if alert_label:
+		alert_label.remove_theme_font_size_override("font_size")
 		if health <= 35.0:
 			alert_label.text = tr("HUD_CRITICAL_DAMAGE") % int(health)
+		elif _recarga_activa:
+			alert_label.text = texto_estado_recarga
+			alert_label.add_theme_font_size_override("font_size", tamano_texto_recarga)
 		elif near_water and water < max_water:
 			alert_label.text = tr("HUD_REFILLING") % [int(water), int(max_water)]
 		else:
@@ -265,6 +337,25 @@ func update_water_level(current: float, maximum: float) -> void:
 	if water_bar:
 		water_bar.max_value = maximum
 		water_bar.value = clampf(current, 0.0, maximum)
+
+func actualizar_estado_recarga(activa: bool) -> void:
+	if _recarga_activa == activa:
+		return
+	_recarga_activa = activa
+	if is_instance_valid(_pulso_barra_agua) and _pulso_barra_agua.is_running():
+		_pulso_barra_agua.kill()
+	if not is_instance_valid(water_bar):
+		return
+	if not activa:
+		water_bar.modulate = _color_barra_agua_original
+		return
+	_pulso_barra_agua = create_tween().set_loops()
+	_pulso_barra_agua.tween_property(
+		water_bar, "modulate", color_pulso_barra_agua, duracion_pulso_barra_agua * 0.5
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_pulso_barra_agua.tween_property(
+		water_bar, "modulate", _color_barra_agua_original, duracion_pulso_barra_agua * 0.5
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func notify_refilling(_current: float, _max_w: float) -> void:
 	if ultima_clave_dialogo_hartman != "recargando":
@@ -349,16 +440,53 @@ func trigger_hartman_warning(reason: String, causa: String = "") -> void:
 
 func register_fire_stream_hit(_amount: float, is_extinguished: bool) -> void:
 	_actualizar_contador_fuego()
+	if _amount <= 0.0:
+		return
+	var ahora_ms: int = Time.get_ticks_msec()
+	if is_extinguished:
+		if is_fire_defeated or ahora_ms - _ultima_reaccion_exito_ms < INTERVALO_ANIMO_EXITO_MS:
+			return
+		_ultima_reaccion_exito_ms = ahora_ms
+		_ultima_reaccion_descarga_ms = ahora_ms
+		set_hartman_dialogue("¡Buen trabajo, siga así!", "happy")
+		return
+	if is_fire_defeated:
+		return
 	if (
-		not is_extinguished
-		and AjustesAyuda.nivel_ayuda == AjustesAyuda.AYUDA_ALTA
-		and Time.get_ticks_msec() < guia_visible_hasta_ms
+		AjustesAyuda.nivel_ayuda == AjustesAyuda.AYUDA_ALTA
+		and ahora_ms < guia_visible_hasta_ms
 	):
 		return
-	if not is_fire_defeated:
-		_decir_hartman("foco_neutralizado" if is_extinguished else "chorro_efectivo")
+	if ahora_ms - _ultima_reaccion_descarga_ms < 4500:
+		return
+	_ultima_reaccion_descarga_ms = ahora_ms
+	_decir_hartman("buena_posicion_descarga", "near")
+
+func notificar_buena_posicion_tiro(info: Dictionary) -> void:
+	var buena_posicion: bool = (
+		info.get("estado", "SIN_OBJETIVO") == "EN_BLANCO"
+		and bool(info.get("dentro_del_chorro", false))
+		and float(info.get("agua_actual", 0.0)) > 0.0
+	)
+	if not buena_posicion:
+		_buena_posicion_previa = false
+		return
+	if _buena_posicion_previa:
+		return
+	_buena_posicion_previa = true
+	var ahora_ms: int = Time.get_ticks_msec()
+	if ahora_ms - _ultima_reaccion_posicion_ms < INTERVALO_ANIMO_POSICION_MS or is_fire_defeated:
+		return
+	_ultima_reaccion_posicion_ms = ahora_ms
+	var disparando: bool = bool(info.get("disparando", false))
+	set_hartman_dialogue(
+		"¡Suelte el agua, piloto!" if disparando else "¡En posición, dispare ahora!",
+		"near"
+	)
 
 func register_fire_tree(tree: Node) -> void:
+	if not is_instance_valid(tree) or tree.is_queued_for_deletion():
+		return
 	if not tree.has_signal("fuego_apagado"):
 		push_error("El árbol en llamas debe emitir la señal fuego_apagado.")
 		return
@@ -464,6 +592,16 @@ func notify_successful_landing() -> void:
 			obj_checklist.text += "\n" + _texto_resumen_objetivos
 
 func actualizar_punteria(info: Dictionary, camara: Camera3D, nivel_ayuda: int) -> void:
+	if (
+		not is_instance_valid(capa_punteria)
+		or not is_instance_valid(reticula_punteria)
+		or not is_instance_valid(distancia_punteria_label)
+		or not is_instance_valid(alcance_chorro_label)
+		or not is_instance_valid(punto_impacto_punteria)
+		or not is_instance_valid(flecha_punteria)
+		or not is_instance_valid(camara)
+	):
+		return
 	var ayuda_activa := nivel_ayuda != AjustesAyuda.AYUDA_NINGUNA
 	capa_punteria.visible = ayuda_activa
 	alcance_chorro_label.visible = (
@@ -476,14 +614,14 @@ func actualizar_punteria(info: Dictionary, camara: Camera3D, nivel_ayuda: int) -
 
 	var estado := str(info.get("estado", "SIN_OBJETIVO"))
 	var distancia := float(info.get("distancia", 0.0))
-	var alcance := maxf(float(info.get("alcance_chorro", 0.1)), 0.1)
-	var color_punteria := Color("#d8e6e8")
-	if estado == "EN_BLANCO":
-		color_punteria = Color("#58f28b")
-	elif estado == "CERCA" or (estado == "FUERA_DE_ALCANCE" and distancia < alcance * 1.5):
-		color_punteria = Color("#ffd34d")
-	elif estado == "FUERA_DE_ALCANCE":
-		color_punteria = Color("#ff584f")
+	var buena_posicion: bool = (
+		estado == "EN_BLANCO"
+		and bool(info.get("dentro_del_chorro", false))
+		and float(info.get("agua_actual", 0.0)) > 0.0
+	)
+	var color_punteria: Color = Color("#ff584f")
+	if buena_posicion:
+		color_punteria = Color(0.2, 0.7, 1.0)
 	reticula_punteria.add_theme_color_override("font_color", color_punteria)
 	punto_impacto_punteria.color = color_punteria
 
@@ -501,7 +639,11 @@ func actualizar_punteria(info: Dictionary, camara: Camera3D, nivel_ayuda: int) -
 		punto_impacto_punteria.visible = true
 
 	var objetivo: Variant = info.get("objetivo")
-	if not is_instance_valid(objetivo):
+	var usa_grilla := bool(info.get("usa_grilla", false))
+	if not is_instance_valid(objetivo) and not usa_grilla:
+		distancia_punteria_label.visible = false
+		return
+	if estado == "SIN_OBJETIVO":
 		distancia_punteria_label.visible = false
 		return
 	distancia_punteria_label.text = "%.0f m" % distancia
@@ -611,6 +753,18 @@ func _posicionar_flecha_punteria(posicion: Vector2, tamano_vista: Vector2, detra
 	flecha_punteria.rotation = direccion.angle() + PI * 0.5
 
 func _exit_tree() -> void:
+	if is_instance_valid(_pulso_barra_agua) and _pulso_barra_agua.is_running():
+		_pulso_barra_agua.kill()
+	if is_instance_valid(speed_feedback_tween) and speed_feedback_tween.is_running():
+		speed_feedback_tween.kill()
+	if is_instance_valid(_temporizador_interfaz_cooperativa):
+		_temporizador_interfaz_cooperativa.stop()
+		if _temporizador_interfaz_cooperativa.timeout.is_connected(
+			_actualizar_interfaz_cooperativa
+		):
+			_temporizador_interfaz_cooperativa.timeout.disconnect(
+				_actualizar_interfaz_cooperativa
+			)
 	if FireGridServer.viento_cambiado.is_connected(_al_cambiar_viento):
 		FireGridServer.viento_cambiado.disconnect(_al_cambiar_viento)
 	if FireGridServer.viento_proximo.is_connected(_al_anunciar_viento):
@@ -631,6 +785,26 @@ func _exit_tree() -> void:
 		NetworkManager.evento_tactico_recibido.disconnect(_al_recibir_evento_tactico)
 	if NetworkManager.marcador_final_recibido.is_connected(_mostrar_marcador_final):
 		NetworkManager.marcador_final_recibido.disconnect(_mostrar_marcador_final)
+	if is_instance_valid(fire_manager):
+		if fire_manager.has_signal("fuegos_actualizados") and fire_manager.is_connected(
+			"fuegos_actualizados", _on_fuegos_actualizados
+		):
+			fire_manager.disconnect("fuegos_actualizados", _on_fuegos_actualizados)
+		if fire_manager.has_signal("incendio_controlado") and fire_manager.is_connected(
+			"incendio_controlado", _on_manager_incendio_controlado
+		):
+			fire_manager.disconnect("incendio_controlado", _on_manager_incendio_controlado)
+		if fire_manager.has_signal("incendio_descontrolado") and fire_manager.is_connected(
+			"incendio_descontrolado", _on_manager_incendio_descontrolado
+		):
+			fire_manager.disconnect("incendio_descontrolado", _on_manager_incendio_descontrolado)
+	for arbol in get_tree().get_nodes_in_group("fuego"):
+		if (
+			is_instance_valid(arbol)
+			and arbol.has_signal("fuego_apagado")
+			and arbol.is_connected("fuego_apagado", _on_tree_extinguished)
+		):
+			arbol.disconnect("fuego_apagado", _on_tree_extinguished)
 	for ping in _pings_tacticos:
 		var etiqueta: Label = ping.get("etiqueta")
 		var flecha: Label = ping.get("flecha")
@@ -638,9 +812,22 @@ func _exit_tree() -> void:
 			etiqueta.queue_free()
 		if is_instance_valid(flecha):
 			flecha.queue_free()
+	for etiqueta in _etiquetas_aliados.values():
+		if is_instance_valid(etiqueta) and not etiqueta.is_queued_for_deletion():
+			etiqueta.queue_free()
+	_etiquetas_aliados.clear()
+	_filas_escuadron.clear()
+	_dron_local_objetivo = null
+	fire_manager = null
+	_menu_pausa = null
 
 func registrar_dron_local(dron: Node3D) -> void:
-	_dron_local_objetivo = dron
+	if is_instance_valid(dron) and not dron.is_queued_for_deletion():
+		_dron_local_objetivo = dron
+
+func desregistrar_dron_local(dron: Node3D) -> void:
+	if _dron_local_objetivo == dron:
+		_dron_local_objetivo = null
 
 func _al_objetivo_critico_amenazado(objetivo: Resource) -> void:
 	_registrar_evento("%s en peligro" % str(objetivo.get("nombre")))
@@ -787,12 +974,15 @@ func _crear_indicador_objetivo_critico() -> void:
 func _crear_interfaz_cooperativa() -> void:
 	_escuadron_panel = PanelContainer.new()
 	_escuadron_panel.name = "PanelEscuadron"
-	_escuadron_panel.position = Vector2(12.0, 66.0)
-	_escuadron_panel.custom_minimum_size = Vector2(220.0, 145.0)
+	_escuadron_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_aplicar_estilo_panel(_escuadron_panel, Color("#55d8ff"))
-	add_child(_escuadron_panel)
+	var espacio_escuadron := get_node_or_null("LeftColumn/LeftStack/SquadSlot") as MarginContainer
+	if not is_instance_valid(espacio_escuadron):
+		push_error("No se encontró el contenedor SquadSlot del HUD.")
+		return
+	espacio_escuadron.add_child(_escuadron_panel)
 	_escuadron_lista = VBoxContainer.new()
-	_escuadron_lista.add_theme_constant_override("separation", 3)
+	_escuadron_lista.add_theme_constant_override("separation", 8)
 	_escuadron_panel.add_child(_escuadron_lista)
 
 	var titulo_escuadron := Label.new()
@@ -801,7 +991,7 @@ func _crear_interfaz_cooperativa() -> void:
 	titulo_escuadron.add_theme_font_size_override("font_size", 11)
 	_escuadron_lista.add_child(titulo_escuadron)
 
-	var radar: ColorRect = get_node_or_null("TacticalRadar/MapSim")
+	var radar: ColorRect = get_node_or_null("RightColumn/RightStack/TacticalRadar/MapSim")
 	if is_instance_valid(radar):
 		var minimapa := SCRIPT_MINIMAPA.new() as Control
 		minimapa.name = "MinimapaFireGrid"
@@ -811,33 +1001,17 @@ func _crear_interfaz_cooperativa() -> void:
 			var icono: CanvasItem = radar.get_node_or_null(nombre_icono) as CanvasItem
 			if is_instance_valid(icono):
 				icono.visible = false
-		var leyenda := get_node_or_null("TacticalRadar/Legend") as Label
+		var leyenda := get_node_or_null("RightColumn/RightStack/TacticalRadar/Legend") as Label
 		if is_instance_valid(leyenda):
 			leyenda.text = tr("HUD_FIREGRID_LEGEND")
 
 	_indicador_ping = Label.new()
 	_indicador_ping.name = "TipoPingActual"
-	_indicador_ping.position = Vector2(12.0, 214.0)
+	_indicador_ping.position = Vector2(264.0, 66.0)
 	_indicador_ping.add_theme_font_size_override("font_size", 10)
 	_indicador_ping.add_theme_color_override("font_color", Color("#ffe67a"))
 	add_child(_indicador_ping)
 	_actualizar_indicador_ping()
-
-	_panel_eventos = PanelContainer.new()
-	_panel_eventos.name = "RegistroEventos"
-	_panel_eventos.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_panel_eventos.offset_left = 12.0
-	_panel_eventos.offset_right = 290.0
-	_panel_eventos.offset_top = -300.0
-	_panel_eventos.offset_bottom = -180.0
-	_aplicar_estilo_panel(_panel_eventos, Color("#ffc85a"))
-	add_child(_panel_eventos)
-	_texto_eventos = Label.new()
-	_texto_eventos.name = "Eventos"
-	_texto_eventos.add_theme_font_size_override("font_size", 10)
-	_texto_eventos.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_texto_eventos.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	_panel_eventos.add_child(_texto_eventos)
 
 	_panel_marcador_final = PanelContainer.new()
 	_panel_marcador_final.name = "MarcadorFinal"
@@ -868,7 +1042,7 @@ func _crear_interfaz_cooperativa() -> void:
 
 func _aplicar_estilo_panel(panel: PanelContainer, color_borde: Color) -> void:
 	var estilo := StyleBoxFlat.new()
-	estilo.bg_color = Color(0.02, 0.06, 0.12, 0.94)
+	estilo.bg_color = Color(0.05, 0.08, 0.12, 0.82)
 	estilo.border_color = color_borde
 	estilo.set_border_width_all(1)
 	estilo.set_content_margin_all(6.0)
@@ -886,7 +1060,7 @@ func _crear_menu_pausa() -> void:
 	var fondo := ColorRect.new()
 	fondo.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fondo.color = Color(0.0, 0.02, 0.06, 0.82)
-	fondo.mouse_filter = Control.MOUSE_FILTER_STOP
+	fondo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_menu_pausa.add_child(fondo)
 
 	var centrador := CenterContainer.new()
@@ -896,11 +1070,13 @@ func _crear_menu_pausa() -> void:
 
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(320.0, 0.0)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_aplicar_estilo_panel(panel, Color("#55d8ff"))
 	centrador.add_child(panel)
 
 	var contenido := VBoxContainer.new()
 	contenido.add_theme_constant_override("separation", 12)
+	contenido.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(contenido)
 
 	var titulo := Label.new()
@@ -908,17 +1084,20 @@ func _crear_menu_pausa() -> void:
 	titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	titulo.add_theme_font_size_override("font_size", 22)
 	titulo.add_theme_color_override("font_color", Color("#7fe8ff"))
+	titulo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	contenido.add_child(titulo)
 
 	var continuar := Button.new()
 	continuar.text = tr("PAUSE_RESUME")
 	continuar.custom_minimum_size = Vector2(0.0, 40.0)
+	continuar.mouse_filter = Control.MOUSE_FILTER_STOP
 	continuar.pressed.connect(_cerrar_menu_pausa)
 	contenido.add_child(continuar)
 
 	var menu_principal := Button.new()
 	menu_principal.text = tr("PAUSE_MAIN_MENU")
 	menu_principal.custom_minimum_size = Vector2(0.0, 40.0)
+	menu_principal.mouse_filter = Control.MOUSE_FILTER_STOP
 	menu_principal.pressed.connect(_volver_al_menu_desde_pausa)
 	contenido.add_child(menu_principal)
 
@@ -955,14 +1134,14 @@ func _cerrar_menu_pausa() -> void:
 			_temporizador_interfaz_cooperativa.start()
 	_menu_pausa_abierto = false
 	_pauso_simulacion = false
-	_menu_pausa.visible = false
+	if is_instance_valid(_menu_pausa):
+		_menu_pausa.visible = false
 	if (
 		is_instance_valid(_dron_local_objetivo)
 		and _dron_local_objetivo.has_method("configurar_menu_pausa_abierto")
 	):
 		_dron_local_objetivo.call("configurar_menu_pausa_abierto", false)
-	else:
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	process_mode = Node.PROCESS_MODE_INHERIT
 
 func _volver_al_menu_desde_pausa() -> void:
@@ -1232,6 +1411,8 @@ func _registrar_evento(texto: String) -> void:
 	while _eventos.size() > 5:
 		_eventos.pop_back()
 	_texto_eventos.text = "\n".join(_eventos)
+	if is_instance_valid(_scroll_eventos):
+		_scroll_eventos.scroll_vertical = 0
 
 func _traducir_evento(texto: String) -> String:
 	var indice_apagado := texto.find(" apagó ")
@@ -1305,26 +1486,34 @@ func _color_equipo(equipo: String) -> Color:
 	return colores[absi(equipo.hash()) % colores.size()]
 
 func _crear_indicador_viento() -> void:
+	var panel_meteorologia: Panel = get_node_or_null(
+		"LeftColumn/LeftStack/WeatherPanel"
+	) as Panel
+	if not is_instance_valid(panel_meteorologia):
+		push_error("No se encontró el panel de meteorología para el indicador de viento.")
+		return
 	indicador_viento = PanelContainer.new()
 	indicador_viento.name = "IndicadorViento"
-	indicador_viento.anchor_left = 0.5
-	indicador_viento.anchor_right = 0.5
-	indicador_viento.offset_left = -112.0
-	indicador_viento.offset_top = 62.0
-	indicador_viento.offset_right = 112.0
-	indicador_viento.offset_bottom = 100.0
-	var estilo := StyleBoxFlat.new()
-	estilo.bg_color = Color(0.02, 0.06, 0.12, 0.92)
-	estilo.border_color = Color(0.1, 0.8, 1.0, 0.8)
+	indicador_viento.position = Vector2(8.0, 146.0)
+	indicador_viento.size = Vector2(224.0, 56.0)
+	indicador_viento.custom_minimum_size = Vector2(224.0, 56.0)
+	var estilo: StyleBoxFlat = StyleBoxFlat.new()
+	estilo.bg_color = Color(0.05, 0.08, 0.12, 0.82)
+	estilo.border_color = Color(0.14, 0.45, 0.62, 0.85)
 	estilo.set_border_width_all(1)
 	estilo.set_content_margin_all(4.0)
 	indicador_viento.add_theme_stylebox_override("panel", estilo)
-	add_child(indicador_viento)
+	panel_meteorologia.add_child(indicador_viento)
 
-	var fila := HBoxContainer.new()
-	fila.alignment = BoxContainer.ALIGNMENT_END
+	var contenido: VBoxContainer = VBoxContainer.new()
+	contenido.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	contenido.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	contenido.add_theme_constant_override("separation", 0)
+	indicador_viento.add_child(contenido)
+	var fila: HBoxContainer = HBoxContainer.new()
+	fila.alignment = BoxContainer.ALIGNMENT_CENTER
 	fila.add_theme_constant_override("separation", 6)
-	indicador_viento.add_child(fila)
+	contenido.add_child(fila)
 	flecha_viento = Label.new()
 	flecha_viento.text = "↑"
 	flecha_viento.custom_minimum_size = Vector2(28.0, 26.0)
@@ -1340,17 +1529,11 @@ func _crear_indicador_viento() -> void:
 
 	aviso_viento = Label.new()
 	aviso_viento.name = "AvisoViento"
-	aviso_viento.anchor_left = 0.5
-	aviso_viento.anchor_right = 0.5
-	aviso_viento.offset_left = -185.0
-	aviso_viento.offset_top = 103.0
-	aviso_viento.offset_right = 185.0
-	aviso_viento.offset_bottom = 128.0
-	aviso_viento.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	aviso_viento.add_theme_font_size_override("font_size", 14)
+	aviso_viento.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	aviso_viento.add_theme_font_size_override("font_size", 9)
 	aviso_viento.add_theme_color_override("font_color", Color("#ffd34d"))
 	aviso_viento.visible = false
-	add_child(aviso_viento)
+	contenido.add_child(aviso_viento)
 
 func _crear_vision_termica() -> void:
 	_capa_vision_termica = ColorRect.new()
@@ -1375,7 +1558,7 @@ func _crear_vision_termica() -> void:
 func _crear_indicadores_rol() -> void:
 	_etiqueta_rol = Label.new()
 	_etiqueta_rol.name = "EstadoRol"
-	_etiqueta_rol.position = Vector2(520.0, 132.0)
+	_etiqueta_rol.position = Vector2(520.0, 154.0)
 	_etiqueta_rol.add_theme_font_size_override("font_size", 13)
 	_etiqueta_rol.add_theme_color_override("font_color", Color("#ffd34d"))
 	_etiqueta_rol.visible = false
@@ -1432,6 +1615,15 @@ func _actualizar_etiqueta_rol() -> void:
 			_etiqueta_rol.text = tr("HUD_TACTIC_CURRENT_WIND") % _punto_cardinal(_viento_direccion)
 
 func _al_cambiar_viento(direccion: Vector2, velocidad: float) -> void:
+	var ahora_ms := Time.get_ticks_msec()
+	if (
+		_viento_inicializado
+		and ahora_ms - _ultimo_evento_viento_ms >= 5000
+		and (not multiplayer.has_multiplayer_peer() or multiplayer.is_server())
+	):
+		NetworkManager.publicar_evento_tactico("Viento cambia")
+		_ultimo_evento_viento_ms = ahora_ms
+	_viento_inicializado = true
 	if direccion.length_squared() > 0.0:
 		_viento_direccion = direccion.normalized()
 	if is_instance_valid(flecha_viento):

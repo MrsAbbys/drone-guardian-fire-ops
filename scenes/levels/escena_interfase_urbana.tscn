@@ -1,13 +1,11 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=14 format=3]
 
+[ext_resource type="Script" path="res://scripts/world/gameplay_scene.gd" id="0_gameplay"]
 [ext_resource type="Script" path="res://scripts/world/interfase_urbana_generator.gd" id="1_generator"]
 [ext_resource type="PackedScene" path="res://scenes/gameplay/drone_player.tscn" id="2_drone"]
-[ext_resource type="PackedScene" path="res://scenes/ui/tactical_hud.tscn" id="3_hud"]
-[ext_resource type="PackedScene" path="res://scenes/actors/fire_source.tscn" id="4_fire"]
 [ext_resource type="Script" path="res://scripts/systems/water_refill_island.gd" id="5_refill"]
 [ext_resource type="Script" path="res://scripts/world/map_atmosphere.gd" id="6_atmosphere"]
 [ext_resource type="Script" path="res://scripts/world/fire_manager.gd" id="7_fire_manager"]
-[ext_resource type="PackedScene" path="res://scenes/ui/perf_overlay.tscn" id="8_perf"]
 
 [sub_resource type="ProceduralSkyMaterial" id="CieloInterfase"]
 sky_top_color = Color(0.35, 0.43, 0.49, 1)
@@ -45,10 +43,8 @@ height = 2.3
 radius = 8.0
 
 [node name="EscenaInterfaseUrbana" type="Node3D"]
-
-[node name="TacticalHUD" parent="." instance=ExtResource("3_hud")]
-
-[node name="PerfOverlay" parent="." instance=ExtResource("8_perf")]
+script = ExtResource("0_gameplay")
+fuego_central_position = Vector3(0, 65, 145)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("EnvironmentInterfase")
@@ -89,10 +85,6 @@ shape = SubResource("AreaRecarga")
 
 [node name="FireManager" type="Node" parent="." groups=["fire_manager"]]
 script = ExtResource("7_fire_manager")
-
-[node name="WildfireZone" parent="." instance=ExtResource("4_fire")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 65, 145)
-objetivo_extinguible = false
 
 [node name="DronePlayer" parent="." instance=ExtResource("2_drone")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -390, 5, 430)

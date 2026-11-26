@@ -11,7 +11,7 @@ var _ruido_suelo: FastNoiseLite = FastNoiseLite.new()
 var _material_niebla: StandardMaterial3D
 
 func _ready() -> void:
-	configuracion_grilla_incendio = CONFIGURACION_INTERFAZ
+	configuracion_grilla_incendio = CONFIGURACION_INTERFASE
 	GraphicsSettings.calidad_cambiada.connect(_aplicar_perfil_calidad)
 	FireGridServer.viento_cambiado.connect(_al_cambiar_viento)
 	FireGridServer.explosion_deposito.connect(_al_explotar_deposito)
@@ -39,15 +39,11 @@ func _ready() -> void:
 	_imprimir_resumen_multimeshes()
 
 func _exit_tree() -> void:
-	if GraphicsSettings.calidad_cambiada.is_connected(_aplicar_perfil_calidad):
-		GraphicsSettings.calidad_cambiada.disconnect(_aplicar_perfil_calidad)
-	if FireGridServer.viento_cambiado.is_connected(_al_cambiar_viento):
-		FireGridServer.viento_cambiado.disconnect(_al_cambiar_viento)
 	if FireGridServer.explosion_deposito.is_connected(_al_explotar_deposito):
 		FireGridServer.explosion_deposito.disconnect(_al_explotar_deposito)
 	if NetworkManager.objetivo_critico_recibido.is_connected(_al_objetivo_critico_recibido_por_red):
 		NetworkManager.objetivo_critico_recibido.disconnect(_al_objetivo_critico_recibido_por_red)
-	FireGridServer.detener()
+	super._exit_tree()
 
 func get_exact_ground_y(px: float, pz: float) -> float:
 	var altura_base := clampf((260.0 - pz) * 0.55, 0.0, 360.0)
@@ -111,7 +107,12 @@ func _generar_bosque_ladera() -> void:
 		var umbral := 0.32 if pz < -110.0 else lerpf(0.32, 0.76, clampf((pz + 110.0) / 265.0, 0.0, 1.0))
 		if densidad < umbral or not _posicion_arbol_apta(px, pz):
 			continue
-		_agregar_arbol_multimesh(px, pz)
+		_agregar_arbol_multimesh(
+			px,
+			pz,
+			get_exact_ground_y(px, pz),
+			densidad
+		)
 
 func _generar_pasto_transicion() -> void:
 	var transformaciones: Array[Transform3D] = []
@@ -150,7 +151,7 @@ func _crear_carreteras() -> void:
 	add_child(carretera)
 
 func _crear_objetivos_visuales() -> void:
-	var objetivos: Array = CONFIGURACION_INTERFAZ.get("objetivos_criticos")
+	var objetivos: Array = CONFIGURACION_INTERFASE.get("objetivos_criticos")
 	var torres: Array[Vector3] = []
 	for elemento: Variant in objetivos:
 		if not elemento is Resource:
@@ -291,6 +292,8 @@ func _crear_cable_torre(inicio: Vector3, fin: Vector3) -> void:
 	_crear_cilindro_entre(self, "LineaAltaTension", inicio, fin, 0.12, _material(Color("#282d30"), 0.25))
 
 func _crear_niebla_ladera() -> void:
+	if NetworkManager.es_servidor_headless():
+		return
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color(0.68, 0.7, 0.73, 0.13)
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -340,6 +343,8 @@ func _al_objetivo_critico_recibido_por_red(datos: Dictionary) -> void:
 		_crear_efecto_explosion(posicion)
 
 func _crear_efecto_explosion(posicion: Vector3) -> void:
+	if NetworkManager.es_servidor_headless():
+		return
 	var explosion := GPUParticles3D.new()
 	explosion.name = "ExplosionDeposito"
 	explosion.one_shot = true

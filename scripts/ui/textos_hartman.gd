@@ -70,6 +70,15 @@ const FRASES: Dictionary = {
 		"¡Chorro efectivo! Manténgalo sobre el foco.",
 		"¡Así se hace! Sostenga el chorro sobre las llamas."
 	],
+	"objetivo_en_mira": [
+		"¡Objetivo en mira, suelta el agua ahora!"
+	],
+	"buena_posicion_descarga": [
+		"¡Buena posición, descarga!"
+	],
+	"fuego_controlado": [
+		"¡Así se hace piloto, fuego controlado!"
+	],
 	"incendio_controlado": [
 		"¡Incendio controlado! Regrese al helipuerto.",
 		"¡Todos los focos están controlados! Vuelva al helipuerto."

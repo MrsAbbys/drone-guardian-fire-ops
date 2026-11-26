@@ -1,69 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://mainmenu_fireops01"]
+[gd_scene load_steps=5 format=3 uid="uid://mainmenu_fireops01"]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
-
-[sub_resource type="StyleBoxFlat" id="Style_BtnNormal"]
-bg_color = Color(0.05, 0.08, 0.12, 0.94)
-border_width_left = 4
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.22, 0.42, 0.58, 0.9)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-content_margin_left = 18.0
-
-[sub_resource type="StyleBoxFlat" id="Style_BtnHover"]
-bg_color = Color(0.14, 0.18, 0.24, 0.98)
-border_width_left = 5
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.6, 0.15, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-content_margin_left = 22.0
-
-[sub_resource type="StyleBoxFlat" id="Style_BtnPrimary"]
-bg_color = Color(0.18, 0.11, 0.04, 0.95)
-border_width_left = 5
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.55, 0.1, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-content_margin_left = 22.0
-
-[sub_resource type="StyleBoxFlat" id="Style_PanelDark"]
-bg_color = Color(0.02, 0.04, 0.07, 0.94)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.18, 0.35, 0.48, 0.9)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-
-[sub_resource type="StyleBoxFlat" id="Style_HartmanBox"]
-bg_color = Color(0.03, 0.06, 0.09, 0.92)
-border_width_left = 2
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.25, 0.55, 0.75, 0.85)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+[ext_resource type="Theme" path="res://assets/ui/menu_theme.tres" id="2_theme"]
+[ext_resource type="Texture2D" path="res://assets/ui/menu_background.png" id="3_background"]
+[ext_resource type="Texture2D" path="res://imagenes_sargento/bien.jpg" id="4_portrait"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -72,6 +12,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_theme")
 script = ExtResource("1_menu")
 
 [node name="MenuArtBackground" type="TextureRect" parent="."]
@@ -81,215 +22,254 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_background")
 expand_mode = 1
 stretch_mode = 6
 
 [node name="FrontUILayer" type="CanvasLayer" parent="."]
 layer = 10
 
-[node name="LeftTacticalPanel" type="Panel" parent="FrontUILayer"]
-anchors_preset = 9
-anchor_bottom = 1.0
-offset_left = 28.0
-offset_top = 24.0
-offset_right = 398.0
-offset_bottom = -30.0
-grow_vertical = 2
-theme_override_styles/panel = SubResource("Style_PanelDark")
-
-[node name="HeaderBox" type="HBoxContainer" parent="FrontUILayer/LeftTacticalPanel"]
-layout_mode = 0
-offset_left = 18.0
-offset_top = 16.0
-offset_right = 350.0
-offset_bottom = 54.0
-
-[node name="SystemLabel" type="Label" parent="FrontUILayer/LeftTacticalPanel/HeaderBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.8, 1, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 11
-text = "DRONE GUARDIAN SYSTEM\nDG-FO v2.4.7"
-
-[node name="StatusLights" type="Label" parent="FrontUILayer/LeftTacticalPanel/HeaderBox"]
-layout_mode = 2
-size_flags_horizontal = 10
-theme_override_colors/font_color = Color(1, 0.6, 0.1, 1)
-theme_override_font_sizes/font_size = 12
-text = "[●●●■]"
-
-[node name="ButtonList" type="VBoxContainer" parent="FrontUILayer/LeftTacticalPanel"]
-layout_mode = 0
-offset_left = 18.0
-offset_top = 68.0
-offset_right = 352.0
-offset_bottom = 445.0
-theme_override_constants/separation = 10
-
-[node name="BtnIniciar" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 14
-theme_override_styles/normal = SubResource("Style_BtnPrimary")
-theme_override_styles/hover = SubResource("Style_BtnHover")
-theme_override_styles/pressed = SubResource("Style_BtnPrimary")
-text = "🎯  1. INICIAR OPERACIÓN"
-alignment = 0
-
-[node name="BtnDrones" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("Style_BtnNormal")
-theme_override_styles/hover = SubResource("Style_BtnHover")
-theme_override_styles/pressed = SubResource("Style_BtnPrimary")
-text = "🚁  2. SELECCIÓN DE DRON"
-alignment = 0
-
-[node name="BtnRuleta" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("Style_BtnNormal")
-theme_override_styles/hover = SubResource("Style_BtnHover")
-theme_override_styles/pressed = SubResource("Style_BtnPrimary")
-text = "🎲  3. RULETA PARA VALIENTES"
-alignment = 0
-
-[node name="BtnMisiones" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("Style_BtnNormal")
-theme_override_styles/hover = SubResource("Style_BtnHover")
-theme_override_styles/pressed = SubResource("Style_BtnPrimary")
-text = "⭐  4. MISIONES"
-alignment = 0
-
-[node name="BtnConfig" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("Style_BtnNormal")
-theme_override_styles/hover = SubResource("Style_BtnHover")
-theme_override_styles/pressed = SubResource("Style_BtnPrimary")
-text = "⚙  5. CONFIGURACIÓN"
-alignment = 0
-
-[node name="BtnSalir" type="Button" parent="FrontUILayer/LeftTacticalPanel/ButtonList"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.94, 0.98, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("Style_BtnNormal")
-theme_override_styles/hover = SubResource("Style_BtnHover")
-theme_override_styles/pressed = SubResource("Style_BtnPrimary")
-text = "🚪  6. SALIR"
-alignment = 0
-
-[node name="HartmanCard" type="Panel" parent="FrontUILayer/LeftTacticalPanel"]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 14.0
-offset_top = -185.0
-offset_right = -14.0
-offset_bottom = -14.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_styles/panel = SubResource("Style_HartmanBox")
-
-[node name="PortraitBox" type="TextureRect" parent="FrontUILayer/LeftTacticalPanel/HartmanCard"]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 88.0
-offset_bottom = 128.0
-expand_mode = 1
-stretch_mode = 6
-
-[node name="PortraitText" type="Label" parent="FrontUILayer/LeftTacticalPanel/HartmanCard/PortraitBox"]
-layout_mode = 1
+[node name="MainPanel" type="PanelContainer" parent="FrontUILayer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 22.0
+offset_top = 18.0
+offset_right = -22.0
+offset_bottom = -18.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 0.9, 0.7, 1)
-theme_override_font_sizes/font_size = 10
-text = "[SGTO.]\nHARTMAN\n------\nINSTRUCTOR\n★★"
-horizontal_alignment = 1
-vertical_alignment = 1
-visible = false
+theme = ExtResource("2_theme")
 
-[node name="NameTag" type="Label" parent="FrontUILayer/LeftTacticalPanel/HartmanCard"]
-layout_mode = 0
-offset_left = 98.0
-offset_top = 10.0
-offset_right = 332.0
-offset_bottom = 28.0
-theme_override_colors/font_color = Color(1, 0.65, 0.1, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 12
+[node name="ContentMargin" type="MarginContainer" parent="FrontUILayer/MainPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="MainColumn" type="VBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HeaderBox" type="HBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn"]
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="BrandBlock" type="VBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/HeaderBox"]
+custom_minimum_size = Vector2(390, 0)
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="SystemLabel" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/HeaderBox/BrandBlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "DRONE GUARDIAN"
+
+[node name="AccentLine" type="ColorRect" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/HeaderBox/BrandBlock"]
+custom_minimum_size = Vector2(190, 4)
+layout_mode = 2
+color = Color(1, 0.36, 0.08, 1)
+
+[node name="FireOpsLabel" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/HeaderBox/BrandBlock"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.48, 0.14, 1)
+theme_override_font_sizes/font_size = 20
+text = "FIRE OPS"
+
+[node name="HeaderTag" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/HeaderBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 2
+vertical_alignment = 1
+text = "CENTRO DE OPERACIONES"
+
+[node name="MainArea" type="HBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="Sidebar" type="PanelContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea"]
+custom_minimum_size = Vector2(294, 0)
+layout_mode = 2
+theme = ExtResource("2_theme")
+
+[node name="SidebarContent" type="VBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BtnDeploy" type="Button" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent"]
+custom_minimum_size = Vector2(246, 40)
+layout_mode = 2
+focus_mode = 2
+text = "Desplegar"
+alignment = 0
+
+[node name="BtnMultiplayer" type="Button" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent"]
+custom_minimum_size = Vector2(246, 40)
+layout_mode = 2
+focus_mode = 2
+text = "Multijugador"
+alignment = 0
+
+[node name="BtnHangar" type="Button" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent"]
+custom_minimum_size = Vector2(246, 40)
+layout_mode = 2
+focus_mode = 2
+text = "Hangar"
+alignment = 0
+
+[node name="BtnTraining" type="Button" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent"]
+custom_minimum_size = Vector2(246, 40)
+layout_mode = 2
+focus_mode = 2
+text = "Entrenamiento"
+alignment = 0
+
+[node name="BtnLaboratory" type="Button" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent"]
+custom_minimum_size = Vector2(246, 40)
+layout_mode = 2
+focus_mode = 2
+text = "Laboratorio"
+alignment = 0
+
+[node name="BtnSettings" type="Button" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent"]
+custom_minimum_size = Vector2(246, 40)
+layout_mode = 2
+focus_mode = 2
+text = "Ajustes"
+alignment = 0
+
+[node name="BtnExit" type="Button" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent"]
+custom_minimum_size = Vector2(246, 40)
+layout_mode = 2
+focus_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Salir"
+alignment = 0
+
+[node name="SidebarSpacer" type="Control" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HartmanCard" type="PanelContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+theme = ExtResource("2_theme")
+
+[node name="HartmanContent" type="HBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent/HartmanCard"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HartmanPortrait" type="TextureRect" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent/HartmanCard/HartmanContent"]
+custom_minimum_size = Vector2(66, 74)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_portrait")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="HartmanText" type="VBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent/HartmanCard/HartmanContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 3
+
+[node name="HartmanName" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent/HartmanCard/HartmanContent/HartmanText"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.48, 0.14, 1)
 text = "SARGENTO HARTMAN"
 
-[node name="DialogueText" type="Label" parent="FrontUILayer/LeftTacticalPanel/HartmanCard"]
-layout_mode = 0
-offset_left = 98.0
-offset_top = 30.0
-offset_right = 334.0
-offset_bottom = 128.0
-theme_override_font_sizes/font_size = 10
-theme_override_constants/line_spacing = 2
-text = "«Aquí no vienes a pasear, soldado. El bosque está en llamas y tú eres lo único entre el caos y la civilización. Cumple tu misión.»"
+[node name="HartmanAdvice" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Sidebar/SidebarContent/HartmanCard/HartmanContent/HartmanText"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Mantén la calma y prioriza la misión."
 autowrap_mode = 3
 
-[node name="AudioWave" type="Label" parent="FrontUILayer/LeftTacticalPanel/HartmanCard"]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = -28.0
-offset_right = -10.0
-offset_bottom = -8.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_colors/font_color = Color(0.35, 0.8, 1, 0.9)
-theme_override_font_sizes/font_size = 9
-text = "ılı.lıllılı.ıllı.ılı.lıll  ● AUDIO FEED"
+[node name="Workspace" type="PanelContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("2_theme")
 
-[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnIniciar" to="." method="_on_btn_1_iniciar_pressed"]
-[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnDrones" to="." method="_on_btn_2_drones_pressed"]
-[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnRuleta" to="." method="_on_btn_3_ruleta_pressed"]
-[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnMisiones" to="." method="_on_btn_4_misiones_pressed"]
-[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnConfig" to="." method="_on_btn_5_config_pressed"]
-[connection signal="pressed" from="FrontUILayer/LeftTacticalPanel/ButtonList/BtnSalir" to="." method="_on_btn_6_salir_pressed"]
+[node name="WorkspaceContent" type="VBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Workspace"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SectionTitle" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Workspace/WorkspaceContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.48, 0.14, 1)
+theme_override_font_sizes/font_size = 28
+text = "DESPLEGAR"
+
+[node name="SectionAccent" type="ColorRect" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Workspace/WorkspaceContent"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(1, 0.36, 0.08, 0.8)
+
+[node name="SectionBody" type="VBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/MainArea/Workspace/WorkspaceContent"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="StatusFooter" type="PanelContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme = ExtResource("2_theme")
+
+[node name="StatusRow" type="HBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ZoneStatus" type="VBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ZoneTitle" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow/ZoneStatus"]
+layout_mode = 2
+text = "ZONA"
+
+[node name="ZoneValue" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow/ZoneStatus"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.48, 0.14, 1)
+text = "—"
+
+[node name="WindStatus" type="VBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="WindTitle" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow/WindStatus"]
+layout_mode = 2
+text = "VIENTO"
+
+[node name="WindValue" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow/WindStatus"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.48, 0.14, 1)
+text = "—"
+
+[node name="ThreatStatus" type="VBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ThreatTitle" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow/ThreatStatus"]
+layout_mode = 2
+text = "AMENAZA"
+
+[node name="ThreatValue" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow/ThreatStatus"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.48, 0.14, 1)
+text = "—"
+
+[node name="TimeStatus" type="VBoxContainer" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TimeTitle" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow/TimeStatus"]
+layout_mode = 2
+text = "HORA LOCAL"
+
+[node name="TimeValue" type="Label" parent="FrontUILayer/MainPanel/ContentMargin/MainColumn/StatusFooter/StatusRow/TimeStatus"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.48, 0.14, 1)
+text = "—"
