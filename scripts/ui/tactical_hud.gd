@@ -113,6 +113,9 @@ var _texto_eventos: Label
 var _eventos: Array[String] = []
 var _panel_marcador_final: PanelContainer
 var _texto_marcador_final: Label
+var _menu_pausa: Control
+var _menu_pausa_abierto: bool = false
+var _pauso_simulacion: bool = false
 var _temporizador_interfaz_cooperativa: Timer
 var _viento_inicializado: bool = false
 var _ultimo_evento_viento_ms: int = 0
@@ -154,6 +157,7 @@ func _ready() -> void:
 	_crear_indicadores_rol()
 	_crear_indicador_objetivo_critico()
 	_crear_interfaz_cooperativa()
+	_crear_menu_pausa()
 	var viento_actual := FireGridServer.obtener_viento()
 	_al_cambiar_viento(
 		FireGridServer.obtener_direccion_viento(),
@@ -169,6 +173,8 @@ func _traducir_textos_escena() -> void:
 		control.set("text", tr(str(TEXTOS_ESCENA[ruta])))
 
 func _process(delta: float) -> void:
+	if _pauso_simulacion:
+		return
 	_actualizar_pings_tacticos()
 	_actualizar_alerta_objetivo_critico(delta)
 	if _rol_local == &"tactico":
@@ -214,6 +220,17 @@ func _process(delta: float) -> void:
 			_decir_hartman("regreso_urgente", "angry")
 
 func _unhandled_input(event: InputEvent) -> void:
+	if (
+		event is InputEventKey
+		and event.pressed
+		and not event.echo
+		and event.keycode == KEY_ESCAPE
+	):
+		_alternar_menu_pausa()
+		get_viewport().set_input_as_handled()
+		return
+	if _menu_pausa_abierto:
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_G:
 		_indice_tipo_ping = (_indice_tipo_ping + 1) % TIPOS_PING.size()
 		_colocar_ping_tactico()
@@ -856,6 +873,101 @@ func _aplicar_estilo_panel(panel: PanelContainer, color_borde: Color) -> void:
 	estilo.set_border_width_all(1)
 	estilo.set_content_margin_all(6.0)
 	panel.add_theme_stylebox_override("panel", estilo)
+
+func _crear_menu_pausa() -> void:
+	_menu_pausa = Control.new()
+	_menu_pausa.name = "MenuPausa"
+	_menu_pausa.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_menu_pausa.mouse_filter = Control.MOUSE_FILTER_STOP
+	_menu_pausa.process_mode = Node.PROCESS_MODE_ALWAYS
+	_menu_pausa.visible = false
+	add_child(_menu_pausa)
+
+	var fondo := ColorRect.new()
+	fondo.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fondo.color = Color(0.0, 0.02, 0.06, 0.82)
+	fondo.mouse_filter = Control.MOUSE_FILTER_STOP
+	_menu_pausa.add_child(fondo)
+
+	var centrador := CenterContainer.new()
+	centrador.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centrador.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_menu_pausa.add_child(centrador)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(320.0, 0.0)
+	_aplicar_estilo_panel(panel, Color("#55d8ff"))
+	centrador.add_child(panel)
+
+	var contenido := VBoxContainer.new()
+	contenido.add_theme_constant_override("separation", 12)
+	panel.add_child(contenido)
+
+	var titulo := Label.new()
+	titulo.text = tr("PAUSE_TITLE")
+	titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	titulo.add_theme_font_size_override("font_size", 22)
+	titulo.add_theme_color_override("font_color", Color("#7fe8ff"))
+	contenido.add_child(titulo)
+
+	var continuar := Button.new()
+	continuar.text = tr("PAUSE_RESUME")
+	continuar.custom_minimum_size = Vector2(0.0, 40.0)
+	continuar.pressed.connect(_cerrar_menu_pausa)
+	contenido.add_child(continuar)
+
+	var menu_principal := Button.new()
+	menu_principal.text = tr("PAUSE_MAIN_MENU")
+	menu_principal.custom_minimum_size = Vector2(0.0, 40.0)
+	menu_principal.pressed.connect(_volver_al_menu_desde_pausa)
+	contenido.add_child(menu_principal)
+
+func _alternar_menu_pausa() -> void:
+	if _menu_pausa_abierto:
+		_cerrar_menu_pausa()
+	else:
+		_abrir_menu_pausa()
+
+func _abrir_menu_pausa() -> void:
+	if not is_instance_valid(_menu_pausa):
+		return
+	_menu_pausa_abierto = true
+	_menu_pausa.visible = true
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	_pauso_simulacion = (
+		not multiplayer.has_multiplayer_peer() and not get_tree().paused
+	)
+	if _pauso_simulacion:
+		if is_instance_valid(_temporizador_interfaz_cooperativa):
+			_temporizador_interfaz_cooperativa.stop()
+		get_tree().paused = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	if is_instance_valid(_dron_local_objetivo):
+		if _dron_local_objetivo.has_method("configurar_menu_pausa_abierto"):
+			_dron_local_objetivo.call("configurar_menu_pausa_abierto", true)
+
+func _cerrar_menu_pausa() -> void:
+	if not _menu_pausa_abierto:
+		return
+	if _pauso_simulacion:
+		get_tree().paused = false
+		if is_instance_valid(_temporizador_interfaz_cooperativa):
+			_temporizador_interfaz_cooperativa.start()
+	_menu_pausa_abierto = false
+	_pauso_simulacion = false
+	_menu_pausa.visible = false
+	if (
+		is_instance_valid(_dron_local_objetivo)
+		and _dron_local_objetivo.has_method("configurar_menu_pausa_abierto")
+	):
+		_dron_local_objetivo.call("configurar_menu_pausa_abierto", false)
+	else:
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	process_mode = Node.PROCESS_MODE_INHERIT
+
+func _volver_al_menu_desde_pausa() -> void:
+	_cerrar_menu_pausa()
+	MissionResults.volver_al_menu()
 
 func _actualizar_interfaz_cooperativa() -> void:
 	_actualizar_lista_escuadron()

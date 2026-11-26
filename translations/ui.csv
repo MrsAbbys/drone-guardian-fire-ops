@@ -230,6 +230,9 @@ RESULT_WASTED_WATER,"Agua desperdiciada: %.1f s","Water wasted: %.1f s"
 RESULT_RECORD_LOAD_FAILED,"No se pudo cargar el récord.","Could not load the record."
 RESULT_NEW_RECORD,"Récord nuevo: %.1f%%","New record: %.1f%%"
 RESULT_BEST_SCORE,"Mejor: %d estrellas · %.1f%%","Best: %d stars · %.1f%%"
+PAUSE_TITLE,PAUSA,PAUSED
+PAUSE_RESUME,CONTINUAR,RESUME
+PAUSE_MAIN_MENU,"MENÚ PRINCIPAL","MAIN MENU"
 INPUT_FORWARD,Avanzar,Move forward
 INPUT_BACKWARD,Retroceder,Move backward
 INPUT_LEFT,"Desplazarse a la izquierda","Move left"

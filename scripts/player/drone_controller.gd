@@ -58,6 +58,7 @@ var is_near_water_source: bool = false
 var is_refilling: bool = false
 var is_discharging: bool = false
 var is_mouse_captured: bool = true
+var _menu_pausa_abierto: bool = false
 var mouse_input: Vector2 = Vector2.ZERO
 var idle_timer: float = 0.0
 var collision_cooldown: float = 0.0
@@ -218,6 +219,16 @@ func _aplicar_color_equipo(color: Color) -> void:
 func _al_cambiar_sensibilidad_mouse(valor: float) -> void:
 	mouse_sensitivity = valor
 
+func configurar_menu_pausa_abierto(abierto: bool) -> void:
+	if not is_multiplayer_authority():
+		return
+	_menu_pausa_abierto = abierto
+	is_mouse_captured = not abierto
+	mouse_input = Vector2.ZERO
+	Input.set_mouse_mode(
+		Input.MOUSE_MODE_VISIBLE if abierto else Input.MOUSE_MODE_CAPTURED
+	)
+
 func _process(_delta: float) -> void:
 	if not multiplayer.has_multiplayer_peer() or is_multiplayer_authority():
 		return
@@ -250,11 +261,6 @@ func _configurar_colision() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
 		return
-	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		is_mouse_captured = not is_mouse_captured
-		Input.set_mouse_mode(
-			Input.MOUSE_MODE_CAPTURED if is_mouse_captured else Input.MOUSE_MODE_VISIBLE
-		)
 	if is_mouse_captured and event is InputEventMouseMotion:
 		mouse_input = event.relative
 
@@ -268,13 +274,14 @@ func _physics_process(delta: float) -> void:
 	var movimiento := Vector2.ZERO
 	var vertical := 0.0
 	var movimiento_mouse := Vector2.ZERO
-	if autoridad_local:
+	if autoridad_local and not _menu_pausa_abierto:
 		movimiento = Input.get_vector(
 			"drone_left", "drone_right", "drone_forward", "drone_backward"
 		)
 		vertical = Input.get_axis("drone_descend", "drone_ascend")
 		if is_mouse_captured:
 			movimiento_mouse = mouse_input
+	if autoridad_local:
 		mouse_input = Vector2.ZERO
 	elif es_servidor:
 		movimiento = _entrada_red
@@ -295,9 +302,15 @@ func _physics_process(delta: float) -> void:
 	if autoridad_local:
 		_actualizar_fov_velocidad()
 		_actualizar_recarga(delta, hay_red, es_servidor)
-		if Input.is_action_just_pressed("drone_special"):
+		if (
+			not _menu_pausa_abierto
+			and Input.is_action_just_pressed("drone_special")
+		):
 			_solicitar_habilidad_especial(hay_red, es_servidor)
-		if Input.is_action_just_pressed("drone_retardant"):
+		if (
+			not _menu_pausa_abierto
+			and Input.is_action_just_pressed("drone_retardant")
+		):
 			_solicitar_retardante(hay_red, es_servidor)
 		if hay_red:
 			_actualizar_disparo_multijugador(delta, es_servidor)
@@ -415,7 +428,9 @@ func _actualizar_fov_velocidad() -> void:
 	fov_tween.tween_property(cam, "fov", target_fov, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func _actualizar_recarga(delta: float, hay_red: bool, es_servidor: bool) -> void:
-	recarga_solicitada = Input.is_action_pressed("drone_refill")
+	recarga_solicitada = (
+		not _menu_pausa_abierto and Input.is_action_pressed("drone_refill")
+	)
 	is_refilling = is_near_water_source and recarga_solicitada and not tanque_lleno()
 	if hay_red:
 		if not es_servidor and recarga_solicitada != _recarga_solicitada_anterior:
@@ -430,8 +445,11 @@ func _actualizar_recarga(delta: float, hay_red: bool, es_servidor: bool) -> void
 			hud_node.notify_refilling(agua_actual, agua_maxima)
 
 func _actualizar_disparo_solitario(delta: float) -> void:
-	is_discharging = Input.is_action_pressed("drone_spray") and agua_actual > 0.0
-	if Input.is_action_pressed("drone_spray") and agua_actual <= 0.0:
+	var rociado_solicitado := (
+		not _menu_pausa_abierto and Input.is_action_pressed("drone_spray")
+	)
+	is_discharging = rociado_solicitado and agua_actual > 0.0
+	if rociado_solicitado and agua_actual <= 0.0:
 		is_discharging = false
 		_notificar_alcance_chorro(false)
 		if not empty_water_warning_sent and hud_node:
@@ -443,7 +461,11 @@ func _actualizar_disparo_solitario(delta: float) -> void:
 		_tiempo_desperdicio_continuo = 0.0
 		_notificar_alcance_chorro(false)
 		return
-	if Input.is_action_just_pressed("drone_spray") and apuntando_fuego_fuera_de_alcance:
+	if (
+		rociado_solicitado
+		and Input.is_action_just_pressed("drone_spray")
+		and apuntando_fuego_fuera_de_alcance
+	):
 		if AjustesAyuda.nivel_ayuda == AjustesAyuda.AYUDA_ALTA and hud_node:
 			hud_node.trigger_hartman_warning("spray_out_of_range")
 
@@ -501,7 +523,11 @@ func _actualizar_disparo_solitario(delta: float) -> void:
 					hud_node.call("trigger_hartman_warning", "wasted_water", causa)
 
 func _actualizar_disparo_multijugador(delta: float, es_servidor: bool) -> void:
-	var activo := is_multiplayer_authority() and Input.is_action_pressed("drone_spray")
+	var activo := (
+		is_multiplayer_authority()
+		and not _menu_pausa_abierto
+		and Input.is_action_pressed("drone_spray")
+	)
 	if es_servidor:
 		if is_multiplayer_authority():
 			_actualizar_intencion_rociado_local(activo, (-nozzle.global_basis.z).normalized())
@@ -936,7 +962,11 @@ func _calcular_info_punteria() -> Dictionary:
 		"posicion_objetivo": Vector3.ZERO,
 		"punto_impacto": origen + direccion * alcance_chorro,
 		"dentro_del_chorro": false,
-		"disparando": Input.is_action_pressed("drone_spray") and agua_actual > 0.0,
+		"disparando": (
+			not _menu_pausa_abierto
+			and Input.is_action_pressed("drone_spray")
+			and agua_actual > 0.0
+		),
 		"agua_actual": agua_actual,
 		"causa_desperdicio": "pasto_limpio",
 	}
