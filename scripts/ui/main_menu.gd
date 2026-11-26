@@ -137,11 +137,14 @@ func _crear_panel_ajustes() -> void:
 	slider_volumen.min_value = 0.0
 	slider_volumen.max_value = 1.0
 	slider_volumen.step = 0.01
-	slider_volumen.value = GraphicsSettings.volumen_maestro
+	slider_volumen.value = AudioManager.obtener_volumen_bus("Maestro")
 	slider_volumen.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slider_volumen.value_changed.connect(_al_cambiar_volumen_maestro)
 	contenido.add_child(slider_volumen)
-	_actualizar_etiqueta_volumen(GraphicsSettings.volumen_maestro)
+	_actualizar_etiqueta_volumen(AudioManager.obtener_volumen_bus("Maestro"))
+	_crear_slider_audio(contenido, "Efectos", "Volumen de efectos")
+	_crear_slider_audio(contenido, "Musica", "Volumen de música")
+	_crear_slider_audio(contenido, "UI", "Volumen de interfaz")
 
 	var etiqueta_ayuda := Label.new()
 	etiqueta_ayuda.text = "Ayuda de puntería"
@@ -182,8 +185,25 @@ func _al_cambiar_sensibilidad_mouse(valor: float) -> void:
 	_actualizar_etiqueta_sensibilidad(valor)
 
 func _al_cambiar_volumen_maestro(valor: float) -> void:
-	GraphicsSettings.configurar_volumen_maestro(valor)
+	AudioManager.configurar_volumen_bus("Maestro", valor)
 	_actualizar_etiqueta_volumen(valor)
+
+func _crear_slider_audio(contenido: VBoxContainer, bus: String, titulo: String) -> void:
+	var etiqueta := Label.new()
+	etiqueta.text = titulo
+	contenido.add_child(etiqueta)
+	var slider := HSlider.new()
+	slider.name = "Volumen%s" % bus
+	slider.min_value = 0.0
+	slider.max_value = 1.0
+	slider.step = 0.01
+	slider.value = AudioManager.obtener_volumen_bus(bus)
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.value_changed.connect(
+		func(valor: float) -> void:
+			AudioManager.configurar_volumen_bus(bus, valor)
+	)
+	contenido.add_child(slider)
 
 func _actualizar_etiqueta_sensibilidad(valor: float) -> void:
 	etiqueta_sensibilidad.text = "Sensibilidad del ratón: %.4f" % valor

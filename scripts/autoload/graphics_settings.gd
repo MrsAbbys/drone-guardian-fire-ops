@@ -151,8 +151,11 @@ func _aplicar_perfil_viewport() -> void:
 	viewport.scaling_3d_scale = float(perfil["scaling_3d_scale"])
 
 func _aplicar_volumen_maestro() -> void:
-	if AudioServer.get_bus_count() == 0:
+	var indice_bus := AudioServer.get_bus_index("Maestro")
+	if indice_bus < 0 and AudioServer.get_bus_count() == 0:
 		push_error("No existe el bus maestro de audio.")
 		return
+	if indice_bus < 0:
+		indice_bus = 0
 	var volumen_db := linear_to_db(volumen_maestro) if volumen_maestro > 0.0 else -80.0
-	AudioServer.set_bus_volume_db(0, volumen_db)
+	AudioServer.set_bus_volume_db(indice_bus, volumen_db)
