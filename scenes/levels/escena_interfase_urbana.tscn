@@ -63,7 +63,7 @@ shadow_blur = 1.0
 [node name="InterfaseUrbanaGenerator" type="Node3D" parent="."]
 script = ExtResource("1_generator")
 
-[node name="PistaAterrizaje" type="StaticBody3D" parent="."]
+[node name="PistaAterrizaje" type="StaticBody3D" parent="." groups=["base_helipad"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -390, 0.1, 430)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="PistaAterrizaje"]
@@ -87,7 +87,7 @@ monitoring = true
 [node name="CollisionShape3D" type="CollisionShape3D" parent="WaterRefillStation/RefillArea"]
 shape = SubResource("AreaRecarga")
 
-[node name="FireManager" type="Node" parent="."]
+[node name="FireManager" type="Node" parent="." groups=["fire_manager"]]
 script = ExtResource("7_fire_manager")
 
 [node name="WildfireZone" parent="." instance=ExtResource("4_fire")]

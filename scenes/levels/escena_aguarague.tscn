@@ -82,7 +82,7 @@ mesh = SubResource("Mesh_DefaultPlane")
 
 [node name="TerrainCollision" type="CollisionShape3D" parent="MountainTerrain" unique_id=865912985]
 
-[node name="BaseHelipad" type="StaticBody3D" parent="." unique_id=1184994390]
+[node name="BaseHelipad" type="StaticBody3D" parent="." unique_id=1184994390 groups=["base_helipad"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -120, 0.2, 40)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="BaseHelipad" unique_id=305893046]
@@ -95,7 +95,7 @@ shape = SubResource("Shape_Helipad")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -178, 0, 40)
 script = ExtResource("5_refill")
 
-[node name="FireManager" type="Node" parent="."]
+[node name="FireManager" type="Node" parent="." groups=["fire_manager"]]
 script = ExtResource("7_fire_manager")
 
 [node name="RefillArea" type="Area3D" parent="WaterRefillStation"]

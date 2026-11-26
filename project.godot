@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="DRONE GUARDIAN: FIRE OPS (4.3)"
+config/name="DRONE GUARDIAN: FIRE OPS (4.7)"
 config/description="Tactical Wildfire Simulator - Serrania del Aguarague"
 config/version="1.0.0"
 run/main_scene="res://scenes/menus/main_menu.tscn"

@@ -71,7 +71,7 @@ size = Vector3(2, 2, 2)
 height = 14.0
 radius = 8.0
 
-[node name="FireSource" type="Node3D" unique_id=68062659]
+[node name="FireSource" type="Node3D" unique_id=68062659 groups=["wildfire_zone"]]
 script = ExtResource("1_fire")
 
 [node name="FlameParticles" type="GPUParticles3D" parent="." unique_id=2037664618]

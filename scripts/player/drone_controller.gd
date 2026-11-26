@@ -151,11 +151,11 @@ func _ready() -> void:
 		cam.current = false
 		cam.get_parent().queue_free()
 		$TacticalCrosshair.queue_free()
+	wildfire_node = get_tree().get_first_node_in_group("wildfire_zone") as Node3D
+	helipad_node = get_tree().get_first_node_in_group("base_helipad") as Node3D
+	fire_manager = get_tree().get_first_node_in_group("fire_manager")
 	if es_autoridad_local:
-		hud_node = get_tree().root.find_child("TacticalHUD", true, false) as CanvasLayer
-		wildfire_node = get_tree().root.find_child("WildfireZone", true, false) as Node3D
-		helipad_node = get_tree().root.find_child("BaseHelipad", true, false) as Node3D
-		fire_manager = get_tree().root.find_child("FireManager", true, false)
+		hud_node = get_tree().get_first_node_in_group("tactical_hud") as CanvasLayer
 		if fire_manager and fire_manager.has_signal("arbol_apagado"):
 			fire_manager.connect("arbol_apagado", _on_tree_extinguished)
 		if hud_node and hud_node.has_method("registrar_dron_local"):
@@ -1075,7 +1075,7 @@ func _notificar_alcance_chorro(fuera_de_alcance: bool) -> void:
 
 func _aplicar_dano_termico(delta: float) -> void:
 	if not is_instance_valid(wildfire_node):
-		wildfire_node = get_tree().root.find_child("WildfireZone", true, false) as Node3D
+		return
 	if wildfire_node and wildfire_node.visible:
 		if global_position.distance_to(wildfire_node.global_position) < 20.0:
 			current_health = maxf(0.0, current_health - 18.0 * delta)
@@ -1084,8 +1084,8 @@ func _aplicar_dano_termico(delta: float) -> void:
 
 func _comprobar_aterrizaje() -> void:
 	if not is_instance_valid(helipad_node):
-		helipad_node = get_tree().root.find_child("BaseHelipad", true, false) as Node3D
-	if not helipad_node or not hud_node or not hud_node.is_fire_defeated:
+		return
+	if not is_instance_valid(hud_node) or not hud_node.is_fire_defeated:
 		return
 	var distance := Vector2(
 		global_position.x - helipad_node.global_position.x,

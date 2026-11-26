@@ -195,7 +195,7 @@ mesh = SubResource("Mesh_Parcela")
 transform = Transform3D(0.819152, 0, -0.573576, 0, 1, 0, 0.573576, 0, 0.819152, 220, 0.15, -180)
 mesh = SubResource("Mesh_Parcela")
 
-[node name="BaseHelipad" type="Node3D" parent="."]
+[node name="BaseHelipad" type="Node3D" parent="." groups=["base_helipad"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0.15, 20)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="BaseHelipad"]

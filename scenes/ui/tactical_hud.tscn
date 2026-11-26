@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/ui/tactical_hud.gd" id="1_hud"]
 
-[node name="TacticalHUD" type="CanvasLayer"]
+[node name="TacticalHUD" type="CanvasLayer" groups=["tactical_hud"]]
 script = ExtResource("1_hud")
 
 [node name="TopBar" type="Panel" parent="."]
